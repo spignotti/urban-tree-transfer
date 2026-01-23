@@ -1,0 +1,41 @@
+name: Berlin
+role: source
+
+crs: EPSG:25833
+
+boundaries:
+  source: BKG VG250 WFS
+  url: https://sgx.geodatenzentrum.de/wfs_vg250
+  layer: vg250_gem
+  filter: "GEN = 'Berlin'"
+
+trees:
+  source: Berlin WFS
+  url: https://fbinter.stadt-berlin.de/fb/wfs/data/senstadt/s_wfs_baumbestand
+  layers:
+    - s_wfs_baumbestand_an
+    - s_wfs_baumbestand
+  mapping:
+    tree_id: gisid
+    genus_latin: gattung
+    species_latin: art_bot
+    genus_german: gattung_deutsch
+    species_german: art_deutsch
+    plant_year: pflanzjahr
+    height_m: baumhoehe
+    tree_type: source_layer
+
+elevation:
+  clip_buffer_m: 500
+  dom:
+    source: Berlin GDI
+    type: atom_feed
+    url: https://fbinter.stadt-berlin.de/fb/feed/senstadt/a_dom1
+  dgm:
+    source: Berlin GDI
+    type: atom_feed
+    url: https://gdi.berlin.de/data/dgm1/atom
+
+sentinel2:
+  year: 2021
+  months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]

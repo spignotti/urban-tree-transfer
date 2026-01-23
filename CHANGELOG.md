@@ -8,22 +8,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- New features that have been added but not yet released
+- Add city YAML configs for Berlin and Leipzig
+- Add config constants and loader utilities
+- Add plotting and execution logging utilities
+- Add Phase 1 data processing modules (boundaries, trees, elevation, CHM, Sentinel-2)
+- Add Phase 1 runner notebook and runner template
+- Add methodology template and Phase 1 data processing methodology
+- Add Leipzig WFS tree mapping with species extraction and metadata export
+- Add tree_type mapping support for Berlin WFS layers
+- Add zip-list elevation download with mosaic + boundary clipping for Leipzig DGM
+- Add Leipzig DOM zip-list configuration
+- Add Berlin DOM/DGM Atom feed URLs from legacy config
+- Add `utils/geo.py` with shared geographic utilities (ensure_project_crs, buffer_boundaries, validate_geometries, clip_to_boundary)
+- Add `utils/validation.py` with dataset validation utilities (validate_crs, validate_schema, validate_within_boundary, generate_validation_report)
+- Add `validate_polygon_geometries()` to boundaries module using shapely make_valid
+- Add `filter_trees_to_boundary()` for spatial filtering with configurable buffer
+- Add `remove_duplicate_trees()` for deduplication by tree_id or proximity
+- Add Atom feed parser for Berlin elevation data with spatial tile filtering
+- Add `clip_chm_to_boundary()` for CHM boundary clipping
+- Add `monitor_tasks()` and `batch_validate_sentinel()` for GEE task management
+- Add 500m buffer to all boundary-based clipping operations
+- Add `outputs/` directory for Colab-generated metadata and logs
+- Add runtime settings section to runner notebook (CPU, High-RAM recommended)
 
 ### Changed
-- Changes in existing functionality
-
-### Deprecated
-- Features that will be removed in upcoming releases
-
-### Removed
-- Features that have been removed
-
-### Fixed
-- Bug fixes
-
-### Security
-- Security improvements or vulnerability fixes
+- Change documentation structure to include Phase 1 methodology
+- Change nox sessions to run `uv` with active environment to avoid warnings
+- Change notebook to clone repo for metadata commits (large data stays on Drive)
+- Change harmonize_trees to use consistent dtypes (Int64, Float64) across cities
+- Change Sentinel-2 export to use 500m buffered boundaries
+- Update Phase 1 methodology with complete processing steps, parameters, and quality criteria
 
 ## [0.1.0] - YYYY-MM-DD
 

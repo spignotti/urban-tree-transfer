@@ -28,7 +28,6 @@ env/
 
 # UV
 .python-version
-uv.lock
 
 # IDE
 .idea/
@@ -50,6 +49,7 @@ htmlcov/
 # Type checking
 .pyright/
 .mypy_cache/
+.ruff_cache/
 
 # OS
 .DS_Store
@@ -67,6 +67,7 @@ data/
 .env
 *.json
 !configs/**/*.json
+!outputs/**/*.json
 credentials/
 secrets/
 

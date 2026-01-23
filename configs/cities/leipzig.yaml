@@ -1,0 +1,41 @@
+name: Leipzig
+role: target
+
+crs: EPSG:25833
+
+boundaries:
+  source: BKG VG250 WFS
+  url: https://sgx.geodatenzentrum.de/wfs_vg250
+  layer: vg250_gem
+  filter: "GEN = 'Leipzig'"
+
+trees:
+  source: Leipzig WFS
+  type: wfs
+  url: https://geoserver.leipzig.de/geoserver/OpenData/Baeume/wfs
+  layers:
+    - OpenData:Baeume
+  mapping:
+    tree_id: objectid
+    genus_latin: gattung
+    species_latin: ga_lang_wiss
+    genus_german: ga_lang_deutsch
+    species_german: null
+    plant_year: pflanzjahr
+    height_m: baumhoehe
+    tree_type: null
+
+elevation:
+  clip_buffer_m: 500
+  dom:
+    source: Sachsen GeoSN
+    type: zip_list
+    urls_file: configs/cities/leipzig_dom_urls.txt
+  dgm:
+    source: Sachsen GeoSN
+    type: zip_list
+    urls_file: configs/cities/leipzig_dgm_urls.txt
+
+sentinel2:
+  year: 2021
+  months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
