@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change Sentinel-2 spectral band constants to match GEE band names (B2, B3, ...)
 - Update Phase 1 methodology with complete processing steps, parameters, and quality criteria
 - Change data processing runner notebook to skip sections when outputs already exist
+- Change elevation downloads to log per-tile progress
 
 ### Fixed
 - Fix Berlin Atom feed downloads by resolving section links to ZIP tiles and validating ZIP responses

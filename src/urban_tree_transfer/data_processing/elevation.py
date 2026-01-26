@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 import warnings
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -226,6 +227,7 @@ def _download_atom_feed_tiles(
     output_dir: Path,
     boundary_gdf: gpd.GeoDataFrame | None = None,
     buffer_m: float = 500.0,
+    progress: bool = True,
 ) -> list[Path]:
     """Download tiles from Berlin Atom feed.
 
@@ -255,14 +257,20 @@ def _download_atom_feed_tiles(
     output_dir.mkdir(parents=True, exist_ok=True)
     extracted: list[Path] = []
 
-    for tile in tiles:
+    total_tiles = len(tiles)
+    if progress:
+        print(f"Downloading {total_tiles} elevation tiles to {output_dir}...")
+
+    for idx, tile in enumerate(tiles, start=1):
         url = tile["url"]
         filename = url.split("/")[-1]
         if not filename.endswith(".zip"):
             filename = f"{tile['title']}.zip"
 
         zip_path = output_dir / filename
-        _download_file(url, zip_path)
+        if progress:
+            print(f"[{idx}/{total_tiles}] {filename}")
+        _download_file(url, zip_path, progress_label=filename)
         if not is_zipfile(zip_path):
             raise ValueError(f"Downloaded file is not a ZIP archive: {url}")
 
@@ -278,14 +286,35 @@ def _download_atom_feed_tiles(
     return extracted
 
 
-def _download_file(url: str, output_path: Path) -> Path:
+def _download_file(
+    url: str,
+    output_path: Path,
+    progress_label: str | None = None,
+    log_every_seconds: int = 30,
+) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with requests.get(url, stream=True, timeout=300, headers=DEFAULT_HEADERS) as response:
         response.raise_for_status()
+        total_bytes = response.headers.get("Content-Length")
+        total_mb = (
+            int(total_bytes) / (1024 * 1024) if total_bytes and total_bytes.isdigit() else None
+        )
+        downloaded = 0
+        last_log = time.time()
         with output_path.open("wb") as handle:
             for chunk in response.iter_content(chunk_size=1024 * 1024):
                 if chunk:
                     handle.write(chunk)
+                    downloaded += len(chunk)
+                    if progress_label and log_every_seconds > 0:
+                        now = time.time()
+                        if now - last_log >= log_every_seconds:
+                            downloaded_mb = downloaded / (1024 * 1024)
+                            if total_mb:
+                                print(f"  {progress_label}: {downloaded_mb:.1f}/{total_mb:.1f} MB")
+                            else:
+                                print(f"  {progress_label}: {downloaded_mb:.1f} MB")
+                            last_log = now
     return output_path
 
 
@@ -401,6 +430,7 @@ def download_elevation(
     data_type: str,
     boundary_gdf: gpd.GeoDataFrame | None = None,
     buffer_m: float = 500.0,
+    progress: bool = True,
 ) -> Path:
     """Download DOM or DGM for city."""
     elev_cfg = city_config.get("elevation", {}).get(data_type)
@@ -436,7 +466,7 @@ def download_elevation(
         if not url:
             raise ValueError(f"Elevation config for {data_type} requires a url.")
         raw_dir = output_dir / f"{data_type}_tiles"
-        tile_paths = _download_atom_feed_tiles(url, raw_dir, boundary_gdf, buffer_m)
+        tile_paths = _download_atom_feed_tiles(url, raw_dir, boundary_gdf, buffer_m, progress)
         mosaic_path = output_dir / f"{data_type}_mosaic.tif"
         raster_path = _mosaic_tiles(tile_paths, mosaic_path)
         raster_path = _ensure_project_crs(raster_path)
