@@ -448,8 +448,8 @@ def filter_viable_genera(
     counts = counts.unstack(fill_value=0)
     if counts.empty:
         return gpd.GeoDataFrame(gdf.iloc[0:0].copy(), crs=gdf.crs)
-    viable = (counts >= min_samples).all(axis=1)
-    viable_index = cast(pd.Index, counts.index[viable])
-    viable_genera = [str(item) for item in viable_index.tolist()]
+    # Check across cities (axis=0) for each genus (columns)
+    viable = (counts >= min_samples).all(axis=0)
+    viable_genera = counts.columns[viable].tolist()
     filtered = gdf[gdf["genus_latin"].isin(viable_genera)].copy()
     return gpd.GeoDataFrame(filtered, crs=gdf.crs)
