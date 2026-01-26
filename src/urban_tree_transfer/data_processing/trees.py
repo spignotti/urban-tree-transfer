@@ -5,7 +5,6 @@ from __future__ import annotations
 import warnings
 from io import BytesIO
 from typing import Any, cast
-from urllib.parse import urlencode
 
 import geopandas as gpd
 import pandas as pd
@@ -17,17 +16,86 @@ _ALLOWED_GEOMETRIES = {"Point", "MultiPoint"}
 _DEFAULT_BUFFER_M = 500.0
 
 
-def _download_wfs_layer(url: str, layer: str) -> gpd.GeoDataFrame:
+def _fetch_wfs_feature_count(url: str, layer: str, timeout_s: int) -> int | None:
     params = {
         "SERVICE": "WFS",
         "VERSION": "2.0.0",
         "REQUEST": "GetFeature",
         "TYPENAMES": layer,
-        "OUTPUTFORMAT": "application/gml+xml; version=3.2",
+        "RESULTTYPE": "hits",
     }
-    response = requests.get(f"{url}?{urlencode(params)}", timeout=300)
+    response = requests.get(url, params=params, timeout=timeout_s)
     response.raise_for_status()
-    return gpd.read_file(BytesIO(response.content))
+    try:
+        import xml.etree.ElementTree as ET
+
+        root = ET.fromstring(response.content)
+    except ET.ParseError:
+        return None
+    count = root.attrib.get("numberMatched") or root.attrib.get("numberOfFeatures")
+    return int(count) if count and count.isdigit() else None
+
+
+def _download_wfs_layer(
+    url: str,
+    layer: str,
+    *,
+    page_size: int = 5000,
+    timeout_s: int = 300,
+) -> gpd.GeoDataFrame:
+    base_params = {
+        "SERVICE": "WFS",
+        "VERSION": "2.0.0",
+        "REQUEST": "GetFeature",
+        "TYPENAMES": layer,
+    }
+    output_formats = [
+        "application/json",
+        "application/gml+xml; version=3.2",
+    ]
+    total_features = _fetch_wfs_feature_count(url, layer, timeout_s=timeout_s)
+    offset = 0
+    gdfs: list[gpd.GeoDataFrame] = []
+
+    while True:
+        if total_features is not None and offset >= total_features:
+            break
+        params = {
+            **base_params,
+            "COUNT": str(page_size),
+            "STARTINDEX": str(offset),
+        }
+        last_error: Exception | None = None
+        page_gdf: gpd.GeoDataFrame | None = None
+        for output_format in output_formats:
+            try:
+                response = requests.get(
+                    url,
+                    params={**params, "OUTPUTFORMAT": output_format},
+                    timeout=timeout_s,
+                )
+                response.raise_for_status()
+                page_gdf = gpd.read_file(BytesIO(response.content))
+                break
+            except Exception as exc:
+                last_error = exc
+                page_gdf = None
+        if page_gdf is None:
+            raise RuntimeError(
+                f"WFS layer download failed for {layer} after trying output formats."
+            ) from last_error
+        if page_gdf.empty:
+            break
+        gdfs.append(page_gdf)
+        offset += len(page_gdf)
+        if len(page_gdf) < page_size:
+            break
+
+    if not gdfs:
+        return gpd.GeoDataFrame()
+    if len(gdfs) == 1:
+        return gdfs[0]
+    return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
 
 
 def _download_ogc_api_features(url: str, limit: int = 10000) -> gpd.GeoDataFrame:
