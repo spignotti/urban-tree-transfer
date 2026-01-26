@@ -10,13 +10,13 @@ MIN_SAMPLES_PER_GENUS = 500
 
 # Sentinel-2 Bands
 SPECTRAL_BANDS = [
-    "B02",
-    "B03",
-    "B04",
-    "B05",
-    "B06",
-    "B07",
-    "B08",
+    "B2",
+    "B3",
+    "B4",
+    "B5",
+    "B6",
+    "B7",
+    "B8",
     "B8A",
     "B11",
     "B12",

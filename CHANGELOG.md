@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `outputs/` directory for Colab-generated metadata and logs
 - Add runtime settings section to runner notebook (CPU, High-RAM recommended)
 - Add integration and unit tests for data processing endpoints and helpers
+- Add `scripts/gee_sentinel_preview.js` for manual GEE Sentinel-2 preview (Berlin/Leipzig)
 
 ### Changed
 - Change documentation structure to include Phase 1 methodology
@@ -38,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Change notebook to clone repo for metadata commits (large data stays on Drive)
 - Change harmonize_trees to use consistent dtypes (Int64, Float64) across cities
 - Change Sentinel-2 export to use 500m buffered boundaries
+- Change Sentinel-2 spectral band constants to match GEE band names (B2, B3, ...)
 - Update Phase 1 methodology with complete processing steps, parameters, and quality criteria
 
 ## [0.1.0] - YYYY-MM-DD
