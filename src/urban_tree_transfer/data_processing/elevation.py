@@ -8,7 +8,7 @@ import warnings
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
-from zipfile import ZipFile
+from zipfile import ZipFile, is_zipfile
 
 import geopandas as gpd
 import numpy as np
@@ -23,6 +23,7 @@ from urban_tree_transfer.config import PROJECT_CRS, get_config_dir
 
 DEFAULT_NODATA = -9999.0
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom", "georss": "http://www.georss.org/georss"}
+DEFAULT_HEADERS = {"User-Agent": "urban-tree-transfer/1.0"}
 
 
 def _get_dataset_feed_url(main_feed_url: str) -> str:
@@ -38,7 +39,7 @@ def _get_dataset_feed_url(main_feed_url: str) -> str:
     Returns:
         URL to the dataset feed with actual tile links.
     """
-    response = requests.get(main_feed_url, timeout=60)
+    response = requests.get(main_feed_url, timeout=60, headers=DEFAULT_HEADERS)
     response.raise_for_status()
 
     root = ET.fromstring(response.content)
@@ -64,7 +65,7 @@ def _get_dataset_feed_url(main_feed_url: str) -> str:
 
 
 def _parse_atom_feed(feed_url: str) -> list[dict[str, str]]:
-    """Parse Atom feed for tile download links.
+    """Parse Atom feed for tile links.
 
     Handles Berlin's nested Atom feed structure where entries may contain
     section links pointing to actual ZIP downloads.
@@ -75,11 +76,11 @@ def _parse_atom_feed(feed_url: str) -> list[dict[str, str]]:
     Returns:
         List of dicts with 'title' and 'url' keys for each tile.
     """
-    response = requests.get(feed_url, timeout=60)
+    response = requests.get(feed_url, timeout=60, headers=DEFAULT_HEADERS)
     response.raise_for_status()
 
     root = ET.fromstring(response.content)
-    tiles: list[dict[str, str]] = []
+    links: list[dict[str, str]] = []
 
     for entry in root.findall("atom:entry", ATOM_NS):
         title_elem = entry.find("atom:title", ATOM_NS)
@@ -87,17 +88,66 @@ def _parse_atom_feed(feed_url: str) -> list[dict[str, str]]:
 
         for link in entry.findall("atom:link", ATOM_NS):
             href = link.get("href", "")
-            rel = link.get("rel", "")
-            link_type = link.get("type", "")
+            if not href:
+                continue
+            links.append(
+                {
+                    "title": title,
+                    "url": href,
+                    "rel": link.get("rel", ""),
+                    "type": link.get("type", ""),
+                }
+            )
 
-            if (
-                (rel == "section" and href)
-                or href.endswith(".zip")
-                or ("application/zip" in link_type and href)
+    return links
+
+
+def _is_zip_link(url: str, link_type: str) -> bool:
+    return url.lower().endswith(".zip") or "application/zip" in link_type.lower()
+
+
+def _looks_like_feed_link(url: str, rel: str, link_type: str) -> bool:
+    rel = rel.lower()
+    link_type = link_type.lower()
+    url_lower = url.lower()
+    return (
+        rel == "section"
+        or "atom+xml" in link_type
+        or "application/atom+xml" in link_type
+        or url_lower.endswith(".xml")
+        or url_lower.endswith("/")
+    )
+
+
+def _collect_atom_zip_links(feed_url: str, max_depth: int = 3) -> list[dict[str, str]]:
+    """Collect ZIP download links from an Atom feed, following section links."""
+    visited: set[str] = set()
+    queue: list[tuple[str, int]] = [(feed_url, 0)]
+    zip_links: list[dict[str, str]] = []
+
+    while queue:
+        current_url, depth = queue.pop(0)
+        if current_url in visited:
+            continue
+        visited.add(current_url)
+
+        links = _parse_atom_feed(current_url)
+        for link in links:
+            url = link.get("url", "")
+            if not url:
+                continue
+
+            if _is_zip_link(url, link.get("type", "")):
+                title = link.get("title") or Path(url).name
+                zip_links.append({"title": title, "url": url})
+                continue
+
+            if depth < max_depth and _looks_like_feed_link(
+                url, link.get("rel", ""), link.get("type", "")
             ):
-                tiles.append({"title": title, "url": href})
+                queue.append((url, depth + 1))
 
-    return tiles
+    return zip_links
 
 
 def _extract_tile_coordinates(title: str) -> tuple[int, int] | None:
@@ -193,7 +243,7 @@ def _download_atom_feed_tiles(
     except ValueError:
         dataset_feed_url = feed_url
 
-    tiles = _parse_atom_feed(dataset_feed_url)
+    tiles = _collect_atom_zip_links(dataset_feed_url)
     if not tiles:
         raise ValueError(f"No tiles found in Atom feed: {feed_url}")
 
@@ -213,6 +263,8 @@ def _download_atom_feed_tiles(
 
         zip_path = output_dir / filename
         _download_file(url, zip_path)
+        if not is_zipfile(zip_path):
+            raise ValueError(f"Downloaded file is not a ZIP archive: {url}")
 
         with ZipFile(zip_path, "r") as zf:
             zf.extractall(output_dir)
@@ -228,7 +280,7 @@ def _download_atom_feed_tiles(
 
 def _download_file(url: str, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with requests.get(url, stream=True, timeout=300) as response:
+    with requests.get(url, stream=True, timeout=300, headers=DEFAULT_HEADERS) as response:
         response.raise_for_status()
         with output_path.open("wb") as handle:
             for chunk in response.iter_content(chunk_size=1024 * 1024):

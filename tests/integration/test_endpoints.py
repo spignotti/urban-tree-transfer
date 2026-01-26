@@ -20,9 +20,9 @@ import requests
 from urban_tree_transfer.config import get_config_dir
 from urban_tree_transfer.data_processing.boundaries import download_city_boundary
 from urban_tree_transfer.data_processing.elevation import (
+    _collect_atom_zip_links,
     _get_dataset_feed_url,
     _load_urls_from_file,
-    _parse_atom_feed,
 )
 
 
@@ -107,7 +107,7 @@ def test_berlin_dom_atom_feed(berlin_config):
     """Verify Berlin DOM Atom feed is parseable and has tile links."""
     dom_cfg = berlin_config["elevation"]["dom"]
     dataset_url = _get_dataset_feed_url(dom_cfg["url"])
-    tiles = _parse_atom_feed(dataset_url)
+    tiles = _collect_atom_zip_links(dataset_url)
     assert tiles
     _assert_url_accessible(tiles[0]["url"])
 
@@ -119,7 +119,7 @@ def test_berlin_dgm_atom_feed(berlin_config):
         dataset_url = _get_dataset_feed_url(dgm_cfg["url"])
     except ValueError:
         dataset_url = dgm_cfg["url"]
-    tiles = _parse_atom_feed(dataset_url)
+    tiles = _collect_atom_zip_links(dataset_url)
     assert tiles
     _assert_url_accessible(tiles[0]["url"])
 
