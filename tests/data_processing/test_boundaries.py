@@ -8,7 +8,9 @@ from urban_tree_transfer.data_processing.boundaries import _build_ogc_filter, _l
 def test_build_ogc_filter():
     """OGC filter XML should be well-formed."""
     xml = _build_ogc_filter("name", "Leipzig", "ave")
-    assert 'xmlns:ave="http://repository.gdi-de.org/schemas/adv/produkt/alkis-vereinfacht/2.0"' in xml
+    assert (
+        'xmlns:ave="http://repository.gdi-de.org/schemas/adv/produkt/alkis-vereinfacht/2.0"' in xml
+    )
     assert "<PropertyName>ave:name</PropertyName>" in xml
     assert "<Literal>Leipzig</Literal>" in xml
 

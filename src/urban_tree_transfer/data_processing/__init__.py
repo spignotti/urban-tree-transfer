@@ -13,6 +13,7 @@ from .sentinel import (
     check_task_status,
     create_gee_tasks,
     monitor_tasks,
+    move_exports_to_destination,
     validate_sentinel_raster,
 )
 from .trees import (
@@ -24,6 +25,8 @@ from .trees import (
     remove_duplicate_trees,
     summarize_tree_cadastre,
 )
+
+_SENTINEL_EXPORTS = (move_exports_to_destination,)
 
 __all__ = [
     "batch_validate_sentinel",
@@ -42,6 +45,7 @@ __all__ = [
     "harmonize_trees",
     "load_boundaries",
     "monitor_tasks",
+    "move_exports_to_destination",
     "normalize_tree_geometries",
     "remove_duplicate_trees",
     "summarize_tree_cadastre",

@@ -4,16 +4,21 @@ from __future__ import annotations
 
 import warnings
 from io import BytesIO
+from pathlib import Path
 from typing import Any, cast
 
 import geopandas as gpd
 import pandas as pd
 import requests
+from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
 from urban_tree_transfer.config import MIN_SAMPLES_PER_GENUS, PROJECT_CRS
 
 _ALLOWED_GEOMETRIES = {"Point", "MultiPoint"}
 _DEFAULT_BUFFER_M = 500.0
+
+# Cache filename pattern for raw tree data
+_CACHE_FILENAME_PATTERN = "{city}_trees_raw.gpkg"
 
 
 def _fetch_wfs_feature_count(url: str, layer: str, timeout_s: int) -> int | None:
@@ -120,31 +125,107 @@ def _download_ogc_api_features(url: str, limit: int = 10000) -> gpd.GeoDataFrame
     return gpd.GeoDataFrame.from_features(cast(Any, payload))
 
 
-def download_tree_cadastre(city_config: dict[str, Any]) -> gpd.GeoDataFrame:
-    """Download tree cadastre from WFS/OGC API."""
+def _find_cached_trees(city_name: str, cache_dir: Path | None) -> Path | None:
+    """Find cached tree data file for a city.
+
+    Args:
+        city_name: City name (e.g., "Leipzig")
+        cache_dir: Directory to search for cached files.
+
+    Returns:
+        Path to cached file if found, None otherwise.
+    """
+    if cache_dir is None:
+        return None
+
+    cache_dir = Path(cache_dir)
+    if not cache_dir.exists():
+        return None
+
+    # Try common filename patterns
+    patterns = [
+        _CACHE_FILENAME_PATTERN.format(city=city_name.lower()),
+        f"{city_name.lower()}_trees.gpkg",
+        f"{city_name}_trees_raw.gpkg",
+    ]
+
+    for pattern in patterns:
+        cache_path = cache_dir / pattern
+        if cache_path.exists():
+            return cache_path
+
+    return None
+
+
+def download_tree_cadastre(
+    city_config: dict[str, Any],
+    cache_dir: Path | None = None,
+) -> gpd.GeoDataFrame:
+    """Download tree cadastre from WFS/OGC API, with fallback to cached file.
+
+    Attempts to download from the configured WFS/OGC API endpoint. If the download
+    fails due to connection timeout or network issues, falls back to a cached
+    GeoPackage file if available.
+
+    Args:
+        city_config: City configuration dictionary with trees section.
+        cache_dir: Optional directory containing cached raw tree data.
+                   Expected filename: {city}_trees_raw.gpkg
+
+    Returns:
+        GeoDataFrame with raw tree data.
+
+    Raises:
+        ValueError: If config is invalid.
+        RuntimeError: If download fails and no cache is available.
+    """
     trees_cfg = city_config.get("trees", {})
     url = trees_cfg.get("url")
     layers = trees_cfg.get("layers")
     source_type = trees_cfg.get("type", "wfs")
+    city_name = city_config.get("name", "unknown")
+
     if not url:
         raise ValueError("Tree cadastre config requires a url.")
 
-    if source_type == "ogc_api_features":
-        return _download_ogc_api_features(url)
-    if source_type != "wfs":
-        raise ValueError(f"Unsupported tree source type: {source_type}")
+    # Try downloading from WFS/API
+    try:
+        if source_type == "ogc_api_features":
+            return _download_ogc_api_features(url)
+        if source_type != "wfs":
+            raise ValueError(f"Unsupported tree source type: {source_type}")
 
-    if layers is None:
-        raise ValueError("WFS tree download requires layers.")
+        if layers is None:
+            raise ValueError("WFS tree download requires layers.")
 
-    gdfs = []
-    for layer in layers:
-        gdf = _download_wfs_layer(url, layer)
-        gdf["source_layer"] = layer
-        gdfs.append(gdf)
-    if len(gdfs) == 1:
-        return gdfs[0]
-    return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
+        gdfs = []
+        for layer in layers:
+            gdf = _download_wfs_layer(url, layer)
+            gdf["source_layer"] = layer
+            gdfs.append(gdf)
+        if len(gdfs) == 1:
+            return gdfs[0]
+        return gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True))
+
+    except (ConnectTimeout, ConnectionError, ReadTimeout) as e:
+        # Network error - try fallback to cached file
+        cache_path = _find_cached_trees(city_name, cache_dir)
+
+        if cache_path is not None:
+            warnings.warn(
+                f"WFS download failed for {city_name}, using cached file: {cache_path}",
+                stacklevel=2,
+            )
+            return gpd.read_file(cache_path)
+
+        # No cache available - re-raise with helpful message
+        raise RuntimeError(
+            f"WFS download failed for {city_name} and no cached file found.\n"
+            f"Error: {e}\n"
+            f"To create a cache file, run locally:\n"
+            f"  uv run python scripts/download_leipzig_trees.py\n"
+            f"Then upload to: {cache_dir or 'data/trees/raw/'}"
+        ) from e
 
 
 def filter_trees_to_boundary(

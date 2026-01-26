@@ -267,3 +267,31 @@ def batch_validate_sentinel(paths: list[Path]) -> pd.DataFrame:
     """
     results = [validate_sentinel_raster(p) for p in paths]
     return pd.DataFrame(results)
+
+
+def move_exports_to_destination(
+    staging_dir: Path,
+    destination_dir: Path,
+    pattern: str = "S2_*.tif",
+) -> list[Path]:
+    """Move exported Sentinel-2 files from staging to destination.
+
+    Args:
+        staging_dir: Source directory (GEE export staging folder).
+        destination_dir: Target directory for final files.
+        pattern: Glob pattern for files to move (default: S2_*.tif).
+
+    Returns:
+        List of paths to moved files in destination.
+    """
+    import shutil
+
+    destination_dir.mkdir(parents=True, exist_ok=True)
+
+    moved_files: list[Path] = []
+    for src_path in staging_dir.glob(pattern):
+        dst_path = destination_dir / src_path.name
+        shutil.move(str(src_path), str(dst_path))
+        moved_files.append(dst_path)
+
+    return moved_files

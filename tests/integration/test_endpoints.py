@@ -15,7 +15,6 @@ from __future__ import annotations
 from io import BytesIO
 
 import geopandas as gpd
-import pytest
 import requests
 
 from urban_tree_transfer.config import get_config_dir

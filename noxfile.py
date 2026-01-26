@@ -39,7 +39,16 @@ def pre_commit(session: nox.Session) -> None:
 @nox.session
 def test(session: nox.Session) -> None:
     """Run unit tests."""
-    session.run("uv", "run", "--active", "pytest", "tests/", "-v", "--ignore=tests/integration", external=True)
+    session.run(
+        "uv",
+        "run",
+        "--active",
+        "pytest",
+        "tests/",
+        "-v",
+        "--ignore=tests/integration",
+        external=True,
+    )
 
 
 @nox.session
@@ -56,4 +65,13 @@ def ci(session: nox.Session) -> None:
     session.run("uv", "run", "--active", "ruff", "check", ".", external=True)
     session.run("uv", "run", "--active", "ruff", "format", "--check", ".", external=True)
     session.run("uv", "run", "--active", "pyright", external=True)
-    session.run("uv", "run", "--active", "pytest", "tests/", "-v", "--ignore=tests/integration", external=True)
+    session.run(
+        "uv",
+        "run",
+        "--active",
+        "pytest",
+        "tests/",
+        "-v",
+        "--ignore=tests/integration",
+        external=True,
+    )
