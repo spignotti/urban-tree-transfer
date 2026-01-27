@@ -50,6 +50,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix Berlin Atom feed downloads by resolving section links to ZIP tiles and validating ZIP responses
 - Fix Berlin DOM/DGM extraction by adding XYZ ASCII to GeoTIFF conversion (Berlin provides .txt/.xyz point clouds, not GeoTIFF)
 - Fix Leipzig DOM/DGM downloads by using browser-like headers for Nextcloud/WebDAV server
+- Fix harmonize_elevation block size error by setting explicit 256x256 tile blocks (TIFF requires multiples of 16)
 
 ### Changed
 - Add parallel downloads for elevation tiles (4 workers by default, configurable)

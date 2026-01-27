@@ -129,6 +129,15 @@ uv run nox -s pre_commit  # Run before commit
 uv run nox -s ci          # Full CI pipeline
 ```
 
+## Git Commits
+
+**ALWAYS use the `/commit` skill (devops:git) for commits.** Never write manual commit messages with `git commit -m`. The skill handles:
+- Conventional commit format (feat, fix, docs, etc.)
+- Proper message structure
+- Automatic staging review
+
+Do NOT add "Co-Authored-By" footers or write long multi-paragraph commit messages manually.
+
 ## Code Review Checklist
 
 - [ ] Type hints present for all functions

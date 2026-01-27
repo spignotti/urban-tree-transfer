@@ -850,6 +850,8 @@ def harmonize_elevation(dom_path: Path, dgm_path: Path, output_path: Path) -> No
         nodata=dom_nodata,
         compress="LZW",
         tiled=True,
+        blockxsize=256,
+        blockysize=256,
     )
 
     dgm_aligned = np.full(dom_data.shape, dgm_nodata, dtype=np.float32)

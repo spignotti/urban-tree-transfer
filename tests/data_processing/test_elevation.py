@@ -5,12 +5,14 @@ from tempfile import TemporaryDirectory
 
 import numpy as np
 import rasterio
+from rasterio.transform import from_origin
 
 from urban_tree_transfer.config import PROJECT_CRS
 from urban_tree_transfer.data_processing.elevation import (
     DEFAULT_NODATA,
     XYZ_RESOLUTION,
     _xyz_to_geotiff,
+    harmonize_elevation,
 )
 
 
@@ -130,3 +132,55 @@ def test_xyz_to_geotiff_berlin_coordinates():
             valid_data = data[data != DEFAULT_NODATA]
             assert len(valid_data) == 4
             assert np.all((valid_data > 29.0) & (valid_data < 30.0))
+
+
+def test_harmonize_elevation_block_sizes():
+    """Verify harmonize_elevation produces GeoTIFFs with valid block sizes."""
+    with TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+
+        # Create test DOM and DGM rasters with non-standard block sizes
+        # Simulate what might come from XYZ conversion or different sources
+        dom_path = tmpdir_path / "dom.tif"
+        dgm_path = tmpdir_path / "dgm.tif"
+        output_path = tmpdir_path / "output"
+
+        # Create test data (20x20 pixels - intentionally not multiple of 16)
+        data = np.random.rand(20, 20).astype(np.float32) * 50 + 30
+        transform = from_origin(369990, 5808340, 1.0, 1.0)
+
+        profile = {
+            "driver": "GTiff",
+            "dtype": "float32",
+            "width": 20,
+            "height": 20,
+            "count": 1,
+            "crs": PROJECT_CRS,
+            "transform": transform,
+            "nodata": DEFAULT_NODATA,
+        }
+
+        with rasterio.open(dom_path, "w", **profile) as dst:
+            dst.write(data, 1)
+        with rasterio.open(dgm_path, "w", **profile) as dst:
+            dst.write(data - 5, 1)  # DGM slightly lower
+
+        # Run harmonization
+        harmonize_elevation(dom_path, dgm_path, output_path)
+
+        # Verify outputs exist and have valid block sizes
+        dom_out = output_path / "dom_1m.tif"
+        dgm_out = output_path / "dgm_1m.tif"
+
+        assert dom_out.exists()
+        assert dgm_out.exists()
+
+        for out_path in [dom_out, dgm_out]:
+            with rasterio.open(out_path) as src:
+                # Block sizes must be multiples of 16 for tiled GeoTIFFs
+                block_shapes = src.block_shapes
+                for block_height, block_width in block_shapes:
+                    assert block_height % 16 == 0 or block_height == src.height
+                    assert block_width % 16 == 0 or block_width == src.width
+                # Verify compression and tiling are set
+                assert src.profile.get("compress") == "lzw"
