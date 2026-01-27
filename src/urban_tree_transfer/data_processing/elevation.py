@@ -580,7 +580,17 @@ def _ensure_project_crs(raster_path: Path) -> Path:
             src.crs, PROJECT_CRS, src.width, src.height, *src.bounds
         )
         profile = src.profile.copy()
-        profile.update(crs=PROJECT_CRS, transform=transform, width=width, height=height)
+        profile.update(
+            crs=PROJECT_CRS,
+            transform=transform,
+            width=width,
+            height=height,
+            tiled=True,
+            blockxsize=256,
+            blockysize=256,
+            compress="LZW",
+            bigtiff="IF_SAFER",
+        )
 
         reprojected_path = raster_path.with_name(f"{raster_path.stem}_reprojected.tif")
         with rasterio.open(reprojected_path, "w", **profile) as dst:
@@ -609,7 +619,14 @@ def _clip_to_boundary(raster_path: Path, boundary_gdf: gpd.GeoDataFrame, buffer_
         out_image, out_transform = mask(src, [geometry], crop=True)
         out_meta = src.meta.copy()
         out_meta.update(
-            {"height": out_image.shape[1], "width": out_image.shape[2], "transform": out_transform}
+            height=out_image.shape[1],
+            width=out_image.shape[2],
+            transform=out_transform,
+            tiled=True,
+            blockxsize=256,
+            blockysize=256,
+            compress="LZW",
+            bigtiff="IF_SAFER",
         )
 
     clipped_path = raster_path.with_name(f"{raster_path.stem}_clipped.tif")
@@ -626,6 +643,11 @@ def _mosaic_tiles(tile_paths: list[Path], output_path: Path) -> Path:
         height=mosaic.shape[1],
         width=mosaic.shape[2],
         transform=transform,
+        tiled=True,
+        blockxsize=256,
+        blockysize=256,
+        compress="LZW",
+        bigtiff="IF_SAFER",
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
