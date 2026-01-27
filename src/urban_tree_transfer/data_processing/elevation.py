@@ -17,14 +17,92 @@ import rasterio
 import requests
 from rasterio.mask import mask
 from rasterio.merge import merge
+from rasterio.transform import from_origin
 from rasterio.warp import Resampling, calculate_default_transform, reproject
 from shapely.geometry import box
 
 from urban_tree_transfer.config import PROJECT_CRS, get_config_dir
 
 DEFAULT_NODATA = -9999.0
+XYZ_RESOLUTION = 1.0  # Berlin XYZ data is 1m resolution
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom", "georss": "http://www.georss.org/georss"}
-DEFAULT_HEADERS = {"User-Agent": "urban-tree-transfer/1.0"}
+# Browser-like headers needed for Nextcloud/WebDAV servers (e.g., Sachsen GeoSN)
+DEFAULT_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "*/*",
+}
+
+
+def _xyz_to_geotiff(xyz_path: Path, output_path: Path | None = None) -> Path:
+    """Convert XYZ ASCII file to GeoTIFF.
+
+    Berlin elevation data is provided as space-separated XYZ ASCII files
+    with coordinates in EPSG:25833. This function converts them to GeoTIFF.
+
+    Args:
+        xyz_path: Path to the XYZ ASCII file.
+        output_path: Optional output path. If None, uses xyz_path with .tif extension.
+
+    Returns:
+        Path to the created GeoTIFF file.
+    """
+    if output_path is None:
+        output_path = xyz_path.with_suffix(".tif")
+
+    # Read XYZ data - format is "X Y Z" per line, space-separated
+    data = np.loadtxt(xyz_path, dtype=np.float64)
+    if data.ndim == 1:
+        data = data.reshape(1, -1)
+
+    x_coords = data[:, 0]
+    y_coords = data[:, 1]
+    z_values = data[:, 2].astype(np.float32)
+
+    # Determine grid bounds
+    x_min, x_max = x_coords.min(), x_coords.max()
+    y_min, y_max = y_coords.min(), y_coords.max()
+
+    # Calculate grid dimensions (1m resolution)
+    width = int(np.round((x_max - x_min) / XYZ_RESOLUTION)) + 1
+    height = int(np.round((y_max - y_min) / XYZ_RESOLUTION)) + 1
+
+    # Create output array filled with nodata
+    grid = np.full((height, width), DEFAULT_NODATA, dtype=np.float32)
+
+    # Convert coordinates to grid indices
+    # Note: raster origin is top-left, so Y is inverted
+    col_indices = np.round((x_coords - x_min) / XYZ_RESOLUTION).astype(int)
+    row_indices = np.round((y_max - y_coords) / XYZ_RESOLUTION).astype(int)
+
+    # Clip indices to valid range
+    col_indices = np.clip(col_indices, 0, width - 1)
+    row_indices = np.clip(row_indices, 0, height - 1)
+
+    # Fill the grid
+    grid[row_indices, col_indices] = z_values
+
+    # Create transform (top-left corner, resolution)
+    transform = from_origin(x_min, y_max, XYZ_RESOLUTION, XYZ_RESOLUTION)
+
+    # Write GeoTIFF
+    profile = {
+        "driver": "GTiff",
+        "dtype": "float32",
+        "width": width,
+        "height": height,
+        "count": 1,
+        "crs": PROJECT_CRS,
+        "transform": transform,
+        "nodata": DEFAULT_NODATA,
+        "compress": "LZW",
+        "tiled": True,
+    }
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with rasterio.open(output_path, "w", **profile) as dst:
+        dst.write(grid, 1)
+
+    return output_path
 
 
 def _get_dataset_feed_url(main_feed_url: str) -> str:
@@ -277,8 +355,16 @@ def _download_atom_feed_tiles(
         with ZipFile(zip_path, "r") as zf:
             zf.extractall(output_dir)
             for name in zf.namelist():
-                if name.lower().endswith((".tif", ".tiff")):
-                    extracted.append(output_dir / name)
+                file_path = output_dir / name
+                name_lower = name.lower()
+                if name_lower.endswith((".tif", ".tiff")):
+                    extracted.append(file_path)
+                elif name_lower.endswith((".txt", ".xyz")):
+                    # Berlin provides XYZ ASCII format - convert to GeoTIFF
+                    if progress:
+                        print(f"  Converting {name} to GeoTIFF...")
+                    tif_path = _xyz_to_geotiff(file_path)
+                    extracted.append(tif_path)
 
     if not extracted:
         raise ValueError("No raster tiles extracted from Atom feed downloads.")

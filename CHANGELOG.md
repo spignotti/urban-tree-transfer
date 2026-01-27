@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `outputs/` directory for Colab-generated metadata and logs
 - Add runtime settings section to runner notebook (CPU, High-RAM recommended)
 - Add integration and unit tests for data processing endpoints and helpers
+- Add unit tests for XYZ to GeoTIFF conversion with various data scenarios
+- Add integration tests that download single Berlin and Leipzig DOM/DGM tiles to verify full pipeline
 - Add `scripts/gee_sentinel_preview.js` for manual GEE Sentinel-2 preview (Berlin/Leipzig)
 
 ### Changed
@@ -46,6 +48,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - Fix Berlin Atom feed downloads by resolving section links to ZIP tiles and validating ZIP responses
+- Fix Berlin DOM/DGM extraction by adding XYZ ASCII to GeoTIFF conversion (Berlin provides .txt/.xyz point clouds, not GeoTIFF)
+- Fix Leipzig DOM/DGM downloads by using browser-like headers for Nextcloud/WebDAV server
 ## [0.1.0] - YYYY-MM-DD
 
 ### Added
