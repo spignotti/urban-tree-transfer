@@ -7,7 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+### Added - Phase 2: Feature Engineering
+
+- Add `configs/features/feature_config.yaml` with complete feature engineering configuration:
+  - Metadata columns (9 fields preserved through pipeline)
+  - CHM features (1m resolution, engineered z-score/percentile)
+  - Sentinel-2 spectral bands (10) and vegetation indices (13)
+  - Temporal configuration (12 months extraction)
+  - Quality thresholds (NaN handling, NDVI plausibility, correlation)
+  - Outlier detection parameters (Z-score, Mahalanobis, IQR, consensus)
+  - Spatial split configuration (500m blocks, city-specific ratios)
+  - Genus classification (deciduous/coniferous lists)
+  - Tree position correction parameters
+- Add feature config loader functions to `config/loader.py`:
+  - `load_feature_config()` - Load feature engineering YAML
+  - `get_metadata_columns()` - Get preserved metadata column names
+  - `get_spectral_bands()` - Get S2 band names
+  - `get_vegetation_indices()` - Get vegetation index names
+  - `get_all_s2_features()` - Get combined S2 features (23 total)
+  - `get_temporal_feature_names()` - Get temporal feature names with month suffix
+  - `get_chm_feature_names()` - Get CHM feature names
+  - `get_all_feature_names()` - Get complete feature list (277 for 12 months)
+- Add `feature_engineering/extraction.py` module stub with function signatures:
+  - `correct_tree_positions()` - Snap trees to CHM local maxima
+  - `extract_chm_features()` - 1m point sampling from CHM
+  - `extract_sentinel_features()` - Monthly S2 band/index extraction
+  - `extract_all_features()` - Complete extraction pipeline
+- Add `feature_engineering/quality.py` module stub with function signatures:
+  - `apply_temporal_selection()` - Filter to selected months
+  - `interpolate_nan_values()` - Within-tree temporal interpolation (no data leakage)
+  - `engineer_chm_features()` - Add z-score and percentile features
+  - `filter_by_ndvi_plausibility()` - Remove low-NDVI trees
+  - `filter_by_plant_year()` - Remove recently planted trees
+  - `run_quality_pipeline()` - Complete quality control pipeline
+- Add `feature_engineering/selection.py` module stub with function signatures:
+  - `compute_feature_correlations()` - Correlation matrices by feature group
+  - `identify_redundant_features()` - Find highly correlated pairs
+  - `remove_redundant_features()` - Drop redundant columns
+- Add `feature_engineering/outliers.py` module stub with function signatures:
+  - `detect_zscore_outliers()` - Z-score based detection
+  - `detect_mahalanobis_outliers()` - Multivariate distance detection
+  - `detect_iqr_outliers()` - IQR-based detection (for CHM)
+  - `classify_outliers_by_consensus()` - Multi-method consensus classification
+  - `remove_outliers()` - Remove based on classification
+- Add `feature_engineering/splits.py` module stub with function signatures:
+  - `create_spatial_blocks()` - Regular grid creation
+  - `assign_trees_to_blocks()` - Spatial join trees to blocks
+  - `create_stratified_spatial_splits()` - Stratified splitting with spatial disjointness
+  - `validate_splits()` - Check disjointness and stratification quality
+
+### Added - Phase 1: Data Processing
+
 - Add city YAML configs for Berlin and Leipzig
 - Add config constants and loader utilities
 - Add plotting and execution logging utilities
