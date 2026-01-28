@@ -1,0 +1,70 @@
+{
+  "skipped_cities": [
+    {
+      "city": "Berlin",
+      "year": 2021,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "files": 12
+    },
+    {
+      "city": "Leipzig",
+      "year": 2021,
+      "months": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "files": 12
+    }
+  ],
+  "tasks_created": 0,
+  "existing_files": [
+    "S2_Berlin_2021_01_median.tif",
+    "S2_Berlin_2021_02_median.tif",
+    "S2_Berlin_2021_03_median.tif",
+    "S2_Berlin_2021_04_median.tif",
+    "S2_Berlin_2021_05_median.tif",
+    "S2_Berlin_2021_06_median.tif",
+    "S2_Berlin_2021_07_median.tif",
+    "S2_Berlin_2021_08_median.tif",
+    "S2_Berlin_2021_09_median.tif",
+    "S2_Berlin_2021_10_median.tif",
+    "S2_Berlin_2021_11_median.tif",
+    "S2_Berlin_2021_12_median.tif",
+    "S2_Leipzig_2021_01_median.tif",
+    "S2_Leipzig_2021_02_median.tif",
+    "S2_Leipzig_2021_03_median.tif",
+    "S2_Leipzig_2021_04_median.tif",
+    "S2_Leipzig_2021_05_median.tif",
+    "S2_Leipzig_2021_06_median.tif",
+    "S2_Leipzig_2021_07_median.tif",
+    "S2_Leipzig_2021_08_median.tif",
+    "S2_Leipzig_2021_09_median.tif",
+    "S2_Leipzig_2021_10_median.tif",
+    "S2_Leipzig_2021_11_median.tif",
+    "S2_Leipzig_2021_12_median.tif"
+  ],
+  "status": "all_exists"
+}

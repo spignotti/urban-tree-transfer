@@ -1,0 +1,20 @@
+[
+  {
+    "stage": "filtered",
+    "city": "Berlin",
+    "records": 905132,
+    "crs": "EPSG:25833",
+    "geometry_types": [
+      "Point"
+    ]
+  },
+  {
+    "stage": "filtered",
+    "city": "Leipzig",
+    "records": 167867,
+    "crs": "EPSG:25833",
+    "geometry_types": [
+      "Point"
+    ]
+  }
+]

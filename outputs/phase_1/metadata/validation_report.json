@@ -1,0 +1,52 @@
+{
+  "datasets": {
+    "boundaries": {
+      "overall_valid": true,
+      "crs": {
+        "valid": true,
+        "expected_crs": "EPSG:25833",
+        "actual_crs": "EPSG:25833"
+      },
+      "null_geometries": {
+        "valid": "True",
+        "null_count": 0,
+        "total_count": 2
+      }
+    },
+    "trees": {
+      "overall_valid": true,
+      "crs": {
+        "valid": true,
+        "expected_crs": "EPSG:25833",
+        "actual_crs": "EPSG:25833"
+      },
+      "null_geometries": {
+        "valid": "True",
+        "null_count": 0,
+        "total_count": 1072999
+      }
+    },
+    "chm_berlin": {
+      "overall_valid": true,
+      "crs": {
+        "valid": true,
+        "expected_crs": "EPSG:25833",
+        "actual_crs": "EPSG:25833"
+      }
+    },
+    "chm_leipzig": {
+      "overall_valid": true,
+      "crs": {
+        "valid": true,
+        "expected_crs": "EPSG:25833",
+        "actual_crs": "EPSG:25833"
+      }
+    }
+  },
+  "summary": {
+    "valid": 4,
+    "invalid": 0,
+    "total": 4,
+    "all_valid": true
+  }
+}
