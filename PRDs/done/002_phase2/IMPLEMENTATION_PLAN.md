@@ -49,8 +49,9 @@ Each prompt should contain:
 | 8 | Exploratory `exp_03_correlation_analysis.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
 | 9 | Exploratory `exp_04_outlier_thresholds.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
 | 10 | Exploratory `exp_05_spatial_autocorrelation.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
-| 11 | Implement `selection.py`, `outliers.py`, `splits.py` | 002c | `feature_engineering/` | Pending |
-| 12 | Runner notebook `02c_final_preparation.ipynb` | 002c | `notebooks/runners/` | Pending |
+| 11 | Exploratory `exp_06_mixed_genus_proximity.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
+| 12 | Implement `selection.py`, `outliers.py`, `splits.py`, `proximity.py` | 002c | `feature_engineering/` | Done |
+| 13 | Runner notebook `02c_final_preparation.ipynb` | 002c | `notebooks/runners/` | Done |
 
 ---
 
@@ -75,13 +76,14 @@ Task 7: 02b_data_quality.ipynb (runner)
     [PAUSE - Run notebook on Colab]
     ↓
 Task 8:  exp_03_correlation_analysis.ipynb   ──┐
-Task 9:  exp_04_outlier_thresholds.ipynb     ──┤ (can be parallel)
-Task 10: exp_05_spatial_autocorrelation.ipynb──┘
+Task 9:  exp_04_outlier_thresholds.ipynb     ──┤
+Task 10: exp_05_spatial_autocorrelation.ipynb──┤ (can be parallel)
+Task 11: exp_06_mixed_genus_proximity.ipynb  ──┘
     ↓
     [PAUSE - Run on Colab, sync JSON configs]
     ↓
-Task 11: selection.py + outliers.py + splits.py
-Task 12: 02c_final_preparation.ipynb (runner)
+Task 12: selection.py + outliers.py + splits.py + proximity.py
+Task 13: 02c_final_preparation.ipynb (runner)
     ↓
     Phase 2 complete → Ready for Phase 3
 ```
@@ -176,60 +178,97 @@ Task 12: 02c_final_preparation.ipynb (runner)
 
 ---
 
-### Tasks 8-10: Exploratory exp_03, exp_04, exp_05
+### Tasks 8-11: Exploratory exp_03, exp_04, exp_05, exp_06
 
-**Goal:** Correlation analysis, outlier thresholds, spatial autocorrelation.
+**Goal:** Correlation analysis, outlier thresholds, spatial autocorrelation, mixed-genus proximity.
 
 **Docs:**
-- `PRDs/002_phase2/002_exploratory.md` (exp_03, exp_04, exp_05 sections)
+- `PRDs/002_phase2/002_exploratory.md` (exp_03, exp_04, exp_05, exp_06 sections)
 - `legacy/documentation/02_Feature_Engineering/06_Correlation_Analysis_Redundancy_Reduction_Methodik.md`
 - `legacy/documentation/02_Feature_Engineering/07_Outlier_Detection_Final_Filtering_Methodik.md`
 - `legacy/documentation/02_Feature_Engineering/08_Spatial_Splits_Stratification_Methodik.md`
+- `docs/documentation/02_Feature_Engineering/02_Exploratory_05_Spatial_Autocorrelation.md`
+- `docs/documentation/02_Feature_Engineering/02_Exploratory_06_Mixed_Genus_Proximity.md`
 
 **Outputs:**
 - `correlation_removal.json` (features to remove)
-- `outlier_thresholds.json` (detection parameters)
+- `outlier_thresholds.json` (detection parameters, flagging strategy)
 - `spatial_autocorrelation.json` (empirically determined block size via Moran's I)
+- `proximity_filter.json` (mixed-genus distance threshold, ~20m expected)
 
-**Note for exp_05:** Block size is data-driven (could be 300m, 400m, 500m, 600m). Used by Task 12 via JSON, NOT from feature_config.yaml.
+**Notes:**
+- Block size is data-driven (could be 300m-600m). Used by Task 13 via JSON, NOT from feature_config.yaml.
+- Proximity threshold balances retention rate (≥85%) with spectral purity (Sentinel-2 pixel contamination)
 
 ---
 
-### Task 11: Implement selection.py + outliers.py + splits.py
+### Task 12: Implement selection.py + outliers.py + splits.py + proximity.py
 
-**Goal:** Implement all stubs in the three remaining modules.
+**Goal:** Implement all stubs in the four final modules.
 
 **Docs:**
 - `PRDs/002_phase2/002c_final_preparation.md`
 - `PRDs/002_phase2_feature_engineering_overview.md`
+- `docs/documentation/02_Feature_Engineering/02c_Final_Preparation_Methodik.md`
 
 **Key Requirements:**
-- Correlation: |r| > 0.95 threshold, keep higher-variance feature
-- Outliers: Z-score + Mahalanobis + IQR, consensus-based (3/3 = remove, 2/3 and 1/3 = flag)
-- Splits: Spatial blocks with empirical size (from exp_05 JSON), StratifiedGroupKFold
-- Berlin: 70/15/15 train/val/test
-- Leipzig: 80/20 finetune/test
 
-**Note:** `splits.py` takes `block_size_m` as function parameter, not loaded from config internally.
+**selection.py:**
+- `remove_redundant_features()` - Drop features from correlation_removal.json
+- Correlation: |r| > 0.95 threshold, keep higher-variance feature
+
+**outliers.py:**
+- `detect_zscore_outliers()` - Per-feature Z-score detection (threshold: 3.0)
+- `detect_mahalanobis_outliers()` - Per-genus multivariate distance (α=0.001)
+- `detect_iqr_outliers()` - Height-based Tukey fences (k=1.5)
+- `apply_consensus_outlier_filter()` - Severity-based flagging (high/medium/low/none)
+- **CRITICAL:** NO trees removed! Only metadata flags added (trees_removed = 0)
+- Adds 5 columns: outlier_zscore, outlier_mahalanobis, outlier_iqr, outlier_severity, outlier_method_count
+
+**splits.py:**
+- `create_spatial_blocks()` - Regular grid with empirical block size
+- `create_stratified_splits_berlin()` - 70/15/15 train/val/test with StratifiedGroupKFold
+- `create_stratified_splits_leipzig()` - 80/20 finetune/test
+- `validate_split_stratification()` - KL-divergence + spatial overlap checks
+- Block size from exp_05 JSON, not hardcoded
+
+**proximity.py:**
+- `compute_nearest_different_genus_distance()` - Per-tree distance to nearest different genus
+- `apply_proximity_filter()` - Remove trees < threshold_m from different genus
+- `analyze_genus_specific_impact()` - Per-genus removal rate validation
+- Threshold from exp_06 JSON (~20m for 2-pixel Sentinel-2 buffer)
 
 ---
 
-### Task 12: Runner Notebook 02c
+### Task 13: Runner Notebook 02c
 
-**Goal:** Create Colab runner for final preparation.
+**Goal:** Create Colab runner for final preparation with dual dataset strategy.
 
 **Docs:**
 - `PRDs/002_phase2/002c_final_preparation.md` (notebook structure)
+- `docs/documentation/02_Feature_Engineering/02c_Final_Preparation_Methodik.md`
 - `docs/templates/Notebook_Templates.md`
 
 **Key Requirements:**
-- Load exploratory configs: `correlation_removal.json`, `outlier_thresholds.json`, `spatial_autocorrelation.json`
-- Extract `recommended_block_size_m` from spatial config (NOT from feature_config.yaml)
+- Load 4 exploratory configs: `correlation_removal.json`, `outlier_thresholds.json`, `spatial_autocorrelation.json`, `proximity_filter.json`
+- Extract `recommended_block_size_m` from spatial config
+- Extract `recommended_threshold_m` from proximity config
 - Remove redundant features per correlation analysis
-- Apply consensus outlier filtering (3/3 = remove, 2/3 and 1/3 = metadata flags)
+- **Outlier flagging only** (NO removal, assert trees_removed == 0)
 - Create spatial blocks with empirical block size
-- Generate stratified splits (Berlin: 70/15/15, Leipzig: 80/20)
-- Output: 5 GeoPackages (3 Berlin + 2 Leipzig) + final_dataset_summary.json
+- **Dual dataset strategy:** Create BOTH baseline AND proximity-filtered variants
+- Generate stratified splits for both variants (Berlin: 70/15/15, Leipzig: 80/20)
+- Validate spatial disjointness (spatial_overlap == 0) and genus stratification (KL < 0.01)
+- **Output: 10 GeoPackages** (5 baseline + 5 filtered) + `phase_2_final_summary.json`
+  - Berlin baseline: train, val, test
+  - Berlin filtered: train_filtered, val_filtered, test_filtered
+  - Leipzig baseline: finetune, test
+  - Leipzig filtered: finetune_filtered, test_filtered
+
+**Rationale for Dual Strategy:**
+- Baseline datasets: Include all trees (with proximity-contaminated samples)
+- Filtered datasets: Exclude trees < 20m from different genus (spectral purity)
+- Enables ablation studies in Phase 3 (baseline vs. filtered performance comparison)
 
 ---
 
@@ -247,6 +286,28 @@ Task 12: 02c_final_preparation.ipynb (runner)
 | Workflow & Config | `docs/documentation/02_Feature_Engineering/00_Workflow_and_Configuration.md` |
 | Feature Config | `src/urban_tree_transfer/configs/features/feature_config.yaml` |
 | Legacy Methodology | `legacy/documentation/02_Feature_Engineering/` |
+
+---
+
+## Phase 2 Status: ✅ COMPLETE
+
+**Completion Date:** 2026-01-30
+
+**Summary:**
+- All 13 tasks implemented and validated
+- 6 exploratory notebooks (exp_01-06) with data-driven parameter determination
+- 3 runner notebooks (02a, 02b, 02c) for automated processing
+- 7 feature engineering modules (extraction, quality, selection, outliers, splits, proximity + tests)
+- 10 ML-ready GeoPackages (baseline + filtered variants)
+- Complete methodology documentation for all components
+- Ready for Phase 3: Experiments
+
+**Final Outputs:**
+- `data/phase_2_splits/*.gpkg` (10 GeoPackages for training/evaluation)
+- `outputs/phase_2/metadata/*.json` (6 JSON configuration files)
+- `docs/documentation/02_Feature_Engineering/` (8 methodology documents)
+
+**Next Phase:** Phase 3 - Cross-City Transfer Learning Experiments
 
 ---
 

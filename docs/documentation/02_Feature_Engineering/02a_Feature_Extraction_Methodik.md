@@ -49,12 +49,12 @@ Korrektur ungenauer Kataster-Koordinaten durch Snapping zu lokalen CHM-Maxima. K
 
 ### Schlüssel-Parameter
 
-| Parameter        | Wert | Begründung                                                                 |
-| ---------------- | ---- | -------------------------------------------------------------------------- |
-| percentile       | 75.0 | Konservativ: 75% der Bäume definieren "normale" Kataster-Genauigkeit      |
-| height_weight    | 0.7  | Höhe wichtiger als Nähe (höherer Baum darf weiter weg sein)               |
-| safety_factor    | 1.5  | Erlaubt Korrekturen bis ~85-90% Perzentil, schützt vor Outliers (>P90)    |
-| sample_size      | 1000 | Genug für stabile P75-Schätzung, schnell genug für große Datensätze       |
+| Parameter     | Wert | Begründung                                                             |
+| ------------- | ---- | ---------------------------------------------------------------------- |
+| percentile    | 75.0 | Konservativ: 75% der Bäume definieren "normale" Kataster-Genauigkeit   |
+| height_weight | 0.7  | Höhe wichtiger als Nähe (höherer Baum darf weiter weg sein)            |
+| safety_factor | 1.5  | Erlaubt Korrekturen bis ~85-90% Perzentil, schützt vor Outliers (>P90) |
+| sample_size   | 1000 | Genug für stabile P75-Schätzung, schnell genug für große Datensätze    |
 
 ### Stadt-Adaptivität
 
@@ -113,9 +113,9 @@ Extraktion der Kronenhöhe aus 1m CHM-Raster an korrigierten Baum-Standorten.
 
 ### Schlüssel-Parameter
 
-| Parameter  | Wert | Begründung                                             |
-| ---------- | ---- | ------------------------------------------------------ |
-| Resolution | 1m   | Maximale verfügbare Auflösung, minimiert Kontamination |
+| Parameter  | Wert         | Begründung                                             |
+| ---------- | ------------ | ------------------------------------------------------ |
+| Resolution | 1m           | Maximale verfügbare Auflösung, minimiert Kontamination |
 | Method     | Point-Sample | Kein Resampling, keine Aggregation                     |
 
 ### NaN-Handling
@@ -172,19 +172,19 @@ Monatliche Sentinel-2 Median-Kompositionen (aus Phase 1):
 
 **13 Vegetations-Indices:**
 
-| Kategorie  | Indices                               |
-| ---------- | ------------------------------------- |
-| Broadband  | NDVI, EVI, GNDVI, VARI                |
-| Red-Edge   | NDre1, NDVIre, CIre, IRECI, RTVIcore  |
-| Water      | NDWI, MSI, NDII, kNDVI                |
+| Kategorie | Indices                              |
+| --------- | ------------------------------------ |
+| Broadband | NDVI, EVI, GNDVI, VARI               |
+| Red-Edge  | NDre1, NDVIre, CIre, IRECI, RTVIcore |
+| Water     | NDWI, MSI, NDII, kNDVI               |
 
 ### Schlüssel-Parameter
 
-| Parameter        | Wert  | Begründung                                                      |
-| ---------------- | ----- | --------------------------------------------------------------- |
-| Monate           | 1–12  | Vollständiger Jahresverlauf für phenologische Differenzierung  |
-| Batch-Größe      | 50000 | Balance zwischen Memory-Effizienz und Performance               |
-| Feature-Benennung | `{name}_{month:02d}` | Konsistente Namenskonvention, sortierbar        |
+| Parameter         | Wert                 | Begründung                                                    |
+| ----------------- | -------------------- | ------------------------------------------------------------- |
+| Monate            | 1–12                 | Vollständiger Jahresverlauf für phenologische Differenzierung |
+| Batch-Größe       | 50000                | Balance zwischen Memory-Effizienz und Performance             |
+| Feature-Benennung | `{name}_{month:02d}` | Konsistente Namenskonvention, sortierbar                      |
 
 ### Phenologische Signifikanz
 
@@ -231,25 +231,25 @@ Cloud-masked Pixel oder fehlende Monate bleiben als `NaN` erhalten. Quality-Cont
 
 #### Metadaten-Spalten (11)
 
-| Spalte               | Typ     | Quelle   | Beschreibung                              |
-| -------------------- | ------- | -------- | ----------------------------------------- |
-| tree_id              | str     | Phase 1  | Eindeutige Baum-ID                        |
-| city                 | str     | Phase 1  | Stadtname (berlin/leipzig)                |
-| genus_latin          | str     | Phase 1  | Gattung lateinisch (UPPERCASE)            |
-| species_latin        | str     | Phase 1  | Art lateinisch (lowercase, nullable)      |
-| genus_german         | str     | Phase 1  | Gattung deutsch (nullable)                |
-| species_german       | str     | Phase 1  | Art deutsch (nullable)                    |
-| plant_year           | Int64   | Phase 1  | Pflanzjahr (nullable)                     |
-| height_m             | Float64 | Phase 1  | Kataster-Höhe in Metern (nullable)        |
-| tree_type            | str     | Phase 1  | anlagenbaeume/strassenbaeume (nullable)   |
-| position_corrected   | bool    | Phase 2a | Wurde Position korrigiert?                |
-| correction_distance  | Float64 | Phase 2a | Korrektur-Distanz in Metern (0.0 wenn nicht) |
+| Spalte              | Typ     | Quelle   | Beschreibung                                 |
+| ------------------- | ------- | -------- | -------------------------------------------- |
+| tree_id             | str     | Phase 1  | Eindeutige Baum-ID                           |
+| city                | str     | Phase 1  | Stadtname (berlin/leipzig)                   |
+| genus_latin         | str     | Phase 1  | Gattung lateinisch (UPPERCASE)               |
+| species_latin       | str     | Phase 1  | Art lateinisch (lowercase, nullable)         |
+| genus_german        | str     | Phase 1  | Gattung deutsch (nullable)                   |
+| species_german      | str     | Phase 1  | Art deutsch (nullable)                       |
+| plant_year          | Int64   | Phase 1  | Pflanzjahr (nullable)                        |
+| height_m            | Float64 | Phase 1  | Kataster-Höhe in Metern (nullable)           |
+| tree_type           | str     | Phase 1  | anlagenbaeume/strassenbaeume (nullable)      |
+| position_corrected  | bool    | Phase 2a | Wurde Position korrigiert?                   |
+| correction_distance | Float64 | Phase 2a | Korrektur-Distanz in Metern (0.0 wenn nicht) |
 
 #### CHM-Feature (1)
 
-| Feature | Typ     | Beschreibung                               |
-| ------- | ------- | ------------------------------------------ |
-| CHM_1m  | Float64 | Kronenhöhe aus 1m CHM (nullable)           |
+| Feature | Typ     | Beschreibung                     |
+| ------- | ------- | -------------------------------- |
+| CHM_1m  | Float64 | Kronenhöhe aus 1m CHM (nullable) |
 
 #### Sentinel-2 Features (276)
 
@@ -283,22 +283,6 @@ Cloud-masked Pixel oder fehlende Monate bleiben als `NaN` erhalten. Quality-Cont
 - `kNDVI_01`, ..., `kNDVI_12`
 
 **Gesamt:** 11 Metadaten + 1 CHM + 276 S2 = **288 Spalten** + Geometrie
-
-### Datensatz-Charakteristika
-
-**Feature-Statistiken:**
-
-- Total Features: 277 (1 CHM + 276 S2)
-- Temporal Resolution: 12 Monate
-- Spatial Resolution: 1m (CHM), 10m (S2)
-- NaN-Rate (typisch): <1% (CHM), <1% (S2 pro Feature)
-
-**Positions-Korrektur (typische Werte):**
-
-- Korrigierte Bäume: ~85-90%
-- Nicht korrigierte: ~10-15% (Outliers, Rand-Bäume)
-- Mittlere Korrektur-Distanz: ~1.5-2.5m
-- Maximale Korrektur: ≤ adaptive_max_radius (3-5m je nach Stadt)
 
 ### Qualitätskriterien
 

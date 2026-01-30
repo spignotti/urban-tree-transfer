@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added - Phase 2: Feature Engineering
 
+- Add redundancy removal, outlier flagging, and spatial split implementations for final preparation
+- Add unit tests for selection, outlier detection, and spatial splits modules
 - Add exploratory notebook `notebooks/exploratory/exp_01_temporal_analysis.ipynb` for temporal feature selection via JM distance
 - Add runner notebook `notebooks/runners/02a_feature_extraction.ipynb` for CHM and Sentinel-2 feature extraction
 - Add runner notebook `notebooks/runners/02b_data_quality.ipynb` for Phase 2b quality control pipeline:
@@ -63,7 +65,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No automatic removal - all trees retained with flags for Phase 3 experiments
   - 7 publication-quality plots (sensitivity, distributions, Venn, rates, severity, genus)
   - Output: `outlier_thresholds.json` with validated parameters and flagging statistics
-- Add exploratory notebook `notebooks/exploratory/exp_05_spatial_autocorrelation.ipynb` for Moran's I spatial autocorrelation analysis and data-driven block size selection
+- Add exploratory notebook `notebooks/exploratory/exp_05_spatial_autocorrelation.ipynb` for Moran's I spatial autocorrelation analysis:
+  - Distance lag analysis (100-1200m) to identify autocorrelation decay distance
+  - Representative feature analysis (NDVI, CHM, spectral bands)
+  - Per-city Moran's I curves with permutation-based significance testing
+  - Data-driven block size recommendation (decay distance + safety buffer)
+  - 3 publication-quality plots (distance decay, feature comparison, spatial patterns)
+  - Output: `spatial_autocorrelation.json` with recommended_block_size_m
+- Add exploratory notebook `notebooks/exploratory/exp_06_mixed_genus_proximity.ipynb` for mixed-genus proximity analysis:
+  - Nearest different-genus distance computation for all trees
+  - Threshold sensitivity analysis [5m, 10m, 15m, 20m, 30m]
+  - Retention rate vs. spectral purity trade-off validation
+  - Genus-specific impact uniformity check (max deviation < 10%)
+  - Sentinel-2 pixel contamination zone visualization (10m × 10m pixels)
+  - 5 publication-quality plots (distribution, retention, genus impact, spatial, contamination schematic)
+  - Output: `proximity_filter.json` with recommended_threshold_m (~20m expected)
+- Add proximity filter module `feature_engineering/proximity.py` with three functions:
+  - `compute_nearest_different_genus_distance()` - Per-tree distance to nearest different genus
+  - `apply_proximity_filter()` - Filter trees by threshold with retention statistics
+  - `analyze_genus_specific_impact()` - Per-genus removal rate validation
+  - Includes 5 unit tests for distance computation, filtering logic, and impact analysis
+- Add runner notebook `notebooks/runners/02c_final_preparation.ipynb` for final ML-ready dataset creation:
+  - 18-cell pipeline: load configs → remove redundancy → flag outliers → assign blocks → create splits (baseline + filtered) → validate → export
+  - Dual dataset strategy: 10 GeoPackages (5 baseline + 5 filtered variants for ablation studies)
+  - Berlin: train/val/test (70/15/15), Leipzig: finetune/test (80/20)
+  - Spatial disjointness validation (spatial_overlap == 0 assertion)
+  - Genus stratification validation (KL-divergence < 0.01)
+  - Outlier flagging only (trees_removed == 0, metadata added for Phase 3 experiments)
+  - Proximity filtering with data-driven threshold from exp_06
+  - 2 summary visualizations (split size comparison, genus distribution)
+  - Output: `phase_2_final_summary.json` with complete validation metrics
+- Add spatial autocorrelation methodology documentation: `docs/documentation/02_Feature_Engineering/02_Exploratory_05_Spatial_Autocorrelation.md`
+- Add mixed-genus proximity methodology documentation: `docs/documentation/02_Feature_Engineering/02_Exploratory_06_Mixed_Genus_Proximity.md`
+- Add final preparation methodology documentation: `docs/documentation/02_Feature_Engineering/02c_Final_Preparation_Methodik.md` covering:
+  - Complete module architecture (selection.py, outliers.py, splits.py, proximity.py)
+  - Mathematical foundations (Moran's I, KL-divergence, Mahalanobis D², Tukey fences)
+  - Dual dataset strategy rationale and Phase 3 experiment matrix
+  - Quality assurance protocols and validation assertions
+  - Phase 3 integration examples for baseline/filtered/transfer-learning experiments
 - Add outlier detection methodology documentation: `docs/documentation/02_Feature_Engineering/02_Exploratory_04_Outlier_Detection.md`
 - Add correlation analysis methodology documentation: `docs/documentation/02_Feature_Engineering/02_Exploratory_03_Correlation_Analysis.md`
 - Add `feature_engineering/extraction.py` module stub with function signatures:

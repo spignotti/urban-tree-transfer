@@ -17,6 +17,7 @@ Identifikation hochkorrelierter Features zur Vermeidung von Multikollinearität 
 **Daten:** `data/phase_2_features/trees_clean_{city}.gpkg` (Phase 2b Output)
 
 **Charakteristika:**
+
 - Berlin: ~750.000 Bäume
 - Leipzig: ~180.000 Bäume
 - Features: ~187 total
@@ -33,6 +34,7 @@ Identifikation hochkorrelierter Features zur Vermeidung von Multikollinearität 
 **Sample-Größe:** 10.000 Bäume pro Stadt
 
 **Begründung:**
+
 - Korrelationsschätzung ist stabil ab ~5.000 Samples
 - 10.000 bietet Puffer für genus-stratifizierte Ziehung
 - Reduziert Rechenzeit bei ausreichender statistischer Power
@@ -75,6 +77,7 @@ Untergruppen nach ökologischer Funktion:
 - **Wasser:** NDWI, MSI, NDII, kNDVI
 
 **Typische Redundanz:**
+
 - NDVI vs. GNDVI (beide Greenness-Indices)
 - NDWI vs. MSI (beide Wasser-Sensitivität)
 
@@ -106,11 +109,13 @@ Für Feature-Paare mit temporalen Instanzen (z.B. B8 vs. B8A):
 **Threshold:** |r| > 0.95
 
 **Literatur-Begründung:**
-- Dormann et al. (2013, *Ecography*): Empfehlen |r| > 0.7–0.9 für Multikollinearitätsprobleme
-- Kuhn & Johnson (2013, *Applied Predictive Modeling*): Schlagen 0.90–0.95 für hochdimensionale Daten vor
+
+- Dormann et al. (2013, _Ecography_): Empfehlen |r| > 0.7–0.9 für Multikollinearitätsprobleme
+- Kuhn & Johnson (2013, _Applied Predictive Modeling_): Schlagen 0.90–0.95 für hochdimensionale Daten vor
 - **0.95 ist konservativ** – entfernt nur sehr hohe Redundanz
 
 **Validierung:** Variance Inflation Factor (VIF) für verbleibende Features
+
 - Ziel: VIF < 10 (Standard-Literaturwert)
 - Prüft, ob Multikollinearität ausreichend reduziert wurde
 
@@ -123,6 +128,7 @@ Wenn zwei Features |r| > 0.95 zeigen, wird eines entfernt basierend auf:
 #### Kriterium 1: Interpretierbarkeit
 
 Bevorzugung von:
+
 - Standardisierten Indices (NDVI > GNDVI)
 - Breiteren Bändern (B8 > B8A, stabiler)
 - Ökologisch etablierten Metriken
@@ -130,20 +136,24 @@ Bevorzugung von:
 #### Kriterium 2: Diskriminative Power
 
 Berechnung der mittleren Korrelation mit Target (genus_latin):
+
 - Für jedes Feature: Mittelwert der absoluten Korrelationen mit allen Genus-Klassen
 - Feature mit höherer Target-Korrelation wird bevorzugt
 
 #### Preservation-Constraints
 
 **Spektrale Bänder:**
+
 - Minimum: 7 von 10 Bändern müssen erhalten bleiben
 - Begründung: Spektrale Diversität für unterschiedliche Vegetations-Signaturen
 
 **Vegetations-Indices:**
+
 - Minimum: 1 Index pro ökologischer Familie (Broadband, Red-Edge, Wasser)
 - Begründung: Erhalt verschiedener physiologischer Informationen (Chlorophyll, Wassergehalt)
 
 **CHM-Features:**
+
 - Erwartung: Alle 3 bleiben erhalten
 - Unterschiedliche Normalisierungen haben verschiedene ML-Eigenschaften
 
@@ -154,6 +164,7 @@ Berechnung der mittleren Korrelation mit Target (genus_latin):
 **Kritische Regel:** Wenn ein Feature-Basis als redundant identifiziert wird, werden **alle temporalen Instanzen** entfernt.
 
 **Beispiel:**
+
 - WENN B8A mit B8 korreliert (|r| > 0.95)
 - DANN entferne: B8A_03, B8A_04, B8A_05, ..., B8A_10
 - NICHT: Nur einzelne Monate wie B8A_06
@@ -167,6 +178,7 @@ Berechnung der mittleren Korrelation mit Target (genus_latin):
 **Strikte Regel:** Ein Feature wird nur entfernt, wenn es in **BEIDEN** Städten redundant ist.
 
 **Algorithmus:**
+
 ```
 redundant_berlin = {Features mit |r| > 0.95 in Berlin}
 redundant_leipzig = {Features mit |r| > 0.95 in Leipzig}
@@ -175,11 +187,13 @@ features_to_remove = redundant_berlin ∩ redundant_leipzig
 ```
 
 **Begründung:**
+
 - **Transfer-Robustheit:** Was in Berlin redundant ist, könnte in Leipzig informativ sein
 - **Konservativer Ansatz:** Schützt vor Überanpassung an stadtspezifische Muster
 - **Generalisierung:** Verbessert Cross-City-Transfer-Performance (Hauptziel des Projekts)
 
 **Metrik:** Cross-City Agreement Rate
+
 ```
 agreement_rate = |removed| / |redundant_berlin ∪ redundant_leipzig|
 ```
@@ -197,6 +211,7 @@ agreement_rate = |removed| / |redundant_berlin ∪ redundant_leipzig|
 **Typ:** Annotierte Korrelationsmatrix (Berlin, Leipzig separat)
 
 **Elemente:**
+
 - Hierarchical Clustering der Zeilen/Spalten (ähnliche Features gruppiert)
 - Diverging Colormap (Rot-Weiß-Blau, zentriert bei r=0)
 - Annotations: r-Werte in jeder Zelle
@@ -219,6 +234,7 @@ agreement_rate = |removed| / |redundant_berlin ∪ redundant_leipzig|
 ---
 
 **Specifications (alle Plots):**
+
 - DPI: 300 (Publication-ready)
 - Figure Size: (12, 10) für Lesbarkeit großer Matrizen
 - Font Size: 10pt für Annotations
@@ -236,22 +252,27 @@ agreement_rate = |removed| / |redundant_berlin ∪ redundant_leipzig|
 **Schema-Struktur:**
 
 #### Section 1: Metadata
+
 - Analysis date, sample size, threshold
 - Literature reference für Threshold-Begründung
 
 #### Section 2: Feature Groups
+
 Pro Gruppe (CHM, Bands, Indices):
+
 - Analyzed features (alle geprüften Features)
 - Removed features (Basen, die entfernt werden)
 - Retained features (verbleibende Basen)
 - Rationale per feature (Begründung für Removal mit r-Werten)
 
 #### Section 3: Temporal Removal
+
 - **Kritisch:** Vollständige Liste aller temporalen Feature-Spalten
 - Beispiel: `["B8A_03", "B8A_04", ..., "B8A_10"]`
 - Total count (Validierung: count = removed_bases × n_months)
 
 #### Section 4: Cross-City Consistency
+
 - Redundant in Berlin (Liste)
 - Redundant in Leipzig (Liste)
 - Final removed (Intersection)
@@ -260,14 +281,18 @@ Pro Gruppe (CHM, Bands, Indices):
 - Interpretation (Text: "high/medium/low consistency")
 
 #### Section 5: Feature Reduction Summary
+
 - Before: Count pro Gruppe + Total
 - After: Count pro Gruppe + Total
 - Reduction percentage
 
 #### Section 6: Validation
+
 - Max VIF der verbleibenden Features
 - VIF threshold (10.0)
 - Check passed (boolean)
+
+**Hinweis:** Alle numerischen Werte im JSON sind Platzhalter zur Illustration der Schema-Struktur.
 
 **Verwendung:** Phase 2c lädt diese JSON und entfernt alle in `temporal_removal.removed_temporal_features` gelisteten Spalten.
 
@@ -278,6 +303,7 @@ Pro Gruppe (CHM, Bands, Indices):
 **Typische Feature-Reduktion:** 10–15% der Sentinel-2-Features
 
 **Häufig redundante Feature-Basen (Literatur-basiert):**
+
 - **B8A:** Hochkorreliert mit B8 (beide NIR, B8A ist schmaleres Band)
 - **GNDVI:** Hochkorreliert mit NDVI (beide Greenness, NDVI ist Standard)
 - **MSI:** Hochkorreliert mit NDWI (beide Wasser-Sensitivität)
@@ -306,6 +332,7 @@ Pro Gruppe (CHM, Bands, Indices):
   - Alle Suffixe (Monate) für jeden removed base vorhanden
 
 **JSON-Schema Validation:**
+
 - Alle erforderlichen Keys vorhanden
 - Temporal removal list matches detected months
 - Rationale für jedes entfernte Feature dokumentiert

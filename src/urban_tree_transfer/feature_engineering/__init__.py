@@ -7,11 +7,15 @@ from .extraction import (
     extract_sentinel_features,
 )
 from .outliers import (
-    classify_outliers_by_consensus,
+    apply_consensus_outlier_filter,
     detect_iqr_outliers,
     detect_mahalanobis_outliers,
     detect_zscore_outliers,
-    remove_outliers,
+)
+from .proximity import (
+    analyze_genus_specific_impact,
+    apply_proximity_filter,
+    compute_nearest_different_genus_distance,
 )
 from .quality import (
     analyze_nan_distribution,
@@ -29,22 +33,25 @@ from .selection import (
     remove_redundant_features,
 )
 from .splits import (
-    assign_trees_to_blocks,
     create_spatial_blocks,
-    create_stratified_spatial_splits,
-    validate_splits,
+    create_stratified_splits_berlin,
+    create_stratified_splits_leipzig,
+    validate_split_stratification,
 )
 
 __all__ = [
+    "analyze_genus_specific_impact",
     "analyze_nan_distribution",
+    "apply_consensus_outlier_filter",
+    "apply_proximity_filter",
     "apply_temporal_selection",
-    "assign_trees_to_blocks",
-    "classify_outliers_by_consensus",
     "compute_chm_engineered_features",
     "compute_feature_correlations",
+    "compute_nearest_different_genus_distance",
     "correct_tree_positions",
     "create_spatial_blocks",
-    "create_stratified_spatial_splits",
+    "create_stratified_splits_berlin",
+    "create_stratified_splits_leipzig",
     "detect_iqr_outliers",
     "detect_mahalanobis_outliers",
     "detect_zscore_outliers",
@@ -57,7 +64,6 @@ __all__ = [
     "filter_ndvi_plausibility",
     "identify_redundant_features",
     "interpolate_features_within_tree",
-    "remove_outliers",
     "remove_redundant_features",
-    "validate_splits",
+    "validate_split_stratification",
 ]

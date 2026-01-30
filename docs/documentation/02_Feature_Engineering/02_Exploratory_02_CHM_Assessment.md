@@ -27,11 +27,13 @@ SS_total = Σ(x_ij - μ_grand)²            [Gesamtvarianz]
 ```
 
 **Interpretation:**
+
 - η² < 0.06: Kleiner Effekt (CHM diskriminiert schwach)
 - η² ∈ [0.06, 0.14): Mittlerer Effekt
 - η² ≥ 0.14: Großer Effekt (CHM ist genus-spezifisch)
 
 **Berechnung:**
+
 1. One-way ANOVA: `CHM_1m ~ genus_latin` pro Stadt (Berlin, Leipzig)
 2. F-Statistik und p-Wert aus `scipy.stats.f_oneway`
 3. Manuelle η²-Berechnung aus Sum-of-Squares
@@ -52,11 +54,13 @@ s_pooled = √[((n_Berlin - 1) × s²_Berlin + (n_Leipzig - 1) × s²_Leipzig) /
 ```
 
 **Interpretation:**
+
 - |d| < 0.2: Kleine Differenz (gut für Transfer)
 - |d| ∈ [0.2, 0.5): Mittlere Differenz (Transfer-Risiko)
 - |d| ≥ 0.5: Große Differenz (city-specific, schlecht für Transfer)
 
 **Berechnung:**
+
 1. Für jedes Genus: Mittelwert und Standardabweichung `CHM_1m` in Berlin und Leipzig
 2. Cohen's d pro Genus mit gepoolter Standardabweichung
 3. Bootstrap-Konfidenzintervalle (1000 Iterationen, 95% CI)
@@ -78,6 +82,7 @@ s_pooled = √[((n_Berlin - 1) × s²_Berlin + (n_Leipzig - 1) × s²_Leipzig) /
   - r > 0.7: Zu hohe Korrelation → Hinweis auf Data Leakage (Legacy-Problem)
 
 **Begründung moderate Korrelation:**
+
 - CHM misst Kronenhöhe (top of canopy)
 - Kataster misst Gesamthöhe (ground to top)
 - Unterschied: Stammhöhe, Messzeitpunkt, Ungenauigkeiten
@@ -86,9 +91,11 @@ s_pooled = √[((n_Berlin - 1) × s²_Berlin + (n_Leipzig - 1) × s²_Leipzig) /
 **Transformationen:**
 
 1. **Z-Score (within-genus):**
+
    ```
    CHM_zscore = (CHM_1m - μ_genus) / σ_genus
    ```
+
    Normalisiert relative Höhe innerhalb Genus (entfernt genus-spezifische Baseline).
 
 2. **Percentile (within-genus):**
@@ -124,6 +131,7 @@ s_pooled = √[((n_Berlin - 1) × s²_Berlin + (n_Leipzig - 1) × s²_Leipzig) /
    - **Empfohlener Threshold:** Letztes Jahr mit `median(CHM) ≥ 2.0m`
 
 **Beispiel:**
+
 ```
 Plant Year  | Median CHM | Interpretation
 ------------|------------|---------------
@@ -134,6 +142,7 @@ Plant Year  | Median CHM | Interpretation
 2019        | 1.5m       | Zu niedrig → verwerfen
 2020        | 0.8m       | Zu niedrig → verwerfen
 ```
+
 → **recommended_max_plant_year = 2018**
 
 **Verwendung:** Phase 2b (Quality Control) entfernt alle Bäume mit `plant_year > 2018` (Stadt-spezifischer Schwellenwert möglich).
@@ -159,11 +168,13 @@ SONST:
 ```
 
 **Begründung:**
+
 - **Genera-Threshold (3):** Minimum für sinnvolle Klassifikation (mindestens 3 Klassen)
 - **Sample-Threshold (500):** Minimum für stabile Statistiken und Train/Val/Test-Split
 - **Praxis:** Urbane Baumbestände sind dominiert von Laubbäumen; Nadelbäume oft <2% der Samples
 
 **Konsequenz:**
+
 - `analysis_scope = "deciduous_only"` → Nadelbäume werden in Phase 2b vollständig gefiltert
 - `analysis_scope = "all"` → Nadelbäume bleiben im Datensatz
 
@@ -176,6 +187,7 @@ SONST:
 **Typ:** Violin/Box Plots, faceted nach Stadt
 
 **Interpretation:**
+
 - Zeigt genus-spezifische CHM-Verteilungen
 - Visuelle Bestätigung der ANOVA η² (getrennte Verteilungen = hohe Diskriminierung)
 - Cross-city Vergleich: Ähnliche Verteilungen = gute Transferierbarkeit
@@ -187,12 +199,14 @@ SONST:
 **Typ:** Scatter Plot mit Regressionslinie
 
 **Elemente:**
+
 - X-Achse: `height_m` (Kataster)
 - Y-Achse: `CHM_1m`
 - Farben: Berlin (blau), Leipzig (orange)
 - Annotation: Pearson r-Wert
 
 **Interpretation:**
+
 - r ∈ [0.4, 0.6]: CHM-Extraktion valide, keine Redundanz
 - Streuung zeigt Messunsicherheiten (normal)
 
@@ -203,11 +217,13 @@ SONST:
 **Typ:** Bar Chart (Berlin vs Leipzig)
 
 **Elemente:**
+
 - Balken: η²-Werte pro Stadt
 - Referenzlinien: medium (0.06), large (0.14)
 - Annotation: Interpretation ("medium effect", "large effect")
 
 **Interpretation:**
+
 - Ähnliche η² in beiden Städten → konsistente Feature-Qualität
 - η² > 0.14 in beiden Städten → CHM ist genus-diskriminativ
 
@@ -218,12 +234,14 @@ SONST:
 **Typ:** Forest Plot mit Konfidenzintervallen
 
 **Elemente:**
+
 - Y-Achse: Genera (sortiert nach |d|)
 - X-Achse: Cohen's d
 - Error Bars: 95% Bootstrap-CI
 - Referenzlinien: small (0.2), medium (0.5), large (0.8)
 
 **Interpretation:**
+
 - CIs überlappen mit 0 → keine signifikante Differenz
 - |d| < 0.2 für alle Genera → geringe Transfer-Risiken
 - Ausreißer-Genera mit |d| > 0.5 → potenzielle Transfer-Probleme
@@ -235,6 +253,7 @@ SONST:
 **Typ:** Overlaid Histograms (Berlin vs Leipzig)
 
 **Interpretation:**
+
 - Ähnliche Verteilungsformen → städteübergreifende Konsistenz
 - Shift in Mittelwerten → systematische Unterschiede (z.B. Stadtstruktur)
 
@@ -245,12 +264,14 @@ SONST:
 **Typ:** Box Plot / Scatter mit Median-Linie
 
 **Elemente:**
+
 - X-Achse: Plant Year (oder Kohorten)
 - Y-Achse: CHM_1m
 - Horizontale Linie: Detection Threshold (2.0m)
 - Highlight: Empfohlenes Cutoff-Jahr
 
 **Interpretation:**
+
 - Klarer Abfall der Median-CHM mit jüngerem Pflanzjahr
 - Schwellenwert-Jahr identifiziert Grenze für Visibility
 
@@ -261,12 +282,14 @@ SONST:
 **Typ:** Bar Chart (Sample Counts pro Genus)
 
 **Elemente:**
+
 - X-Achse: Genus (sortiert nach Count)
 - Y-Achse: Sample Count (log-scale optional)
 - Farben: Deciduous (grün), Coniferous (braun)
 - Horizontale Linie: Min-Sample-Threshold (500)
 
 **Interpretation:**
+
 - Dominanz von Laubbäumen visuell offensichtlich
 - Nadelbäume unterhalb Threshold → Begründung für "deciduous_only"
 
@@ -338,29 +361,10 @@ outputs/phase_2/figures/exp_02_chm/
 
 ---
 
-## Erwartete Ergebnisse
-
-**Discriminative Power:**
-- **Typische η²-Werte:** 0.12–0.22 (mittlerer bis großer Effekt)
-- **Interpretation:** CHM erklärt 12-22% der Varianz → genus-spezifisch genug für Klassifikation
-
-**Transfer Risk:**
-- **Typischer Cohen's d:** |d| < 0.2 für meiste Genera
-- **Interpretation:** Geringe cross-city Unterschiede → gute Transferierbarkeit
-
-**Plant Year Threshold:**
-- **Typischer Cutoff:** 2017–2019 (abhängig von Wachstumsraten)
-- **Begründung:** Bäume gepflanzt nach diesem Jahr haben 2021 <2m CHM
-
-**Analysis Scope:**
-- **Erwartung (urban context):** "deciduous_only"
-- **Begründung:** Nadelbäume meist <3 Genera oder <500 Samples in urbanen Beständen
-
----
-
 ## Validierung
 
 **In-Notebook Checks:**
+
 - ✅ η² in Range [0, 1]
 - ✅ Cohen's d Konfidenzintervalle überlappen nicht pathologisch
 - ✅ CHM-Kataster-Korrelation r ∈ [0.3, 0.7]
@@ -369,6 +373,7 @@ outputs/phase_2/figures/exp_02_chm/
 - ✅ Cross-city Schema-Konsistenz
 
 **Post-Execution:**
+
 - JSON-Schema vollständig
 - 7 PNG-Plots gespeichert
 - Execution Log generiert
@@ -378,6 +383,7 @@ outputs/phase_2/figures/exp_02_chm/
 ## Nächste Schritte
 
 **Manual Sync (nach Colab-Ausführung):**
+
 1. Download `chm_assessment.json` von Drive
 2. Commit zu Git: `outputs/phase_2/metadata/chm_assessment.json`
 3. Download Plots von Drive: `outputs/phase_2/figures/exp_02_chm/*.png`
@@ -387,6 +393,7 @@ outputs/phase_2/figures/exp_02_chm/
 **Verwendung in Phase 2b:**
 
 Die JSON-Datei wird geladen und die folgenden Parameter extrahiert:
+
 - `recommended_max_plant_year` → Filter: Entferne Bäume mit `plant_year > threshold`
 - `analysis_scope` → Filter: Wenn "deciduous_only", entferne alle Nadelbäume
 

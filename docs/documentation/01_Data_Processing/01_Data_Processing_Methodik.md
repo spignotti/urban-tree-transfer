@@ -112,12 +112,6 @@ Attribut-Mappings sind pro Stadt in `configs/cities/*.yaml` definiert.
 
 **Metadaten:** `outputs/metadata/trees_cadastre_summary.json`
 
-**Datensatz-Charakteristika (Beispiel):**
-
-- Gesamtanzahl Bäume: >1 Mio. (beide Städte kombiniert)
-- Häufigste Gattungen: ACER, TILIA, QUERCUS
-- Verteilung: Berlin (Mehrheit), Leipzig (Target Domain)
-
 ---
 
 ## Höhenmodelle (DOM/DGM)

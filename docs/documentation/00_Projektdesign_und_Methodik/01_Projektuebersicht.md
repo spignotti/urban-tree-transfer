@@ -31,24 +31,24 @@ Die Wahl von Berlin und Leipzig ermöglicht eine klare methodische Trennung:
 - **Vergleichbare Phänologie**: Ähnliche Vegetationsperioden und saisonale Muster
 - **Räumliche Unabhängigkeit**: ~190 km Entfernung, keine räumliche Autokorrelation
 
-### Phasenstruktur
+### Experimentstruktur
 
-Das Projekt folgt einer sequentiellen Phasenstruktur, wobei jede Phase auf den Ergebnissen der vorherigen aufbaut:
+Die Experimente (Phase 3 des Projekts) folgen einer sequentiellen Struktur, wobei jedes Experiment auf den Ergebnissen des vorherigen aufbaut:
 
 ```
-Phase 1: Berlin-Optimierung
+Experiment 1: Berlin-Optimierung
     │
     │   Ziel: Optimales Modell für Single-City-Klassifikation
     │   Output: Best Model + Hyperparameter + Feature-Importance
     │
     ▼
-Phase 2: Transfer-Evaluation
+Experiment 2: Transfer-Evaluation
     │
     │   Ziel: Quantifizierung der Transfer-Performance (Berlin → Leipzig)
     │   Output: Transfer-Metriken + Genus-spezifische Analyse
     │
     ▼
-Phase 3: Fine-Tuning-Analyse
+Experiment 3: Fine-Tuning-Analyse
     │
     │   Ziel: Dateneffizienz bei lokalem Fine-Tuning
     │   Output: Fine-Tuning-Kurve + Empfehlungen

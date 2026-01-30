@@ -26,17 +26,20 @@ wobei B = (1/8) × (μ₁ - μ₂)² / ((σ₁ + σ₂)/2)
 ```
 
 **Interpretation:**
+
 - JM = 0: Vollständige Überlappung
 - JM ≈ 1: Akzeptable Diskriminierung
 - JM = 2: Perfekte Separabilität
 
 **Berechnung:**
+
 1. Für jedes Feature (23 S2-Features) pro Monat (12 Monate)
 2. Für alle Genus-Paare (z.B. ACER vs TILIA, ACER vs QUERCUS, ...)
 3. Mittelung über alle 23 Features pro Monat → Monatlicher JM-Wert
 4. Mittelung über beide Städte (Berlin + Leipzig)
 
 **Numerische Stabilität:**
+
 - Epsilon-Handling: `σ = max(σ, 1e-6)` verhindert Division durch Null
 - Clipping: JM ∈ [0, 2]
 - NaN-Filterung vor Berechnung
@@ -58,6 +61,7 @@ wobei B = (1/8) × (μ₁ - μ₂)² / ((σ₁ + σ₂)/2)
    - Winter (Dez-Feb): Optional (typisch niedrige JM-Werte)
 
 **Rationale:**
+
 - **Phenologische Abdeckung:** Laub-Phasen (Austrieb, Vollbelaubung, Laubfärbung) differenzieren Genera
 - **Datenreduktion:** 6-10 statt 12 Monate reduziert Feature-Dimensionen (~33% weniger)
 - **Robustheit:** Vermeidung redundanter Winter-Monate (niedrige Aktivität)
@@ -65,6 +69,7 @@ wobei B = (1/8) × (μ₁ - μ₂)² / ((σ₁ + σ₂)/2)
 ### Performance-Optimierung
 
 **Sampling:** 10.000 Bäume pro Genus (statt komplettem Datensatz)
+
 - **Begründung:** JM-Schätzung stabil ab ~5.000 Samples, 10k bietet Puffer
 - **Trade-off:** ~80% schnellere Berechnung bei <5% JM-Varianz
 
@@ -97,6 +102,7 @@ wobei B = (1/8) × (μ₁ - μ₂)² / ((σ₁ + σ₂)/2)
 ### JSON: `temporal_selection.json`
 
 **Schema:**
+
 ```json
 {
   "analysis_date": "2026-01-30T...",
@@ -130,25 +136,10 @@ outputs/phase_2/figures/exp_01_temporal/
 
 ---
 
-## Erwartete Ergebnisse
-
-**Typische Selektion (8 Monate):**
-- **Gewählt:** März-Oktober (Growing Season)
-- **Verworfen:** November-Februar (Winter, niedrige Aktivität)
-
-**Typische JM-Werte:**
-- **Ausgewählte Monate:** Mean JM ≈ 0.85-1.1
-- **Verworfene Monate:** Mean JM ≈ 0.55-0.75
-- **Range gesamt:** JM ≈ 0.4-1.3
-
-**Bekanntes Problem (aus PRD):**
-Legacy-Pipeline zeigte niedrige absolute JM-Werte (0.5-1.2), obwohl Separabilität vorhanden. **Relative Vergleiche zwischen Monaten bleiben valide** – absolute Schwellenwerte (z.B. "JM > 1.0") sind weniger aussagekräftig.
-
----
-
 ## Validierung
 
 **In-Notebook Checks:**
+
 - ✅ JM-Werte in Range [0, 2]
 - ✅ Keine NaN in Ergebnissen
 - ✅ Mindestens 500 Samples pro Genus
@@ -156,6 +147,7 @@ Legacy-Pipeline zeigte niedrige absolute JM-Werte (0.5-1.2), obwohl Separabilit�
 - ✅ Cross-city Schema-Konsistenz
 
 **Post-Execution:**
+
 - JSON-Schema vollständig
 - 3 PNG-Plots gespeichert
 - Execution Log generiert
@@ -165,6 +157,7 @@ Legacy-Pipeline zeigte niedrige absolute JM-Werte (0.5-1.2), obwohl Separabilit�
 ## Nächste Schritte
 
 **Manual Sync (nach Colab-Ausführung):**
+
 1. Download `temporal_selection.json` von Drive
 2. Commit zu Git: `outputs/phase_2/metadata/temporal_selection.json`
 3. Push zu GitHub
