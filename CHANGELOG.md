@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `assign_trees_to_blocks()` - Spatial join trees to blocks
   - `create_stratified_spatial_splits()` - Stratified splitting with spatial disjointness
   - `validate_splits()` - Check disjointness and stratification quality
+- Implement feature extraction module functions for tree correction, CHM sampling, Sentinel-2 extraction, and extraction summaries
 
 ### Added - Phase 1: Data Processing
 
