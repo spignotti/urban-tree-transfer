@@ -42,7 +42,7 @@ Each prompt should contain:
 | 1 | Setup: Config + Loader + Module stubs | Overview | `feature_config.yaml`, `loader.py`, stubs | Done |
 | 2 | Implement `extraction.py` | 002a | `feature_engineering/extraction.py` | Done |
 | 3 | Runner notebook `02a_feature_extraction.ipynb` | 002a | `notebooks/runners/` | Done |
-| 4 | Exploratory `exp_01_temporal_analysis.ipynb` | 002_exploratory | `notebooks/exploratory/` | Pending |
+| 4 | Exploratory `exp_01_temporal_analysis.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
 | 5 | Exploratory `exp_02_chm_assessment.ipynb` | 002_exploratory | `notebooks/exploratory/` | Pending |
 | 6 | Implement `quality.py` | 002b | `feature_engineering/quality.py` | Pending |
 | 7 | Runner notebook `02b_data_quality.ipynb` | 002b | `notebooks/runners/` | Pending |
@@ -243,4 +243,4 @@ Task 12: 02c_final_preparation.ipynb (runner)
 
 ---
 
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-01-31
