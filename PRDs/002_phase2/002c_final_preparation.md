@@ -105,11 +105,15 @@ Finalize features by removing redundant columns, detecting and filtering outlier
   INPUT_DIR = DRIVE_DIR / "data" / "phase_2_quality"   # From 002b
   OUTPUT_DIR = DRIVE_DIR / "data" / "phase_2_splits"   # Final datasets
 
-  # Load all exploratory configs
+  # Load all exploratory configs (from manual sync after exploratory notebooks)
   config_dir = INPUT_DIR.parent.parent / "outputs" / "phase_2" / "metadata"
-  correlation_config = json.load(open(config_dir / "correlation_analysis.json"))
+  correlation_config = json.load(open(config_dir / "correlation_removal.json"))
   outlier_config = json.load(open(config_dir / "outlier_thresholds.json"))
   spatial_config = json.load(open(config_dir / "spatial_autocorrelation.json"))
+
+  # Extract parameters from exploratory configs
+  features_to_remove = correlation_config["features_to_remove"]
+  block_size_m = spatial_config["recommended_block_size_m"]  # ← Empirically determined in exp_05
   ```
 
 - **Processing Sections:**
@@ -696,8 +700,10 @@ print("\n" + "="*60)
 print("STEP 5: Create Spatial Blocks")
 print("="*60)
 
-block_size = feature_config["splits"]["block_size_m"]
-print(f"Block size: {block_size}m (validated in exp_05)")
+# Block size determined empirically in exp_05 via Moran's I analysis
+block_size = spatial_config["recommended_block_size_m"]
+print(f"Block size: {block_size}m (determined empirically in exp_05)")
+print(f"Justification: {spatial_config['justification']}")
 
 trees_gdf = create_spatial_blocks(trees_gdf, block_size_m=block_size)
 

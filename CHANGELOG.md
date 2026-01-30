@@ -63,6 +63,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No automatic removal - all trees retained with flags for Phase 3 experiments
   - 7 publication-quality plots (sensitivity, distributions, Venn, rates, severity, genus)
   - Output: `outlier_thresholds.json` with validated parameters and flagging statistics
+- Add exploratory notebook `notebooks/exploratory/exp_05_spatial_autocorrelation.ipynb` for Moran's I spatial autocorrelation analysis and data-driven block size selection
 - Add outlier detection methodology documentation: `docs/documentation/02_Feature_Engineering/02_Exploratory_04_Outlier_Detection.md`
 - Add correlation analysis methodology documentation: `docs/documentation/02_Feature_Engineering/02_Exploratory_03_Correlation_Analysis.md`
 - Add `feature_engineering/extraction.py` module stub with function signatures:
@@ -93,6 +94,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `create_stratified_spatial_splits()` - Stratified splitting with spatial disjointness
   - `validate_splits()` - Check disjointness and stratification quality
 - Implement feature extraction module functions for tree correction, CHM sampling, Sentinel-2 extraction, and extraction summaries
+
+### Changed - Phase 2: Feature Engineering
+
+- Update PRD 002c (Final Preparation) to load spatial block size from `spatial_autocorrelation.json` instead of `feature_config.yaml`
+- Update Implementation Plan to clarify data-driven block size determination workflow via Moran's I analysis
+- Spatial block size now empirically determined in exp_05, not hardcoded
 
 ### Added - Phase 1: Data Processing
 

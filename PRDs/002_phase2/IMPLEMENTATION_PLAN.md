@@ -189,7 +189,9 @@ Task 12: 02c_final_preparation.ipynb (runner)
 **Outputs:**
 - `correlation_removal.json` (features to remove)
 - `outlier_thresholds.json` (detection parameters)
-- `spatial_autocorrelation.json` (block size validation)
+- `spatial_autocorrelation.json` (empirically determined block size via Moran's I)
+
+**Note for exp_05:** Block size is data-driven (could be 300m, 400m, 500m, 600m). Used by Task 12 via JSON, NOT from feature_config.yaml.
 
 ---
 
@@ -203,10 +205,12 @@ Task 12: 02c_final_preparation.ipynb (runner)
 
 **Key Requirements:**
 - Correlation: |r| > 0.95 threshold, keep higher-variance feature
-- Outliers: Z-score + Mahalanobis + IQR, consensus-based (3/3 = remove)
-- Splits: 500m spatial blocks, StratifiedGroupKFold
+- Outliers: Z-score + Mahalanobis + IQR, consensus-based (3/3 = remove, 2/3 and 1/3 = flag)
+- Splits: Spatial blocks with empirical size (from exp_05 JSON), StratifiedGroupKFold
 - Berlin: 70/15/15 train/val/test
 - Leipzig: 80/20 finetune/test
+
+**Note:** `splits.py` takes `block_size_m` as function parameter, not loaded from config internally.
 
 ---
 
@@ -219,10 +223,13 @@ Task 12: 02c_final_preparation.ipynb (runner)
 - `docs/templates/Notebook_Templates.md`
 
 **Key Requirements:**
-- Load correlation, outlier, spatial configs from Drive
-- Remove redundant features, outliers, apply sample size filter
-- Create spatial blocks and stratified splits
-- Output: 5 GeoPackages (3 Berlin + 2 Leipzig)
+- Load exploratory configs: `correlation_removal.json`, `outlier_thresholds.json`, `spatial_autocorrelation.json`
+- Extract `recommended_block_size_m` from spatial config (NOT from feature_config.yaml)
+- Remove redundant features per correlation analysis
+- Apply consensus outlier filtering (3/3 = remove, 2/3 and 1/3 = metadata flags)
+- Create spatial blocks with empirical block size
+- Generate stratified splits (Berlin: 70/15/15, Leipzig: 80/20)
+- Output: 5 GeoPackages (3 Berlin + 2 Leipzig) + final_dataset_summary.json
 
 ---
 
