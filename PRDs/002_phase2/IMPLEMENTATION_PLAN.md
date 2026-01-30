@@ -44,7 +44,7 @@ Each prompt should contain:
 | 3 | Runner notebook `02a_feature_extraction.ipynb` | 002a | `notebooks/runners/` | Done |
 | 4 | Exploratory `exp_01_temporal_analysis.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
 | 5 | Exploratory `exp_02_chm_assessment.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
-| 6 | Implement `quality.py` | 002b | `feature_engineering/quality.py` | Pending |
+| 6 | Implement `quality.py` | 002b | `feature_engineering/quality.py` | Done |
 | 7 | Runner notebook `02b_data_quality.ipynb` | 002b | `notebooks/runners/` | Pending |
 | 8 | Exploratory `exp_03_correlation_analysis.ipynb` | 002_exploratory | `notebooks/exploratory/` | Pending |
 | 9 | Exploratory `exp_04_outlier_thresholds.ipynb` | 002_exploratory | `notebooks/exploratory/` | Pending |

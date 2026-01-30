@@ -14,12 +14,14 @@ from .outliers import (
     remove_outliers,
 )
 from .quality import (
+    analyze_nan_distribution,
     apply_temporal_selection,
-    engineer_chm_features,
-    filter_by_ndvi_plausibility,
+    compute_chm_engineered_features,
     filter_by_plant_year,
-    interpolate_nan_values,
-    run_quality_pipeline,
+    filter_deciduous_genera,
+    filter_nan_trees,
+    filter_ndvi_plausibility,
+    interpolate_features_within_tree,
 )
 from .selection import (
     compute_feature_correlations,
@@ -34,9 +36,11 @@ from .splits import (
 )
 
 __all__ = [
+    "analyze_nan_distribution",
     "apply_temporal_selection",
     "assign_trees_to_blocks",
     "classify_outliers_by_consensus",
+    "compute_chm_engineered_features",
     "compute_feature_correlations",
     "correct_tree_positions",
     "create_spatial_blocks",
@@ -44,16 +48,16 @@ __all__ = [
     "detect_iqr_outliers",
     "detect_mahalanobis_outliers",
     "detect_zscore_outliers",
-    "engineer_chm_features",
     "extract_all_features",
     "extract_chm_features",
     "extract_sentinel_features",
-    "filter_by_ndvi_plausibility",
     "filter_by_plant_year",
+    "filter_deciduous_genera",
+    "filter_nan_trees",
+    "filter_ndvi_plausibility",
     "identify_redundant_features",
-    "interpolate_nan_values",
+    "interpolate_features_within_tree",
     "remove_outliers",
     "remove_redundant_features",
-    "run_quality_pipeline",
     "validate_splits",
 ]
