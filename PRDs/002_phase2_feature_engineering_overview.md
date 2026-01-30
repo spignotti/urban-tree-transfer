@@ -357,7 +357,7 @@ genus_classification:
 
 **All Phase 2 notebooks follow standardized templates** based on the proven structure from Runner 1 (`notebooks/runners/01_data_processing.ipynb`).
 
-**Documentation:** [docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md](../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md)
+**Documentation:** [Notebook_Templates.md](../docs/templates/Notebook_Templates.md)
 
 ### 5.1 Runner-Notebook Template
 
@@ -380,7 +380,7 @@ genus_classification:
 - Skip-if-exists logic (idempotent execution)
 - Standardized validation & error handling
 
-**See:** [Runner-Notebook Template Documentation](../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md#1-runner-notebook-template-phase-2)
+**See:** [Runner-Notebook Template Documentation](../docs/templates/Notebook_Templates.md#1-runner-notebook-template-phase-2)
 
 ### 5.2 Exploratory-Notebook Template
 
@@ -398,7 +398,7 @@ genus_classification:
 - Explicit manual sync workflow (Colab → Drive → Local → Git)
 
 **Visualization:** All plots follow [Visualization Strategy](../docs/documentation/02_Feature_Engineering/01_Visualization_Strategy.md)  
-**Template:** [Exploratory-Notebook Template Documentation](../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md#2-exploratory-notebook-template-phase-2)
+**Template:** [Exploratory-Notebook Template Documentation](../docs/templates/Notebook_Templates.md#2-exploratory-notebook-template-phase-2)
 
 ### 5.3 Benefits of Standardization
 

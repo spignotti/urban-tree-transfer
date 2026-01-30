@@ -585,7 +585,7 @@ In jedem PRD (002a/b/c und exploratory) sollte ein **"Notebook Structure"** Absc
 ```markdown
 ### Notebook Structure
 
-**Template:** [Runner-Notebook Template](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md#1-runner-notebook-template-phase-2)
+**Template:** [Runner-Notebook Template](../templates/Notebook_Templates.md#1-runner-notebook-template-phase-2)
 
 **Anpassungen:**
 
@@ -595,7 +595,7 @@ In jedem PRD (002a/b/c und exploratory) sollte ein **"Notebook Structure"** Absc
 - **Zelle 6:** Feature Extraction - Sentinel-2
 - **Letzte Zelle:** Validate `chm_features.parquet`, `sentinel_features.parquet`
 
-**Siehe:** [Complete template documentation](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md)
+**Siehe:** [Complete template documentation](../templates/Notebook_Templates.md)
 ```
 
 ---

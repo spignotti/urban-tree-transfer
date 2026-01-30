@@ -42,6 +42,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `get_temporal_feature_names()` - Get temporal feature names with month suffix
   - `get_chm_feature_names()` - Get CHM feature names
   - `get_all_feature_names()` - Get complete feature list (277 for 12 months)
+- Add exploratory notebook `notebooks/exploratory/exp_03_correlation_analysis.ipynb` for correlation-based redundancy detection:
+  - Stacked temporal-vector correlations (all months concatenated per feature base)
+  - Pearson correlation with threshold 0.95 (Kuhn & Johnson 2013)
+  - Cross-city consistency requirement (features removed only if redundant in both cities)
+  - Temporal consistency (all month instances removed if base is redundant)
+  - Interpretability-based selection preferences (NDVI > EVI, B8 > B8A)
+  - Family constraint for vegetation indices (≥1 retained per family)
+  - VIF validation (target < 10) for retained features
+  - Clustered heatmaps with bold borders for |r| > 0.95
+  - Output: `correlation_removal.json` with complete temporal removal list
+- Add correlation analysis methodology documentation: `docs/documentation/02_Feature_Engineering/02_Exploratory_03_Correlation_Analysis.md`
 - Add `feature_engineering/extraction.py` module stub with function signatures:
   - `correct_tree_positions()` - Snap trees to CHM local maxima
   - `extract_chm_features()` - 1m point sampling from CHM

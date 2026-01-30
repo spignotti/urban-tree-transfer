@@ -68,7 +68,7 @@ Conduct exploratory analyses to determine optimal parameters and validate method
 
 ## Exploratory Notebooks
 
-**Template:** [Exploratory-Notebook Template](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md#2-exploratory-notebook-template-phase-2)
+**Template:** [Exploratory-Notebook Template](../../docs/templates/Notebook_Templates.md#2-exploratory-notebook-template-phase-2)
 
 All exploratory notebooks follow a **consistent structure** based on the Runner-Notebook template with additional visualization and JSON-output capabilities.
 
@@ -81,7 +81,7 @@ All exploratory notebooks follow a **consistent structure** based on the Runner-
 - Manual sync required (JSONs needed by subsequent Runner notebooks)
 
 **Visualization requirements:** See [Visualization Strategy](../../docs/documentation/02_Feature_Engineering/01_Visualization_Strategy.md)  
-**Template documentation:** See [Notebook Templates](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md)
+**Template documentation:** See [Notebook Templates](../../docs/templates/Notebook_Templates.md)
 
 ---
 

@@ -72,7 +72,7 @@ Clean extracted features by applying temporal reduction, handling missing values
 
 ### 1. Notebook Structure
 
-**Template:** [Runner-Notebook Template](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md#1-runner-notebook-template-phase-2)
+**Template:** [Runner-Notebook Template](../../docs/templates/Notebook_Templates.md#1-runner-notebook-template-phase-2)
 
 **File:** `notebooks/runners/02b_data_quality.ipynb`
 
@@ -112,7 +112,7 @@ Clean extracted features by applying temporal reduction, handling missing values
 - **Validation:**
   - `features_cleaned.parquet` (schema + NaN counts + plausibility checks)
 
-**Complete template documentation:** [02_Notebook_Templates.md](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md)
+**Complete template documentation:** [Notebook_Templates.md](../../docs/templates/Notebook_Templates.md)
 
 ---
 

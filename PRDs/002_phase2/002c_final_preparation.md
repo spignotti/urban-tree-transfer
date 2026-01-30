@@ -79,7 +79,7 @@ Finalize features by removing redundant columns, detecting and filtering outlier
 
 ### 1. Notebook Structure
 
-**Template:** [Runner-Notebook Template](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md#1-runner-notebook-template-phase-2)
+**Template:** [Runner-Notebook Template](../../docs/templates/Notebook_Templates.md#1-runner-notebook-template-phase-2)
 
 **File:** `notebooks/runners/02c_final_preparation.ipynb`
 
@@ -123,7 +123,7 @@ Finalize features by removing redundant columns, detecting and filtering outlier
   - `train_berlin.parquet` / `val_berlin.parquet`
   - `train_leipzig.parquet` / `val_leipzig.parquet`
 
-**Complete template documentation:** [02_Notebook_Templates.md](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md)
+**Complete template documentation:** [Notebook_Templates.md](../../docs/templates/Notebook_Templates.md)
 
 ---
 

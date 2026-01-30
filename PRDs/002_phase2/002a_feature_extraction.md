@@ -63,7 +63,7 @@ Extract raw features from Phase 1 outputs: correct tree positions using 1m CHM, 
 
 ### 1. Notebook Structure
 
-**Template:** [Runner-Notebook Template](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md#1-runner-notebook-template-phase-2)
+**Template:** [Runner-Notebook Template](../../docs/templates/Notebook_Templates.md#1-runner-notebook-template-phase-2)
 
 **File:** `notebooks/runners/02a_feature_extraction.ipynb`
 
@@ -97,7 +97,7 @@ Extract raw features from Phase 1 outputs: correct tree positions using 1m CHM, 
   - `chm_features.parquet` (schema + NaN counts)
   - `sentinel_features.parquet` (schema + NaN counts)
 
-**Complete template documentation:** [02_Notebook_Templates.md](../../docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md)
+**Complete template documentation:** [Notebook_Templates.md](../../docs/templates/Notebook_Templates.md)
 
 ---
 

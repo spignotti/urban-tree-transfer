@@ -46,7 +46,7 @@ Each prompt should contain:
 | 5 | Exploratory `exp_02_chm_assessment.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
 | 6 | Implement `quality.py` | 002b | `feature_engineering/quality.py` | Done |
 | 7 | Runner notebook `02b_data_quality.ipynb` | 002b | `notebooks/runners/` | Pending |
-| 8 | Exploratory `exp_03_correlation_analysis.ipynb` | 002_exploratory | `notebooks/exploratory/` | Pending |
+| 8 | Exploratory `exp_03_correlation_analysis.ipynb` | 002_exploratory | `notebooks/exploratory/` | Done |
 | 9 | Exploratory `exp_04_outlier_thresholds.ipynb` | 002_exploratory | `notebooks/exploratory/` | Pending |
 | 10 | Exploratory `exp_05_spatial_autocorrelation.ipynb` | 002_exploratory | `notebooks/exploratory/` | Pending |
 | 11 | Implement `selection.py`, `outliers.py`, `splits.py` | 002c | `feature_engineering/` | Pending |
@@ -96,7 +96,7 @@ Task 12: 02c_final_preparation.ipynb (runner)
 
 **Docs:**
 - `PRDs/002_phase2/002a_feature_extraction.md` (notebook structure section)
-- `docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md`
+- `docs/templates/Notebook_Templates.md`
 - `notebooks/runners/01_data_processing.ipynb` (pattern reference)
 
 **Key Requirements:**
@@ -167,7 +167,7 @@ Task 12: 02c_final_preparation.ipynb (runner)
 
 **Docs:**
 - `PRDs/002_phase2/002b_data_quality.md` (notebook structure)
-- `docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md`
+- `docs/templates/Notebook_Templates.md`
 
 **Key Requirements:**
 - Load `temporal_selection.json` and `chm_assessment.json` from Drive
@@ -216,7 +216,7 @@ Task 12: 02c_final_preparation.ipynb (runner)
 
 **Docs:**
 - `PRDs/002_phase2/002c_final_preparation.md` (notebook structure)
-- `docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md`
+- `docs/templates/Notebook_Templates.md`
 
 **Key Requirements:**
 - Load correlation, outlier, spatial configs from Drive
@@ -235,7 +235,7 @@ Task 12: 02c_final_preparation.ipynb (runner)
 | Data Quality PRD | `PRDs/002_phase2/002b_data_quality.md` |
 | Final Preparation PRD | `PRDs/002_phase2/002c_final_preparation.md` |
 | Exploratory PRD | `PRDs/002_phase2/002_exploratory.md` |
-| Notebook Templates | `docs/documentation/02_Feature_Engineering/02_Notebook_Templates.md` |
+| Notebook Templates | `docs/templates/Notebook_Templates.md` |
 | Visualization Strategy | `docs/documentation/02_Feature_Engineering/01_Visualization_Strategy.md` |
 | Workflow & Config | `docs/documentation/02_Feature_Engineering/00_Workflow_and_Configuration.md` |
 | Feature Config | `src/urban_tree_transfer/configs/features/feature_config.yaml` |
