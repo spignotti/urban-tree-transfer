@@ -506,16 +506,19 @@ def extract_sentinel_features(
                     f"Expected {len(s2_features)} bands in {file_path}, found {src.count}."
                 )
             descriptions = list(src.descriptions or [])
-            if descriptions and any(desc is not None for desc in descriptions):
-                expected = s2_features
-                actual = [desc or "" for desc in descriptions]
-                if actual != expected:
+            band_indexes: list[int] | None = None
+            if descriptions and all(desc is not None for desc in descriptions):
+                description_map = {desc: idx + 1 for idx, desc in enumerate(descriptions)}
+                missing = [band for band in s2_features if band not in description_map]
+                if missing:
                     raise ValueError(
-                        f"Sentinel-2 band order mismatch. Expected {expected}, found {actual}."
+                        "Sentinel-2 band descriptions missing expected bands. "
+                        f"Missing={missing}, found={descriptions}."
                     )
+                band_indexes = [description_map[band] for band in s2_features]
             elif descriptions:
                 warnings.warn(
-                    f"Band descriptions missing in {file_path}; unable to validate band order.",
+                    f"Band descriptions incomplete in {file_path}; assuming expected order.",
                     stacklevel=2,
                 )
             nodata_value = src.nodata
@@ -526,7 +529,12 @@ def extract_sentinel_features(
                     (trees_gdf.geometry.iloc[idx].x, trees_gdf.geometry.iloc[idx].y)
                     for idx in batch_indices
                 ]
-                samples = np.array(list(src.sample(batch_coords)), dtype=np.float32)
+                if band_indexes is None:
+                    samples = np.array(list(src.sample(batch_coords)), dtype=np.float32)
+                else:
+                    samples = np.array(
+                        list(src.sample(batch_coords, indexes=band_indexes)), dtype=np.float32
+                    )
                 if np.ma.isMaskedArray(samples):
                     samples = samples.filled(np.nan)
                 if nodata_value is not None:

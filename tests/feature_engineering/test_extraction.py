@@ -218,12 +218,15 @@ def test_extract_sentinel_features_band_order_validation(tmp_path: Path) -> None
     band_count = len(s2_features)
     data = np.stack([np.full((2, 2), i + 1, dtype=np.float32) for i in range(band_count)], axis=0)
     wrong_order = list(reversed(s2_features))
+    band_index_map = {band: idx + 1 for idx, band in enumerate(wrong_order)}
 
     path = sentinel_dir / "S2_berlin_2021_01_median.tif"
     _write_raster(path, data, descriptions=wrong_order)
 
-    with pytest.raises(ValueError, match="band order"):
-        extract_sentinel_features(gdf, sentinel_dir, city="berlin", year=2021, months=[1])
+    result = extract_sentinel_features(gdf, sentinel_dir, city="berlin", year=2021, months=[1])
+
+    expected_band_value = float(band_index_map[s2_features[0]])
+    assert np.isclose(result.loc[0, f"{s2_features[0]}_01"], expected_band_value)
 
 
 def test_extract_sentinel_features_missing_file_warns(tmp_path: Path) -> None:
