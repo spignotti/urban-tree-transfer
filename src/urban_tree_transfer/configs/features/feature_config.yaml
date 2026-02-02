@@ -1,0 +1,197 @@
+# Feature Engineering Configuration
+# Phase 2: Feature Extraction, Quality Control, Final Preparation
+
+# =============================================================================
+# METADATA COLUMNS
+# =============================================================================
+# Columns preserved through the entire pipeline (identifiers, labels, context)
+metadata_columns:
+  - tree_id        # Unique identifier
+  - city           # Source city (berlin/leipzig)
+  - genus_latin    # Target variable for classification
+  - species_latin  # Full species (optional, may be null)
+  - genus_german   # German genus name (optional)
+  - species_german # German species name (optional)
+  - plant_year     # Year planted (for filtering young trees)
+  - height_m       # Cadastre height (different from CHM!)
+  - tree_type      # anlagenbaeume/strassenbaeume (Berlin only)
+  - position_corrected  # Boolean: was position corrected?
+  - correction_distance # Distance in meters (0.0 if not corrected)
+
+# =============================================================================
+# CHM FEATURES
+# =============================================================================
+chm:
+  resolution_m: 1  # Use 1m CHM directly (no resampling!)
+  features:
+    - name: CHM_1m
+      description: "Direct point sample from 1m CHM at tree location"
+      source: raster
+    # Engineered features (added in 002b after extraction):
+    - name: CHM_1m_zscore
+      description: "Z-score normalized CHM within genus"
+      source: engineered
+    - name: CHM_1m_percentile
+      description: "Percentile rank within genus"
+      source: engineered
+
+# =============================================================================
+# SENTINEL-2 SPECTRAL BANDS
+# =============================================================================
+# 10 bands from Sentinel-2 L2A (already in Phase 1 composites)
+spectral_bands:
+  - B2   # Blue (490nm)
+  - B3   # Green (560nm)
+  - B4   # Red (665nm)
+  - B5   # Red Edge 1 (705nm)
+  - B6   # Red Edge 2 (740nm)
+  - B7   # Red Edge 3 (783nm)
+  - B8   # NIR (842nm)
+  - B8A  # NIR narrow (865nm)
+  - B11  # SWIR 1 (1610nm)
+  - B12  # SWIR 2 (2190nm)
+
+# =============================================================================
+# VEGETATION INDICES
+# =============================================================================
+# 13 indices computed in Phase 1 Sentinel-2 composites
+vegetation_indices:
+  broadband:
+    - NDVI      # Normalized Difference Vegetation Index
+    - EVI       # Enhanced Vegetation Index
+    - GNDVI     # Green NDVI
+    - VARI      # Visible Atmospherically Resistant Index
+  red_edge:
+    - NDre1     # Red Edge NDVI (B8A-B5)/(B8A+B5)
+    - NDVIre    # Red Edge NDVI variant
+    - CIre      # Chlorophyll Index Red Edge
+    - IRECI     # Inverted Red-Edge Chlorophyll Index
+    - RTVIcore  # Red-edge Triangular VI
+  water:
+    - NDWI      # Normalized Difference Water Index
+    - MSI       # Moisture Stress Index
+    - NDII      # Normalized Difference Infrared Index
+    - kNDVI     # Kernel NDVI
+
+# =============================================================================
+# TEMPORAL CONFIGURATION
+# =============================================================================
+temporal:
+  reference_year: 2021
+  # Extract ALL 12 months initially (selection happens via exploratory analysis)
+  extraction_months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+  # selected_months: determined by exp_01 → temporal_selection.json
+
+# =============================================================================
+# QUALITY THRESHOLDS
+# =============================================================================
+quality:
+  # NaN handling (PRD 002b)
+  nan_handling:
+    max_nan_months: 2           # Trees with >2 months NaN are removed
+    interior_method: linear     # Linear interpolation for interior gaps
+    edge_method: nearest        # Forward/backward fill for edge gaps
+    max_edge_nan_months: 1      # Remove if ≥2 months missing at start/end
+
+  # NDVI plausibility (PRD 002b)
+  ndvi_plausibility:
+    min_max_ndvi: 0.3           # Tree must have max(NDVI) >= 0.3 in growing season
+    growing_season_months: [4, 5, 6, 7, 8, 9]  # April-September
+
+  # Correlation threshold (PRD 002c)
+  correlation:
+    redundancy_threshold: 0.95  # |r| > 0.95 → remove one feature
+
+# =============================================================================
+# PROCESSING
+# =============================================================================
+processing:
+  batch_size: 50000  # Configurable batch size for raster sampling
+
+# =============================================================================
+# OUTLIER DETECTION
+# =============================================================================
+outliers:
+  # Z-score method
+  zscore:
+    threshold: 4.0              # |z| > 4 → potential outlier
+    min_features_flagged: 3     # Must exceed threshold in ≥3 features
+
+  # Mahalanobis distance
+  mahalanobis:
+    alpha: 0.001                # Chi-squared critical value (p < 0.001)
+
+  # IQR method (for CHM specifically)
+  iqr:
+    multiplier: 2.0             # Q1 - 2*IQR or Q3 + 2*IQR
+
+  # Consensus requirement
+  consensus:
+    min_methods: 3              # Must be flagged by all 3 methods → CRITICAL outlier
+
+# =============================================================================
+# SPATIAL SPLITS
+# =============================================================================
+splits:
+  block_size_m: 500             # 500x500m spatial blocks (validated by exp_05)
+  random_seed: 42
+
+  # City-specific split ratios
+  berlin:
+    role: source
+    train_ratio: 0.70
+    val_ratio: 0.15
+    test_ratio: 0.15
+
+  leipzig:
+    role: target
+    finetune_ratio: 0.80
+    test_ratio: 0.20
+
+# =============================================================================
+# GENUS CLASSIFICATION
+# =============================================================================
+genus_classification:
+  deciduous:
+    - ACER
+    - TILIA
+    - QUERCUS
+    - PLATANUS
+    - FRAXINUS
+    - BETULA
+    - AESCULUS
+    - ROBINIA
+    - CARPINUS
+    - FAGUS
+    - POPULUS
+    - PRUNUS
+    - SORBUS
+    - ULMUS
+    - CORYLUS
+    - SALIX
+    - ALNUS
+    - CRATAEGUS
+    - MALUS
+
+  coniferous:
+    - PINUS
+    - PICEA
+    - ABIES
+    - LARIX
+    - TAXUS
+    - THUJA
+    - JUNIPERUS
+    - PSEUDOTSUGA
+
+  # Thresholds for including conifers in analysis
+  min_genera_for_analysis: 3
+  min_samples_for_analysis: 500
+
+# =============================================================================
+# TREE POSITION CORRECTION (Hybrid Approach: Adaptive Radius + Scoring)
+# =============================================================================
+tree_position_correction:
+  percentile: 75.0           # Use P75 of peak distances for adaptive radius
+  height_weight: 0.7         # Weight for height vs distance in scoring
+  safety_factor: 1.5         # Multiplier for adaptive radius (P75 × 1.5)
+  sample_size: 1000          # Trees to sample for radius estimation

@@ -1,3 +1,5 @@
+import sys
+
 import nox
 
 nox.options.sessions = ["lint", "typecheck"]
@@ -39,6 +41,30 @@ def pre_commit(session: nox.Session) -> None:
 @nox.session
 def test(session: nox.Session) -> None:
     """Run unit tests."""
+    session.env["EXECUTE_NOTEBOOKS"] = "1"
+    session.env["NOTEBOOK_TEST_MODE"] = "1"
+    if sys.platform == "darwin":
+        session.run(
+            "xattr",
+            "-dr",
+            "com.apple.quarantine",
+            session.virtualenv.location,
+            external=True,
+        )
+    session.run(
+        "uv",
+        "run",
+        "--active",
+        "python",
+        "-m",
+        "ipykernel",
+        "install",
+        "--name",
+        "python3",
+        "--prefix",
+        session.virtualenv.location,
+        external=True,
+    )
     session.run(
         "uv",
         "run",
@@ -65,6 +91,30 @@ def ci(session: nox.Session) -> None:
     session.run("uv", "run", "--active", "ruff", "check", ".", external=True)
     session.run("uv", "run", "--active", "ruff", "format", "--check", ".", external=True)
     session.run("uv", "run", "--active", "pyright", external=True)
+    session.env["EXECUTE_NOTEBOOKS"] = "1"
+    session.env["NOTEBOOK_TEST_MODE"] = "1"
+    if sys.platform == "darwin":
+        session.run(
+            "xattr",
+            "-dr",
+            "com.apple.quarantine",
+            session.virtualenv.location,
+            external=True,
+        )
+    session.run(
+        "uv",
+        "run",
+        "--active",
+        "python",
+        "-m",
+        "ipykernel",
+        "install",
+        "--name",
+        "python3",
+        "--prefix",
+        session.virtualenv.location,
+        external=True,
+    )
     session.run(
         "uv",
         "run",

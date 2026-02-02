@@ -24,7 +24,7 @@ Geografische Daten erfordern besondere methodische Sorgfalt:
 
 - Sub-Pixel-Problem: Baumkronen (5-15m) bei 10m Pixelauflösung
 - Mixed Pixels: Überlagerung von Baum, Straße, Gebäude
-- Ungenauigkeiten Im Baukataster: Veraltete/nicht aktualisierte Datensätze, Messungenaugkeiten
+- Ungenauigkeiten im Baumkataster: Veraltete/nicht aktualisierte Datensätze, Messungenauigkeiten
 
 ### Occam's Razor
 
@@ -43,7 +43,7 @@ Die Wahl von Berlin und Leipzig als Untersuchungsstädte basiert auf mehreren me
 **Berlin (Source Domain):**
 
 - **Datenverfügbarkeit**: Hervorragende Datenqualität und -vollständigkeit
-- **Stichprobengröße**: ~800.000 Bäume im Kataster ermöglichen robustes Training
+- **Stichprobengröße**: Sehr großes Baumkataster ermöglicht robustes Training
 - **Diversität**: Hohe Gattungsvielfalt für repräsentative Modellentwicklung
 - **Infrastruktur**: Open-Data-Portal mit gut dokumentierten WFS-Diensten
 
@@ -112,17 +112,17 @@ Feature Engineering
          └── Spatial Splits
          │
          ▼
-Phase 1: Berlin-Optimierung
+Experiment 1: Berlin-Optimierung
          │
          │  Fixiert: Algorithmus, Hyperparameter, Features
          │
          ▼
-Phase 2: Transfer-Evaluation
+Experiment 2: Transfer-Evaluation
          │
          │  Fixiert: Berlin-Modell
          │
          ▼
-Phase 3: Fine-Tuning-Analyse
+Experiment 3: Fine-Tuning-Analyse
 ```
 
 Jede Phase baut auf den fixierten Ergebnissen der vorherigen auf. Rückwärts-Iterationen sind methodisch nicht vorgesehen.
@@ -183,14 +183,6 @@ Nicht alle Bäume im Kataster sind für die Klassifikation geeignet:
 | Ausreichende Samples pro Genus | Mindestens N Bäume pro Klasse für robustes Training |
 | Räumliche Qualität             | Keine offensichtlichen Koordinatenfehler            |
 
-### Gattungs-Isolations-Filter
-
-Bei 10m Pixelauflösung können benachbarte Bäume unterschiedlicher Gattungen zu gemischten spektralen Signaturen führen. Der Gattungs-Isolations-Filter adressiert dieses Problem:
-
-- **Problem**: Bäume mit <20m Abstand zu Bäumen anderer Gattungen haben potentiell kontaminierte Spektralsignaturen
-- **Lösung**: Filterung von Bäumen, die weniger als 20m von einem Baum einer anderen Gattung entfernt sind
-- **Trade-off**: Reduzierte Stichprobengröße, aber reinere spektrale Signaturen pro Gattung
-
 ## Computational Constraints
 
 Die verfügbaren Rechenressourcen beeinflussen maßgeblich das experimentelle Design:
@@ -235,20 +227,3 @@ Diese Constraints beeinflussen die Projektgestaltung:
 - Unsicherheiten werden dokumentiert, nicht versteckt
 - Konfidenzintervalle wo möglich
 - Sensitivitätsanalysen für kritische Parameter
-
-## Dokumentationsstandards
-
-### Struktur pro Experiment
-
-1. **Forschungsfrage**: Was wird getestet?
-2. **Methodik**: Wie wird getestet? (kompakt, Tabellen bevorzugt)
-3. **Ergebnisse**: Was kam heraus? (Zahlen, Visualisierungen)
-4. **Entscheidung**: Was wurde gewählt und warum?
-5. **Limitationen**: Was sind die Einschränkungen?
-
-### Anti-Patterns
-
-- Keine langen Einleitungen
-- Keine Erklärung von ML-Grundlagen
-- Keine Redundanz zwischen Dokumenten
-- Keine Spekulation über nicht durchgeführte Experimente

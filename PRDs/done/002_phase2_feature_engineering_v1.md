@@ -3,7 +3,6 @@
 **PRD ID:** 002
 **Status:** Draft
 **Created:** 2026-01-26
-**Author:** Claude (with user guidance)
 
 ---
 
@@ -58,19 +57,26 @@ urban-tree-transfer/
 │   │   ├── 02b_data_quality.ipynb        # NEW
 │   │   └── 02c_final_preparation.ipynb   # NEW
 │   └── exploratory/
-│       ├── exp_01_temporal_analysis.ipynb    # NEW
-│       ├── exp_02_chm_assessment.ipynb       # NEW
-│       ├── exp_03_correlation_analysis.ipynb # NEW
-│       └── exp_04_outlier_thresholds.ipynb   # NEW
+│       ├── exp_01_temporal_analysis.ipynb        # NEW
+│       ├── exp_02_chm_assessment.ipynb           # NEW
+│       ├── exp_03_correlation_analysis.ipynb     # NEW
+│       ├── exp_04_outlier_thresholds.ipynb       # NEW
+│       └── exp_05_spatial_autocorrelation.ipynb  # NEW
 ├── docs/documentation/
 │   └── 02_Feature_Engineering/
 │       └── 02_Feature_Engineering_Methodik.md  # NEW
 └── outputs/
-    └── metadata/
-        ├── feature_extraction_summary.json
-        ├── temporal_selection.json       # From exploratory
-        ├── correlation_removal.json      # From exploratory
-        └── outlier_thresholds.json       # From exploratory
+    ├── phase_1/                 # Existing from Phase 1
+    │   ├── logs/
+    │   └── metadata/
+    └── phase_2/                 # NEW for Phase 2
+        ├── logs/
+        └── metadata/
+            ├── feature_extraction_summary.json
+            ├── temporal_selection.json           # From exploratory
+            ├── correlation_removal.json          # From exploratory
+            ├── outlier_thresholds.json           # From exploratory
+            └── spatial_autocorrelation.json      # From exploratory
 ```
 
 ### 2.2 Data Flow
@@ -160,16 +166,16 @@ Phase 1 Outputs
 # Metadata columns preserved through pipeline (from Phase 1 trees schema)
 # These columns are NOT features - they are identifiers and labels
 metadata_columns:
-  - tree_id         # Unique identifier
-  - city            # City name (Berlin/Leipzig)
-  - genus_latin     # Target label (UPPERCASE)
-  - species_latin   # Species (lowercase, nullable)
-  - genus_german    # German genus name (nullable)
-  - species_german  # German species name (nullable)
-  - plant_year      # Planting year (used for filtering, then dropped)
-  - height_m        # Cadastre tree height (kept as reference)
-  - tree_type       # Source layer identifier (nullable)
-  - geometry        # Point location
+  - tree_id # Unique identifier
+  - city # City name (Berlin/Leipzig)
+  - genus_latin # Target label (UPPERCASE)
+  - species_latin # Species (lowercase, nullable)
+  - genus_german # German genus name (nullable)
+  - species_german # German species name (nullable)
+  - plant_year # Planting year (used for filtering, kept for analysis)
+  - height_m # Cadastre tree height (kept as reference)
+  - tree_type # Source layer identifier (nullable)
+  - geometry # Point location
 
 # CHM Features (1m resolution, direct extraction, no resampling)
 # Note: height_m (cadastre) and CHM_1m (raster) are DIFFERENT sources
@@ -187,16 +193,16 @@ chm:
 
 # Sentinel-2 Spectral Bands
 spectral_bands:
-  - B2    # Blue (10m)
-  - B3    # Green (10m)
-  - B4    # Red (10m)
-  - B5    # Red Edge 1 (20m)
-  - B6    # Red Edge 2 (20m)
-  - B7    # Red Edge 3 (20m)
-  - B8    # NIR (10m)
-  - B8A   # Red Edge 4 (20m)
-  - B11   # SWIR 1 (20m)
-  - B12   # SWIR 2 (20m)
+  - B2 # Blue (10m)
+  - B3 # Green (10m)
+  - B4 # Red (10m)
+  - B5 # Red Edge 1 (20m)
+  - B6 # Red Edge 2 (20m)
+  - B7 # Red Edge 3 (20m)
+  - B8 # NIR (10m)
+  - B8A # Red Edge 4 (20m)
+  - B11 # SWIR 1 (20m)
+  - B12 # SWIR 2 (20m)
 
 # Vegetation Indices
 vegetation_indices:
@@ -212,7 +218,6 @@ vegetation_indices:
     - CIre
     - IRECI
     - RTVIcore
-    - MCARI
   water:
     - NDWI
     - MSI
@@ -220,39 +225,42 @@ vegetation_indices:
 
 # Temporal Configuration
 temporal:
-  extraction_months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]  # Extract all 12 months
+  year: 2021 # Reference year from Phase 1
+  extraction_months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] # Extract all 12 months
   # selected_months: DETERMINED BY exp_01_temporal_analysis.ipynb
   # DO NOT hardcode - let exploratory analysis decide
 
 # Plant Year Filtering
 # Trees planted recently may not be visible in satellite data
+# Based on 2021 Sentinel-2 imagery, exclude trees planted after 2018
+# This gives 3+ years growth time for satellite visibility
 plant_year:
-  min_year: null  # To be determined - filter young trees
-  # After filtering, plant_year column can be dropped from features
+  max_year: 2018 # Trees must be planted before 2019 (≥3 years old in 2021)
+  # plant_year column is kept in metadata for future analyses
 
 # Quality Control Thresholds
 # NOTE: All thresholds below are PRELIMINARY and need validation in exploratory notebooks
 # Each should be either: (1) statistically justified, or (2) sensitivity-analyzed
 quality:
-  nan_month_threshold: 2        # NEEDS JUSTIFICATION: Why 2? Sensitivity analysis in exp_01
-  ndvi_min_threshold: 0.3       # NEEDS JUSTIFICATION: Literature reference or sensitivity analysis
-  correlation_threshold: 0.95   # NEEDS JUSTIFICATION: Literature reference (r²=0.90 common)
+  nan_month_threshold: 2 # NEEDS JUSTIFICATION: Why 2? Sensitivity analysis in exp_01
+  ndvi_min_threshold: 0.3 # NEEDS JUSTIFICATION: Literature reference or sensitivity analysis
+  correlation_threshold: 0.95 # NEEDS JUSTIFICATION: Literature reference (r²=0.90 common)
 
 # Outlier Detection
 # NOTE: All thresholds need statistical justification in exp_04_outlier_thresholds.ipynb
 outliers:
-  zscore_threshold: 3.0         # Standard, but document rationale
-  zscore_feature_count: 10      # NEEDS JUSTIFICATION: Why 10 features?
-  mahalanobis_alpha: 0.001      # NEEDS JUSTIFICATION: Why not 0.01 or 0.0001?
-  iqr_multiplier: 1.5           # Tukey's standard, document reference
+  zscore_threshold: 3.0 # Standard, but document rationale
+  zscore_feature_count: 10 # NEEDS JUSTIFICATION: Why 10 features?
+  mahalanobis_alpha: 0.001 # NEEDS JUSTIFICATION: Why not 0.01 or 0.0001?
+  iqr_multiplier: 1.5 # Tukey's standard, document reference
 
 # Spatial Splits
-# NOTE: block_size needs spatial autocorrelation analysis in exploratory
+# NOTE: block_size needs spatial autocorrelation analysis in exp_05_spatial_autocorrelation.ipynb
 splits:
-  block_size_m: 500             # NEEDS JUSTIFICATION: Based on spatial autocorr decay
-  train_ratio: 0.8              # Standard 80/20 split
+  block_size_m: 500 # DETERMINED BY exp_05: Spatial autocorrelation decay distance
+  train_ratio: 0.8 # Standard 80/20 split
   random_seed: 42
-  min_samples_per_genus: 500    # Matches Phase 1 viability filter
+  min_samples_per_genus: 500 # Matches Phase 1 viability filter
 
 # Genus Classification (deciduous only for spectral homogeneity)
 genus_filter:
@@ -336,13 +344,15 @@ def get_all_feature_names(months: list[int] | None = None) -> list[str]:
 **Purpose:** Extract raw features from Phase 1 outputs
 
 **Inputs:**
+
 - `data/phase_1_processing/trees/trees_filtered_viable.gpkg`
 - `data/phase_1_processing/chm/CHM_1m_{city}.tif`
 - `data/phase_1_processing/sentinel2/S2_{city}_{year}_{MM}_median.tif`
 
 **Outputs:**
+
 - `data/phase_2_features/trees_with_features_{city}.gpkg`
-- `outputs/metadata/feature_extraction_summary.json`
+- `outputs/phase_2/metadata/feature_extraction_summary.json`
 
 **Processing Steps:**
 
@@ -410,13 +420,15 @@ def extract_all_features(
 **Purpose:** Clean features and handle missing values
 
 **Inputs:**
+
 - `data/phase_2_features/trees_with_features_{city}.gpkg`
-- `outputs/metadata/temporal_selection.json` (from exploratory)
-- `outputs/metadata/chm_assessment.json` (from exploratory)
+- `outputs/phase_2/metadata/temporal_selection.json` (from exploratory)
+- `outputs/phase_2/metadata/chm_assessment.json` (from exploratory)
 
 **Outputs:**
+
 - `data/phase_2_features/trees_clean_{city}.gpkg`
-- `outputs/metadata/data_quality_summary.json`
+- `outputs/phase_2/metadata/data_quality_summary.json`
 
 **Processing Steps:**
 
@@ -430,34 +442,35 @@ def extract_all_features(
 
 3. **Plant Year Filtering**
    - Filter out recently planted trees (may not be visible in satellite data)
-   - Threshold to be determined (e.g., planted before 2018 for 2021 imagery)
-   - After filtering, `plant_year` column is no longer needed for ML
-   - Keep in metadata for reference but exclude from feature set
+   - **Threshold: planted_year ≤ 2018** (≥3 years old in 2021)
+   - Rationale: Young trees need time to develop detectable canopy in 10m Sentinel-2 pixels
+   - `plant_year` column is kept in metadata for potential future analyses
 
-5. **Temporal Reduction**
+4. **Temporal Reduction**
    - Load `temporal_selection.json` for selected months
    - Drop columns for non-selected months
    - Log feature count reduction
 
-6. **NaN Handling** (CRITICAL: Avoid data leakage!)
+5. **NaN Handling** (CRITICAL: Avoid data leakage!)
    - Analyze NaN distribution per tree
    - Remove trees with >2 months missing (threshold from config)
-   - **Within-tree interpolation only** (no cross-tree information):
-     - Linear temporal interpolation for interior NaNs (between valid months)
-     - Edge NaNs (first/last selected month missing): forward/backward fill from adjacent month
-     - If edge cannot be filled: use tree's own mean across available months for that feature
-   - Trees that still have NaN after within-tree interpolation → remove
+   - **Within-tree temporal filling only** (no cross-tree information):
+     - **Interior NaNs:** Linear interpolation between adjacent valid months
+     - **Edge NaNs:** Linear extrapolation using trend from available months
+       - Guaranteed sufficient data points (≥3 months) due to >2 month filter
+       - Example: First month missing with [NaN, 0.65, 0.70, 0.75] → slope from months 2-4 → extrapolate to 0.60
+   - Trees that still have NaN after temporal filling → remove
    - **NO genus/city means** - this would leak information between trees
 
-7. **CHM Feature Engineering**
+6. **CHM Feature Engineering**
    - Compute `CHM_1m_zscore` per city (using all trees - no leakage since CHM is input data)
    - Compute `CHM_1m_percentile` per city (percentile rank)
 
-8. **NDVI Plausibility**
+7. **NDVI Plausibility**
    - Compute `max_NDVI` across all months
    - Remove trees with `max_NDVI < 0.3`
 
-9. **Validation**
+8. **Validation**
    - Assert 0 NaN values
    - Validate all expected columns present
    - Save per-city clean datasets
@@ -473,10 +486,18 @@ def filter_deciduous_genera(
 
 def filter_by_plant_year(
     gdf: gpd.GeoDataFrame,
-    min_year: int | None = None,
-    max_year: int | None = None,
+    max_year: int = 2018,
+    reference_year: int = 2021,
 ) -> gpd.GeoDataFrame:
-    """Filter trees by planting year to exclude recently planted trees."""
+    """Filter trees by planting year to exclude recently planted trees.
+
+    Args:
+        max_year: Maximum planting year (trees must be planted ≤ this year)
+        reference_year: Sentinel-2 imagery year for context
+
+    Returns:
+        Filtered GeoDataFrame with only established trees (≥3 years old)
+    """
 
 def apply_temporal_selection(
     gdf: gpd.GeoDataFrame,
@@ -503,11 +524,13 @@ def interpolate_features_within_tree(
     feature_columns: list[str],
     selected_months: list[int],
 ) -> gpd.GeoDataFrame:
-    """Interpolate NaN values using within-tree temporal information only.
+    """Fill NaN values using within-tree temporal information only.
 
     No cross-tree information is used to avoid data leakage:
-    - Interior NaNs: linear interpolation between adjacent months
-    - Edge NaNs: forward/backward fill, then tree's own feature mean
+    - Interior NaNs: linear interpolation between adjacent valid months
+    - Edge NaNs: linear extrapolation using trend from available months
+      (sufficient data guaranteed by max_nan_months=2 filter)
+    - Remaining NaN: tree will be removed in validation step
     """
 
 def compute_chm_engineered_features(
@@ -534,15 +557,17 @@ def filter_ndvi_plausibility(
 **Purpose:** Finalize features and create train/val splits
 
 **Inputs:**
+
 - `data/phase_2_features/trees_clean_{city}.gpkg`
-- `outputs/metadata/correlation_removal.json` (from exploratory)
-- `outputs/metadata/outlier_thresholds.json` (from exploratory)
+- `outputs/phase_2/metadata/correlation_removal.json` (from exploratory)
+- `outputs/phase_2/metadata/outlier_thresholds.json` (from exploratory)
 
 **Outputs:**
+
 - `data/phase_2_features/final/{city}_train.gpkg`
 - `data/phase_2_features/final/{city}_val.gpkg`
-- `outputs/metadata/split_statistics.json`
-- `outputs/metadata/final_dataset_summary.json`
+- `outputs/phase_2/metadata/split_statistics.json`
+- `outputs/phase_2/metadata/final_dataset_summary.json`
 
 **Processing Steps:**
 
@@ -643,14 +668,16 @@ These notebooks analyze data and produce configuration files for the runners.
 **Purpose:** Determine optimal months using JM distance analysis
 
 **Key Tasks:**
+
 - Calculate univariate JM distance per feature × month × genus pair
 - Aggregate JM scores across genus pairs
 - Visualize monthly discriminability patterns
 - Compare across cities for consistency
 - **Fix JM implementation** (values too low in legacy)
-- Output: `temporal_selection.json` with selected months
+- Output: `outputs/phase_2/metadata/temporal_selection.json` with selected months
 
 **Known Issue:** Legacy JM values were too low. Validate against:
+
 - Bruzzone et al. (1995) reference implementation
 - Synthetic test case with known separability
 
@@ -659,33 +686,51 @@ These notebooks analyze data and produce configuration files for the runners.
 **Purpose:** Evaluate CHM feature quality and transfer risk
 
 **Key Tasks:**
+
 - ANOVA η² for discriminative power
 - Cohen's d for cross-city consistency
 - Validate 1m CHM extraction quality
 - Design engineered features (Z-score, percentile)
-- Output: `chm_assessment.json` with feature decisions
+- Output: `outputs/phase_2/metadata/chm_assessment.json` with feature decisions
 
 #### exp_03_correlation_analysis.ipynb
 
 **Purpose:** Identify redundant features within spectral groups
 
 **Key Tasks:**
+
 - Classify features into groups (bands, broadband VI, red-edge VI, water VI)
 - Calculate intra-class correlation matrices
 - Apply threshold (|r| > 0.95) with priority rules
 - Validate temporal consistency (phenological patterns)
-- Output: `correlation_removal.json` with features to drop
+- Output: `outputs/phase_2/metadata/correlation_removal.json` with features to drop
 
 #### exp_04_outlier_thresholds.ipynb
 
 **Purpose:** Determine and validate outlier detection thresholds
 
 **Key Tasks:**
+
 - Sensitivity analysis for Z-score threshold
 - Validate Mahalanobis α level
 - IQR multiplier evaluation
 - Document statistical justification for thresholds
-- Output: `outlier_thresholds.json` with validated parameters
+- Output: `outputs/phase_2/metadata/outlier_thresholds.json` with validated parameters
+
+#### exp_05_spatial_autocorrelation.ipynb
+
+**Purpose:** Determine optimal spatial block size for train/val splits
+
+**Key Tasks:**
+
+- Compute Moran's I for spectral features at multiple distance lags
+- Analyze spatial autocorrelation decay patterns
+- Identify distance threshold where autocorrelation becomes negligible
+- Compare across features and cities for consistency
+- Validate 500m block size (or determine new threshold)
+- Output: `outputs/phase_2/metadata/spatial_autocorrelation.json` with justified block_size
+
+**Rationale:** Spatial blocks must be large enough to avoid autocorrelation between train/val sets, which would inflate performance metrics. The block size should exceed the spatial correlation range of the features.
 
 ---
 
@@ -698,12 +743,14 @@ These notebooks analyze data and produce configuration files for the runners.
 **Challenge:** We can't use training-set means because the train/val split happens at the end (02c), after NaN handling (02b).
 
 **Solution:** Use **within-tree interpolation only** - no cross-tree statistics:
+
 1. Linear temporal interpolation for interior NaNs (month 4 missing? interpolate from months 3 and 5)
 2. Edge NaNs (first/last selected month): forward/backward fill from adjacent month
 3. If edge still NaN: use tree's own mean for that feature across other months
 4. Trees with remaining NaNs → remove (these are unfixable without cross-tree leakage)
 
 **Implementation:**
+
 ```python
 def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]) -> pd.Series:
     """Interpolate one tree's temporal series without cross-tree info."""
@@ -730,6 +777,7 @@ def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]
 **Problem:** Legacy used 10m resampled CHM which caused neighbor contamination (r=0.638).
 
 **Solution:**
+
 - Extract directly from 1m CHM at tree point (no resampling)
 - Keep only: `CHM_1m`, `height_m_zscore`, `height_m_percentile`
 - Remove: `CHM_mean`, `CHM_max`, `CHM_std`, `crown_ratio` (all contaminated)
@@ -739,6 +787,7 @@ def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]
 **Problem:** Legacy JM values were consistently low (0.5-1.2) even for clearly separable genera.
 
 **Investigation Tasks:**
+
 1. Validate formula against Bruzzone et al. (1995)
 2. Test with synthetic data (known μ, σ differences)
 3. Check numerical stability (log operations, small variances)
@@ -757,18 +806,21 @@ def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]
 ## 6. Validation Criteria
 
 ### 6.1 Feature Extraction (02a)
+
 - [ ] All trees have CHM_1m value (no NaN from extraction)
 - [ ] Feature count matches config (1 CHM + 23 bands × 12 months = 277)
 - [ ] CRS is EPSG:25833
 - [ ] Metadata columns preserved
 
 ### 6.2 Data Quality (02b)
+
 - [ ] 0 NaN values in output
 - [ ] Temporal reduction applied correctly (per temporal_selection.json)
 - [ ] No data leakage: imputation stats from training only
 - [ ] NDVI plausibility: no trees with max_NDVI < 0.3
 
 ### 6.3 Final Preparation (02c)
+
 - [ ] Redundant features removed per config
 - [ ] Outlier removal rate reasonable (~1-3%)
 - [ ] All genera meet minimum sample threshold
@@ -777,6 +829,7 @@ def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]
 - [ ] No spatial overlap between train and val
 
 ### 6.4 Overall Pipeline
+
 - [ ] Consistent tree_id tracking through pipeline
 - [ ] Metadata JSON files generated at each step
 - [ ] Processing can be resumed (skip logic for existing outputs)
@@ -787,16 +840,19 @@ def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]
 ## 7. Dependencies
 
 ### 7.1 Phase 1 Outputs Required
+
 - `trees_filtered_viable.gpkg` - Harmonized tree cadastres
 - `CHM_1m_{city}.tif` - 1m Canopy Height Models
 - `S2_{city}_{year}_{MM}_median.tif` - Monthly Sentinel-2 composites
 
 ### 7.2 Python Dependencies (existing)
+
 - geopandas, rasterio, pandas, numpy
 - scikit-learn (StratifiedGroupKFold)
 - scipy (Mahalanobis, chi-squared)
 
 ### 7.3 New Config File
+
 - `configs/features/feature_config.yaml` - Must be created first
 
 ---
@@ -804,11 +860,13 @@ def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]
 ## 8. Execution Order
 
 ### Initial Setup
+
 1. Create `configs/features/feature_config.yaml`
 2. Extend `config/loader.py` with feature config functions
 3. Implement source modules
 
 ### Runner Sequence
+
 ```
 02a_feature_extraction.ipynb
         │
@@ -829,21 +887,22 @@ def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]
 ```
 
 ### Exploratory Notebooks (can run in parallel after 02a)
-- exp_01_temporal_analysis → produces `temporal_selection.json`
-- exp_02_chm_assessment → produces `chm_assessment.json`
-- exp_03_correlation_analysis → produces `correlation_removal.json`
-- exp_04_outlier_thresholds → produces `outlier_thresholds.json`
+
+- exp_01_temporal_analysis → produces `outputs/phase_2/metadata/temporal_selection.json`
+- exp_02_chm_assessment → produces `outputs/phase_2/metadata/chm_assessment.json`
+- exp_03_correlation_analysis → produces `outputs/phase_2/metadata/correlation_removal.json`
+- exp_04_outlier_thresholds → produces `outputs/phase_2/metadata/outlier_thresholds.json`
 
 ---
 
 ## 9. Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
+| Risk                     | Mitigation                                                        |
+| ------------------------ | ----------------------------------------------------------------- |
 | JM implementation issues | Runner uses output regardless; fix in exploratory as time permits |
-| Large dataset memory | Batch processing (50k trees), lazy loading rasters |
-| Sentinel-2 cloud gaps | Already handled by Phase 1 median composites |
-| Cross-city inconsistency | Same config applied to both; validation checks |
+| Large dataset memory     | Batch processing (50k trees), lazy loading rasters                |
+| Sentinel-2 cloud gaps    | Already handled by Phase 1 median composites                      |
+| Cross-city inconsistency | Same config applied to both; validation checks                    |
 
 ---
 
@@ -860,16 +919,19 @@ def interpolate_within_tree(row: pd.Series, feature_base: str, months: list[int]
 ## 11. References
 
 ### Codebase
+
 - Phase 1 runner: `notebooks/runners/01_data_processing.ipynb`
 - Existing utilities: `src/urban_tree_transfer/utils/`
 - Config patterns: `src/urban_tree_transfer/config/`
 
 ### Legacy Documentation
+
 - `legacy/documentation/02_Feature_Engineering/*.md`
 - `legacy/notebooks/02_feature_engineering/*.md`
 - `legacy/documentation/02_Feature_Engineering/99_Methodische_Verbesserungen.md`
 
 ### Literature
+
 - Bruzzone et al. (1995) - JM distance reference
 - Tukey (1977) - IQR outlier detection
 
