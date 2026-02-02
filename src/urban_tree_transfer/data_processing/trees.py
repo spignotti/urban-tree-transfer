@@ -13,6 +13,7 @@ import requests
 from requests.exceptions import ConnectionError, ConnectTimeout, ReadTimeout
 
 from urban_tree_transfer.config import MIN_SAMPLES_PER_GENUS, PROJECT_CRS
+from urban_tree_transfer.utils.strings import normalize_city_name
 
 _ALLOWED_GEOMETRIES = {"Point", "MultiPoint"}
 _DEFAULT_BUFFER_M = 500.0
@@ -142,10 +143,11 @@ def _find_cached_trees(city_name: str, cache_dir: Path | None) -> Path | None:
     if not cache_dir.exists():
         return None
 
+    city_key = normalize_city_name(city_name)
     # Try common filename patterns
     patterns = [
-        _CACHE_FILENAME_PATTERN.format(city=city_name.lower()),
-        f"{city_name.lower()}_trees.gpkg",
+        _CACHE_FILENAME_PATTERN.format(city=city_key),
+        f"{city_key}_trees.gpkg",
         f"{city_name}_trees_raw.gpkg",
     ]
 
@@ -369,7 +371,7 @@ def harmonize_trees(gdf: gpd.GeoDataFrame, city_config: dict[str, Any]) -> gpd.G
     df = normalize_tree_geometries(gdf.copy())
 
     df["tree_id"] = _get_column("tree_id").astype(str)
-    df["city"] = city_config["name"]
+    df["city"] = normalize_city_name(str(city_config["name"]))
     df["genus_latin"] = _get_column("genus_latin").apply(_normalize_genus)
     df["species_latin"] = _get_column("species_latin").apply(_normalize_species)
 
@@ -433,7 +435,7 @@ def summarize_tree_cadastre(gdf: gpd.GeoDataFrame, city_name: str) -> dict[str, 
         geometry_types = sorted(gdf.geometry.type.unique().tolist())
 
     return {
-        "city": city_name,
+        "city": normalize_city_name(city_name),
         "records": len(gdf),
         "crs": str(gdf.crs) if gdf.crs else None,
         "geometry_types": geometry_types,

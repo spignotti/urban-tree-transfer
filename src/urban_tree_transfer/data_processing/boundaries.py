@@ -15,6 +15,7 @@ from shapely.validation import make_valid
 
 from urban_tree_transfer.config import PROJECT_CRS
 from urban_tree_transfer.config.loader import load_city_config
+from urban_tree_transfer.utils.strings import normalize_city_name
 
 
 def validate_polygon_geometries(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -153,7 +154,7 @@ def load_boundaries(cities: list[str], config_dir: Path) -> gpd.GeoDataFrame:
         city_config = load_city_config(city, config_dir=config_dir)
         gdf = download_city_boundary(city_config)
         gdf = clean_boundaries(gdf)
-        gdf["city"] = city_config["name"]
+        gdf["city"] = normalize_city_name(str(city_config["name"]))
         gdfs.append(gdf)
     combined = gpd.GeoDataFrame(pd.concat(gdfs, ignore_index=True), crs=PROJECT_CRS)
     return combined

@@ -1,0 +1,54 @@
+{
+  "notebook": "exp_01_temporal_analysis",
+  "execution_start": "2026-02-02T19:46:31.573791",
+  "execution_end": "2026-02-02T20:05:48.625754",
+  "steps": [
+    {
+      "name": "Data Loading & Validation",
+      "status": "success",
+      "start_time": "2026-02-02T19:46:31.616174",
+      "end_time": "2026-02-02T19:51:48.435284",
+      "records": 333344,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "JM Distance Computation",
+      "status": "success",
+      "start_time": "2026-02-02T19:51:48.457917",
+      "end_time": "2026-02-02T19:52:09.626894",
+      "records": 9627,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Cross-City JM Consistency Analysis",
+      "status": "error",
+      "start_time": "2026-02-02T19:52:13.746701",
+      "end_time": "2026-02-02T19:52:13.755650",
+      "records": null,
+      "warnings": [],
+      "errors": [
+        "Cannot convert non-finite values (NA or inf) to integer"
+      ]
+    },
+    {
+      "name": "Cross-City JM Consistency Analysis",
+      "status": "success",
+      "start_time": "2026-02-02T20:01:45.847924",
+      "end_time": "2026-02-02T20:01:45.862477",
+      "records": 12,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Cross-City JM Consistency Analysis",
+      "status": "success",
+      "start_time": "2026-02-02T20:05:28.782683",
+      "end_time": "2026-02-02T20:05:28.805498",
+      "records": 12,
+      "warnings": [],
+      "errors": []
+    }
+  ]
+}

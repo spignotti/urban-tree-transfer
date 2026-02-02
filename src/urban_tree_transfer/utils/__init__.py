@@ -9,6 +9,7 @@ from .geo import (
     validate_geometries,
 )
 from .logging import ExecutionLog, log_error, log_step, log_success, log_warning
+from .strings import normalize_city_name
 
 if TYPE_CHECKING:
     from .plotting import save_figure, setup_plotting
@@ -62,6 +63,7 @@ __all__ = [
     "log_step",
     "log_success",
     "log_warning",
+    "normalize_city_name",
     "save_figure",
     "setup_plotting",
     "validate_chm_assessment",

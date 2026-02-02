@@ -18,6 +18,7 @@ from shapely.geometry import box
 from sklearn.model_selection import StratifiedGroupKFold
 
 from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
+from urban_tree_transfer.utils.strings import normalize_city_name
 
 
 def create_spatial_blocks(
@@ -46,7 +47,7 @@ def create_spatial_blocks(
 
     grids: list[gpd.GeoDataFrame] = []
     for city, group in trees_gdf.groupby("city"):
-        city_name = str(city)
+        city_name = normalize_city_name(str(city))
         if group.empty:
             continue
         minx, miny, maxx, maxy = group.total_bounds
@@ -58,7 +59,7 @@ def create_spatial_blocks(
             for iy, y in enumerate(ys):
                 records.append(
                     {
-                        "city": city,
+                        "city": city_name,
                         "grid_x": ix,
                         "grid_y": iy,
                         "block_id": f"{city_name[:8]}_{ix:04d}_{iy:04d}",

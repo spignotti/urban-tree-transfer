@@ -5,6 +5,7 @@ from geopandas import GeoDataFrame
 from shapely.geometry import Point
 
 from urban_tree_transfer.data_processing.trees import harmonize_trees
+from urban_tree_transfer.utils.strings import normalize_city_name
 
 
 def test_harmonize_trees_schema(berlin_config):
@@ -42,4 +43,4 @@ def test_harmonize_trees_schema(berlin_config):
     assert harmonized["tree_id"].dtype == object
     assert harmonized["plant_year"].dtype == pd.Int64Dtype()
     assert harmonized["height_m"].dtype == pd.Float64Dtype()
-    assert harmonized["city"].iloc[0] == berlin_config["name"]
+    assert harmonized["city"].iloc[0] == normalize_city_name(berlin_config["name"])

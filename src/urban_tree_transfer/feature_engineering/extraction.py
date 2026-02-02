@@ -28,6 +28,7 @@ from urban_tree_transfer.config.loader import (
 )
 from urban_tree_transfer.utils.geo import ensure_project_crs
 from urban_tree_transfer.utils.schema_validation import validate_phase2a_output
+from urban_tree_transfer.utils.strings import normalize_city_name
 
 _DEFAULT_BATCH_SIZE = 50000
 _DEFAULT_SAMPLING_RADIUS_M = 5.0
@@ -483,6 +484,7 @@ def extract_sentinel_features(
     trees_gdf = ensure_project_crs(trees_gdf.copy())
 
     s2_features = get_all_s2_features()
+    city_key = normalize_city_name(city)
     valid_mask = ~trees_gdf.geometry.is_empty & trees_gdf.geometry.notnull()
     valid_indices = np.where(valid_mask)[0]
 
@@ -501,13 +503,23 @@ def extract_sentinel_features(
         trees_gdf = cast(gpd.GeoDataFrame, trees_gdf.drop(columns=overlap_cols))
 
     for month_index, month in enumerate(months_sorted):
-        file_path = sentinel_dir / f"S2_{city}_{year}_{month:02d}_median.tif"
+        file_path = sentinel_dir / f"S2_{city_key}_{year}_{month:02d}_median.tif"
         if not file_path.exists():
-            warnings.warn(
-                f"Sentinel-2 composite missing for {city} {year}-{month:02d}: {file_path}",
-                stacklevel=2,
-            )
-            continue
+            title_name = city.title()
+            fallback_path = sentinel_dir / f"S2_{title_name}_{year}_{month:02d}_median.tif"
+            if fallback_path.exists():
+                warnings.warn(
+                    "Sentinel-2 composite uses non-normalized city name. "
+                    f"Expected {file_path.name}, found {fallback_path.name}.",
+                    stacklevel=2,
+                )
+                file_path = fallback_path
+            else:
+                warnings.warn(
+                    f"Sentinel-2 composite missing for {city_key} {year}-{month:02d}: {file_path}",
+                    stacklevel=2,
+                )
+                continue
 
         with rasterio.open(file_path) as src:
             if src.count != len(s2_features):

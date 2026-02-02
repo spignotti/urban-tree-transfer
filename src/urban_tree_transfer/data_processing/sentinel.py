@@ -14,6 +14,7 @@ import pandas as pd
 import rasterio
 
 from urban_tree_transfer.config import PROJECT_CRS, SPECTRAL_BANDS, VEGETATION_INDICES
+from urban_tree_transfer.utils.strings import normalize_city_name
 
 DEFAULT_BUFFER_M = 500.0
 
@@ -135,6 +136,7 @@ def create_gee_tasks(
     merged_geom = boundary.geometry.unary_union
     ee_geom = _geometry_to_ee(merged_geom)
 
+    city_key = normalize_city_name(city)
     tasks: list[Any] = []
     for month in months:
         next_year = year + 1 if month == 12 else year
@@ -155,7 +157,7 @@ def create_gee_tasks(
         out_bands = SPECTRAL_BANDS + VEGETATION_INDICES
         final_img = median_img.select(out_bands).toFloat()
 
-        description = f"S2_{city}_{year}_{month:02d}_median"
+        description = f"S2_{city_key}_{year}_{month:02d}_median"
         task = ee.batch.Export.image.toDrive(
             image=final_img,
             description=description,

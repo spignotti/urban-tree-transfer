@@ -1,0 +1,174 @@
+{
+  "analysis_date": "2026-02-02T20:05:46.165182Z",
+  "input_files": [
+    "trees_with_features_berlin.gpkg",
+    "trees_with_features_leipzig.gpkg"
+  ],
+  "total_trees_analyzed": 333344,
+  "viable_genera": [
+    "ACER",
+    "AESCULUS",
+    "AILANTHUS",
+    "ALNUS",
+    "BETULA",
+    "CARPINUS",
+    "CORNUS",
+    "CORYLUS",
+    "CRATAEGUS",
+    "FAGUS",
+    "FRAXINUS",
+    "GLEDITSIA",
+    "JUGLANS",
+    "LIQUIDAMBAR",
+    "MALUS",
+    "PICEA",
+    "PINUS",
+    "PLATANUS",
+    "POPULUS",
+    "PRUNUS",
+    "PYRUS",
+    "QUERCUS",
+    "ROBINIA",
+    "SALIX",
+    "SOPHORA",
+    "SORBUS",
+    "TAXUS",
+    "THUJA",
+    "TILIA",
+    "ULMUS"
+  ],
+  "genus_pairs_analyzed": 496,
+  "cross_city_validation": {
+    "spearman_rho": 0.9510489510489512,
+    "p_value": 2.0384246324655723e-06,
+    "interpretation": "high consistency - average JM selection valid",
+    "top8_berlin": [
+      6,
+      8,
+      7,
+      9,
+      5,
+      10,
+      4,
+      3
+    ],
+    "top8_leipzig": [
+      8,
+      6,
+      9,
+      10,
+      7,
+      5,
+      4,
+      11
+    ],
+    "consistent_months": [
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "berlin_only": [
+      3
+    ],
+    "leipzig_only": [
+      11
+    ]
+  },
+  "monthly_jm_statistics": {
+    "1": {
+      "mean": 0.7075,
+      "std": 0.2062,
+      "min": 0.1144,
+      "max": 1.1347
+    },
+    "2": {
+      "mean": 0.7818,
+      "std": 0.2022,
+      "min": 0.0283,
+      "max": 1.1041
+    },
+    "3": {
+      "mean": 0.7968,
+      "std": 0.2085,
+      "min": 0.0272,
+      "max": 1.0967
+    },
+    "4": {
+      "mean": 0.8248,
+      "std": 0.1905,
+      "min": 0.1028,
+      "max": 1.1268
+    },
+    "5": {
+      "mean": 0.8706,
+      "std": 0.2055,
+      "min": 0.1305,
+      "max": 1.135
+    },
+    "6": {
+      "mean": 0.9038,
+      "std": 0.1909,
+      "min": 0.1873,
+      "max": 1.1938
+    },
+    "7": {
+      "mean": 0.8816,
+      "std": 0.2123,
+      "min": 0.1119,
+      "max": 1.1815
+    },
+    "8": {
+      "mean": 0.905,
+      "std": 0.1966,
+      "min": 0.1697,
+      "max": 1.1776
+    },
+    "9": {
+      "mean": 0.894,
+      "std": 0.1994,
+      "min": 0.1368,
+      "max": 1.1835
+    },
+    "10": {
+      "mean": 0.8709,
+      "std": 0.2051,
+      "min": 0.1526,
+      "max": 1.1524
+    },
+    "11": {
+      "mean": 0.8082,
+      "std": 0.2065,
+      "min": 0.1397,
+      "max": 1.1191
+    },
+    "12": {
+      "mean": 0.7475,
+      "std": 0.219,
+      "min": 0.1488,
+      "max": 1.0936
+    }
+  },
+  "selection_method": "average_jm_with_consistency_validation",
+  "selection_threshold": 0.8847285280401819,
+  "selected_months": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+  ],
+  "rejected_months": [
+    1,
+    2,
+    3,
+    12
+  ],
+  "rationale": "Selected 8 months using average_jm_with_consistency_validation. Cross-city rank correlation \u03c1=0.951 indicates high consistency. Selected months are discriminative in both Berlin and Leipzig."
+}

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed - Phase 2: Code Review Fixes
 
+- Fix JM consistency analysis to handle NaN monthly means before ranking
+- Fix JM consistency analysis to normalize city casing before aggregation
 - Fix tile-based CHM correction window bounds handling for negative offsets
 - Fix edge NaN logic in `filter_nan_trees()` to use per-tree edge NaN counting (quality.py:166-234)
   - Add `max_edge_nan_months` parameter to filter trees with excessive edge NaN values
@@ -216,6 +218,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Use P90 adaptive radius without safety factor and 5m sampling radius
   - Add minimum peak height filter and local maxima footprint
   - Add tile-based CHM processing for large-scale performance
+- Normalize city identifiers to lowercase across processing and splitting outputs
 - Implement genus-specific CHM normalization in quality pipeline (PRD 002d Improvement 3):
   - Change from city-level to genus×city-level normalization for `CHM_1m_zscore` and `CHM_1m_percentile`
   - Prevents genus-leakage by removing genus-mean effect from features
