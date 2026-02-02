@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed - Phase 2: Code Review Fixes
 
+- Fix exp_02 CHM assessment notebook to accept non-normalized city filenames
 - Fix JM consistency analysis to handle NaN monthly means before ranking
 - Fix JM consistency analysis to normalize city casing before aggregation
 - Fix tile-based CHM correction window bounds handling for negative offsets
