@@ -86,40 +86,27 @@ def test_correct_tree_positions_handles_empty_geometry(tmp_path: Path) -> None:
     assert "adaptive_max_radius" in metadata
 
 
-def test_correct_tree_positions_scoring_prefers_height(tmp_path: Path) -> None:
-    gdf = _make_trees([Point(0.5, 9.5)])
-    chm = np.array([[5.0, 20.0], [1.0, 2.0]], dtype=np.float32)
+def test_correct_tree_positions_scoring_prefers_closer_peak(tmp_path: Path) -> None:
+    gdf = _make_trees([Point(2.5, 7.5)])
+    chm = np.zeros((5, 5), dtype=np.float32)
+    chm[2, 3] = 5.0
+    chm[2, 0] = 6.0
     chm_path = tmp_path / "chm.tif"
     _write_raster(chm_path, chm)
 
     result, _ = correct_tree_positions(
         gdf,
         chm_path,
-        height_weight=1.0,
-        sample_size=1,
+        sample_size=0,
+        sampling_radius_m=5.0,
+        min_peak_height_m=1.0,
+        footprint_size=3,
+        tile_size_px=4,
     )
 
     corrected_point = result.geometry.iloc[0]
-    assert np.isclose(corrected_point.x, 1.5)
-    assert np.isclose(corrected_point.y, 9.5)
-
-
-def test_correct_tree_positions_scoring_prefers_distance(tmp_path: Path) -> None:
-    gdf = _make_trees([Point(0.5, 9.5)])
-    chm = np.array([[5.0, 20.0], [1.0, 2.0]], dtype=np.float32)
-    chm_path = tmp_path / "chm.tif"
-    _write_raster(chm_path, chm)
-
-    result, _ = correct_tree_positions(
-        gdf,
-        chm_path,
-        height_weight=0.0,
-        sample_size=1,
-    )
-
-    corrected_point = result.geometry.iloc[0]
-    assert np.isclose(corrected_point.x, 0.5)
-    assert np.isclose(corrected_point.y, 9.5)
+    assert np.isclose(corrected_point.x, 3.5)
+    assert np.isclose(corrected_point.y, 7.5)
 
 
 def test_correct_tree_positions_metadata_keys(tmp_path: Path) -> None:

@@ -31,45 +31,46 @@ Korrektur ungenauer Kataster-Koordinaten durch Snapping zu lokalen CHM-Maxima. K
 
 ### Methodischer Ansatz
 
-**Hybrid-Methode:** Kombination aus datengetriebenem Radius und intelligenter Peak-Auswahl.
+**Peak-basierte Methode:** Lokale CHM-Maxima dienen als Kandidaten; der Suchradius wird datengetrieben bestimmt.
 
 **Phase 1 – Adaptive Radius-Bestimmung:**
 
 1. Sample von 1000 Bäumen (reproducible, seed=42)
-2. Für jeden Baum: Berechne Distanz zum nächsten CHM-Peak (Suchradius 10m)
-3. Berechne 75. Perzentil (P75) dieser Distanzen
-4. Setze `max_radius = ceil(P75 × safety_factor)`
+2. Für jeden Baum: Suche den besten lokalen CHM-Peak innerhalb eines 5 m Fensters
+3. Berechne 90. Perzentil (P90) der Peak-Distanzen
+4. Setze `max_radius = ceil(P90)`
 
-**Phase 2 – Scoring-basiertes Snapping:**
+**Phase 2 – Snap-to-Peak:**
 
 1. Für jeden Baum: Extrahiere CHM-Fenster im `max_radius`
-2. Score alle Pixel: `score = CHM_height × 0.7 - distance × 0.3`
-3. Snap zu Pixel mit höchstem Score
-4. Speichere `correction_distance` (Euklidische Distanz in Metern)
+2. Detektiere lokale Maxima (Footprint 3×3) oberhalb einer Mindesthöhe
+3. Wähle den Peak mit minimalem Verhältnis `distance / (height + 1)`
+4. Snap zu diesem Peak und speichere `correction_distance`
 
 ### Schlüssel-Parameter
 
 | Parameter     | Wert | Begründung                                                             |
 | ------------- | ---- | ---------------------------------------------------------------------- |
-| percentile    | 75.0 | Konservativ: 75% der Bäume definieren "normale" Kataster-Genauigkeit   |
-| height_weight | 0.7  | Höhe wichtiger als Nähe (höherer Baum darf weiter weg sein)            |
-| safety_factor | 1.5  | Erlaubt Korrekturen bis ~85-90% Perzentil, schützt vor Outliers (>P90) |
-| sample_size   | 1000 | Genug für stabile P75-Schätzung, schnell genug für große Datensätze    |
+| percentile         | 90.0 | Konservativ: verhindert Fehlkorrekturen bei Ausreißern, ohne Faktor     |
+| sampling_radius_m  | 5.0  | Erwartete GPS-/Kataster-Ungenauigkeit in urbanen Katastern              |
+| min_peak_height_m  | 3.0  | Entfernt niedrige Artefakte und Bodenrauschen                           |
+| footprint_size     | 3    | Robuste lokale Maxima-Detektion in 1 m CHM                              |
+| sample_size        | 1000 | Stabiler P90-Schätzer bei vertretbarer Laufzeit                         |
 
 ### Stadt-Adaptivität
 
-Der adaptive Radius passt sich automatisch an die Kataster-Qualität an:
-
-- **Berlin** (präziser Kataster): P75 ≈ 1.8m → `max_radius ≈ 3m`
-- **Leipzig** (weniger präziser Kataster): P75 ≈ 2.7m → `max_radius ≈ 5m`
-
-**Trade-off:** 85-90% der Bäume werden korrigiert, die äußersten 10-15% (wahrscheinlich Outliers) bleiben an Original-Koordinaten.
+Der adaptive Radius passt sich automatisch an die Kataster-Qualität an, ohne feste Annahmen pro Stadt.
 
 ### Qualitätskriterien
 
 - Adaptive Radius >1m und <10m (Plausibilitäts-Check)
 - `correction_distance ≤ max_radius` für alle Bäume
 - `correction_distance = 0.0` wenn `position_corrected = False`
+
+### Performance-Optimierung
+
+- CHM wird tile-basiert verarbeitet, um Raster-IO pro Baum zu vermeiden.
+- Fenster werden innerhalb der Tiles in-memory berechnet, wodurch die Laufzeit bei Millionen Bäumen stabil bleibt.
 
 ### Output-Metadaten
 

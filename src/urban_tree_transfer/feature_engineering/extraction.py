@@ -16,8 +16,9 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 import rasterio
-from rasterio.windows import from_bounds
-from rasterio.windows import transform as window_transform
+from numpy.lib.stride_tricks import sliding_window_view
+from rasterio.transform import xy as raster_xy
+from rasterio.windows import Window, from_bounds
 from shapely.geometry import Point
 
 from urban_tree_transfer.config.loader import (
@@ -29,26 +30,87 @@ from urban_tree_transfer.utils.geo import ensure_project_crs
 from urban_tree_transfer.utils.schema_validation import validate_phase2a_output
 
 _DEFAULT_BATCH_SIZE = 50000
-_DEFAULT_SAMPLING_RADIUS_M = 10.0
+_DEFAULT_SAMPLING_RADIUS_M = 5.0
+_DEFAULT_MIN_PEAK_HEIGHT_M = 3.0
+_DEFAULT_FOOTPRINT_SIZE = 3
+_DEFAULT_TILE_SIZE_PX = 512
 
 
-def _find_nearest_peak_distance(
+def _compute_local_maxima_mask(
+    chm_data: np.ndarray,
+    footprint_size: int,
+) -> np.ndarray | None:
+    if footprint_size <= 0 or footprint_size % 2 == 0:
+        raise ValueError("footprint_size must be a positive odd integer.")
+
+    valid_mask = ~np.isnan(chm_data)
+    if not np.any(valid_mask):
+        return None
+
+    chm_temp = np.where(valid_mask, chm_data, -np.inf)
+    if footprint_size == 1:
+        local_max = chm_temp
+    else:
+        pad = footprint_size // 2
+        padded = np.pad(chm_temp, pad, mode="constant", constant_values=-np.inf)
+        windows = sliding_window_view(padded, (footprint_size, footprint_size))
+        local_max = windows.max(axis=(-2, -1))
+
+    return (chm_data == local_max) & valid_mask
+
+
+def _select_best_peak(
+    chm_data: np.ndarray,
+    center_row: int,
+    center_col: int,
+    pixel_size: float,
+    search_radius_m: float,
+    min_peak_height_m: float,
+    footprint_size: int,
+) -> tuple[int, int, float, float] | None:
+    peak_mask = _compute_local_maxima_mask(chm_data, footprint_size)
+    if peak_mask is None:
+        return None
+
+    peak_mask = peak_mask & (chm_data >= min_peak_height_m)
+    if not np.any(peak_mask):
+        return None
+
+    peak_rows, peak_cols = np.where(peak_mask)
+    peak_coords = np.column_stack([peak_rows, peak_cols]).astype(np.float64)
+    center = np.array([center_row, center_col], dtype=np.float64)
+    distances_px = np.linalg.norm(peak_coords - center, axis=1)
+    distances_m = distances_px * pixel_size
+
+    within_mask = distances_m <= search_radius_m
+    if not np.any(within_mask):
+        return None
+
+    valid_rows = peak_rows[within_mask]
+    valid_cols = peak_cols[within_mask]
+    valid_distances = distances_m[within_mask]
+    valid_heights = chm_data[valid_rows, valid_cols]
+
+    scores = valid_distances / (valid_heights + 1.0)
+    best_idx = int(np.argmin(scores))
+
+    return (
+        int(valid_rows[best_idx]),
+        int(valid_cols[best_idx]),
+        float(valid_distances[best_idx]),
+        float(valid_heights[best_idx]),
+    )
+
+
+def _find_best_peak_distance(
     tree_point: Point,
     chm_path: Path,
-    search_radius_m: float = _DEFAULT_SAMPLING_RADIUS_M,
-) -> float:
-    """Find distance from tree to nearest CHM local maximum.
-
-    Args:
-        tree_point: Tree location.
-        chm_path: CHM raster.
-        search_radius_m: Max search distance (default: 10m for sampling phase).
-
-    Returns:
-        Distance in meters to nearest peak (or search_radius_m if no peak found).
-    """
+    search_radius_m: float,
+    min_peak_height_m: float,
+    footprint_size: int,
+) -> float | None:
     if tree_point is None or tree_point.is_empty:
-        return float(search_radius_m)
+        return None
 
     with rasterio.open(chm_path) as src:
         nodata_value = src.nodata
@@ -65,78 +127,90 @@ def _find_nearest_peak_distance(
             .round_offsets()
             .round_lengths()
         )
+
         chm_data = src.read(1, window=window, boundless=True, fill_value=nodata_value)
         if nodata_value is not None:
             chm_data = np.where(chm_data == nodata_value, np.nan, chm_data)
+        chm_data = np.where(chm_data < 0, np.nan, chm_data)
 
         if chm_data.size == 0 or np.all(np.isnan(chm_data)):
-            return float(search_radius_m)
+            return None
 
-        max_height = float(np.nanmax(chm_data))
-        if np.isnan(max_height):
-            return float(search_radius_m)
+        row, col = src.index(x, y)
+        row_in_window = int(row - window.row_off)
+        col_in_window = int(col - window.col_off)
+        if not (0 <= row_in_window < chm_data.shape[0] and 0 <= col_in_window < chm_data.shape[1]):
+            return None
 
-        win_transform = window_transform(window, src.transform)
-        height, width = chm_data.shape
+        pixel_size = float(abs(src.res[0]))
+        peak = _select_best_peak(
+            chm_data=chm_data,
+            center_row=row_in_window,
+            center_col=col_in_window,
+            pixel_size=pixel_size,
+            search_radius_m=search_radius_m,
+            min_peak_height_m=min_peak_height_m,
+            footprint_size=footprint_size,
+        )
+        if peak is None:
+            return None
 
-        cols = np.arange(width, dtype=np.float32)
-        rows = np.arange(height, dtype=np.float32)
-        xs = win_transform.c + (cols + 0.5) * win_transform.a
-        ys = win_transform.f + (rows + 0.5) * win_transform.e
-        xx, yy = np.meshgrid(xs, ys)
-
-        peak_mask = chm_data == max_height
-        if not np.any(peak_mask):
-            return float(search_radius_m)
-
-        distances = np.sqrt((xx - x) ** 2 + (yy - y) ** 2)
-        return float(np.nanmin(distances[peak_mask]))
+        return peak[2]
 
 
 def correct_tree_positions(
     trees_gdf: gpd.GeoDataFrame,
     chm_path: Path,
-    percentile: float = 75.0,
-    height_weight: float = 0.7,
-    safety_factor: float = 1.5,
+    percentile: float = 90.0,
     sample_size: int = 1000,
+    sampling_radius_m: float = _DEFAULT_SAMPLING_RADIUS_M,
+    min_peak_height_m: float = _DEFAULT_MIN_PEAK_HEIGHT_M,
+    footprint_size: int = _DEFAULT_FOOTPRINT_SIZE,
+    tile_size_px: int = _DEFAULT_TILE_SIZE_PX,
+    height_weight: float | None = None,
+    safety_factor: float | None = None,
 ) -> tuple[gpd.GeoDataFrame, dict[str, Any]]:
-    """Snap tree positions to local CHM maximum using adaptive radius.
+    """Snap tree positions to local CHM peaks using adaptive radius.
 
-    Algorithm (Hybrid Approach):
+    Algorithm:
         Phase 1 (Adaptive Radius Determination):
             1. Sample up to `sample_size` trees randomly
-            2. For each sampled tree, find distance to nearest CHM peak
-            3. Compute `percentile` of these distances (e.g., P75 = 2.7m)
-            4. Set max_radius = ceil(P75 x safety_factor)
+            2. For each sampled tree, find distance to best local peak within `sampling_radius_m`
+            3. Compute `percentile` of these distances (e.g., P90)
+            4. Set max_radius = ceil(Pxx)
 
-        Phase 2 (Intelligent Correction):
+        Phase 2 (Snap-to-Peak):
             5. For each tree, extract CHM window within max_radius
-            6. Score candidates: score = height x height_weight - distance x (1 - height_weight)
-            7. Snap to pixel with highest score
-            8. Store correction_distance for analysis
+            6. Detect local maxima (footprint_size) above min_peak_height_m
+            7. Score candidates by distance / (height + 1)
+            8. Snap to peak with minimal score
+            9. Store correction_distance for analysis
 
-    Args:
-        trees_gdf: Input tree point geometries.
-        chm_path: Path to 1m CHM GeoTIFF.
-        percentile: Percentile for adaptive radius (default: 75.0).
-        height_weight: Weight for height vs distance (default: 0.7).
-        safety_factor: Multiplier for adaptive radius (default: 1.5).
-        sample_size: Number of trees to sample for radius estimation (default: 1000).
+    Notes:
+        - height_weight and safety_factor are deprecated and ignored.
 
     Returns:
         Tuple of (corrected_gdf, metadata_dict).
         corrected_gdf includes 'position_corrected' (bool) and 'correction_distance' (float).
     """
-    if not 0.0 <= height_weight <= 1.0:
-        raise ValueError("height_weight must be between 0 and 1.")
-
     trees_gdf = ensure_project_crs(trees_gdf.copy())
+    if not 0.0 < percentile <= 100.0:
+        raise ValueError("percentile must be between 0 and 100.")
+    if sampling_radius_m <= 0.0:
+        raise ValueError("sampling_radius_m must be > 0.")
+    if min_peak_height_m < 0.0:
+        raise ValueError("min_peak_height_m must be >= 0.")
 
     geometry = trees_gdf.geometry
     valid_mask = ~geometry.is_empty & ~geometry.isna()
     valid_indices = np.where(valid_mask)[0]
     sampled_indices = valid_indices
+
+    if height_weight is not None or safety_factor is not None:
+        warnings.warn(
+            "height_weight and safety_factor are deprecated and ignored.",
+            stacklevel=2,
+        )
 
     if len(valid_indices) > 0:
         np.random.seed(42)
@@ -146,19 +220,22 @@ def correct_tree_positions(
     sample_distances: list[float] = []
     for idx in sampled_indices:
         geom = trees_gdf.geometry.iloc[idx]
-        distance = _find_nearest_peak_distance(
+        distance = _find_best_peak_distance(
             cast(Point, geom),
             chm_path=chm_path,
-            search_radius_m=_DEFAULT_SAMPLING_RADIUS_M,
+            search_radius_m=sampling_radius_m,
+            min_peak_height_m=min_peak_height_m,
+            footprint_size=footprint_size,
         )
-        sample_distances.append(distance)
+        if distance is not None and not np.isnan(distance):
+            sample_distances.append(distance)
 
     if sample_distances:
         p_distance = float(np.percentile(sample_distances, percentile))
-        adaptive_max_radius = float(max(1.0, np.ceil(p_distance * safety_factor)))
+        adaptive_max_radius = float(max(1.0, np.ceil(p_distance)))
     else:
-        adaptive_max_radius = 5.0
-        p_distance = adaptive_max_radius / safety_factor
+        adaptive_max_radius = float(max(1.0, np.ceil(sampling_radius_m)))
+        p_distance = adaptive_max_radius
 
     percentile_key = (
         f"p{int(percentile)}_distance"
@@ -166,95 +243,156 @@ def correct_tree_positions(
         else f"p{percentile}_distance"
     )
 
-    corrected_geometries: list[Point] = []
-    position_corrected: list[bool] = []
-    correction_distances: list[float] = []
+    total_trees = len(trees_gdf)
+    corrected_geometries: list[Point | None] = [None] * total_trees
+    position_corrected: list[bool] = [False] * total_trees
+    correction_distances: list[float] = [0.0] * total_trees
 
     with rasterio.open(chm_path) as src:
         nodata_value = src.nodata
+        pixel_size = float(abs(src.res[0]))
+        radius_px = int(np.ceil(adaptive_max_radius / pixel_size))
+        if radius_px <= 0:
+            raise ValueError("Computed radius_px must be > 0.")
+        if tile_size_px <= 0:
+            raise ValueError("tile_size_px must be > 0.")
+        tile_size_px = int(max(1, min(tile_size_px, src.width, src.height)))
 
-        for geom in trees_gdf.geometry:
-            if geom is None or geom.is_empty:
-                corrected_geometries.append(Point())
-                position_corrected.append(False)
-                correction_distances.append(0.0)
+        rows = np.full(len(trees_gdf), -1, dtype=int)
+        cols = np.full(len(trees_gdf), -1, dtype=int)
+        for idx in valid_indices:
+            geom = trees_gdf.geometry.iloc[idx]
+            row, col = src.index(geom.x, geom.y)
+            rows[idx] = row
+            cols[idx] = col
+
+        tile_groups: dict[tuple[int, int], list[int]] = {}
+        for idx in valid_indices:
+            row = int(rows[idx])
+            col = int(cols[idx])
+            if row < 0 or col < 0 or row >= src.height or col >= src.width:
+                geom = trees_gdf.geometry.iloc[idx]
+                corrected_geometries[idx] = cast(Point, geom)
+                position_corrected[idx] = False
+                correction_distances[idx] = 0.0
                 continue
+            tile_row = row // tile_size_px
+            tile_col = col // tile_size_px
+            tile_groups.setdefault((tile_row, tile_col), []).append(idx)
 
-            x, y = geom.x, geom.y
-            window = (
-                from_bounds(
-                    x - adaptive_max_radius,
-                    y - adaptive_max_radius,
-                    x + adaptive_max_radius,
-                    y + adaptive_max_radius,
-                    src.transform,
-                )
-                .round_offsets()
-                .round_lengths()
+        for idx, geom in enumerate(trees_gdf.geometry):
+            if geom is None or geom.is_empty:
+                corrected_geometries[idx] = Point()
+                position_corrected[idx] = False
+                correction_distances[idx] = 0.0
+            elif not valid_mask.iloc[idx]:
+                corrected_geometries[idx] = cast(Point, geom)
+                position_corrected[idx] = False
+                correction_distances[idx] = 0.0
+
+        for (tile_row, tile_col), indices in tile_groups.items():
+            row_off = tile_row * tile_size_px
+            col_off = tile_col * tile_size_px
+            row_off_pad = row_off - radius_px
+            col_off_pad = col_off - radius_px
+            window = Window.from_slices(
+                (row_off_pad, row_off_pad + tile_size_px + 2 * radius_px),
+                (col_off_pad, col_off_pad + tile_size_px + 2 * radius_px),
+                height=src.height,
+                width=src.width,
+                boundless=True,
             )
 
-            chm_data = src.read(1, window=window, boundless=True, fill_value=nodata_value)
+            chm_tile = src.read(1, window=window, boundless=True, fill_value=nodata_value)
             if nodata_value is not None:
-                chm_data = np.where(chm_data == nodata_value, np.nan, chm_data)
+                chm_tile = np.where(chm_tile == nodata_value, np.nan, chm_tile)
+            chm_tile = np.where(chm_tile < 0, np.nan, chm_tile)
 
-            if chm_data.size == 0 or np.all(np.isnan(chm_data)):
-                corrected_geometries.append(cast(Point, geom))
-                position_corrected.append(False)
-                correction_distances.append(0.0)
-                continue
+            expected_window_size = 2 * radius_px + 1
+            for idx in indices:
+                geom = trees_gdf.geometry.iloc[idx]
+                row = rows[idx]
+                col = cols[idx]
+                if row < 0 or col < 0 or row >= src.height or col >= src.width:
+                    corrected_geometries[idx] = cast(Point, geom)
+                    position_corrected[idx] = False
+                    correction_distances[idx] = 0.0
+                    continue
 
-            win_transform = window_transform(window, src.transform)
-            height, width = chm_data.shape
+                row_in_tile = row - row_off_pad
+                col_in_tile = col - col_off_pad
+                r_start = row_in_tile - radius_px
+                r_end = row_in_tile + radius_px + 1
+                c_start = col_in_tile - radius_px
+                c_end = col_in_tile + radius_px + 1
+                chm_window = chm_tile[r_start:r_end, c_start:c_end]
 
-            cols = np.arange(width, dtype=np.float32)
-            rows = np.arange(height, dtype=np.float32)
-            xs = win_transform.c + (cols + 0.5) * win_transform.a
-            ys = win_transform.f + (rows + 0.5) * win_transform.e
-            xx, yy = np.meshgrid(xs, ys)
+                if chm_window.shape != (expected_window_size, expected_window_size):
+                    padded = np.full(
+                        (expected_window_size, expected_window_size),
+                        np.nan,
+                        dtype=chm_window.dtype,
+                    )
+                    r_slice = slice(max(0, -r_start), max(0, -r_start) + chm_window.shape[0])
+                    c_slice = slice(max(0, -c_start), max(0, -c_start) + chm_window.shape[1])
+                    padded[r_slice, c_slice] = chm_window
+                    chm_window = padded
 
-            distances = np.sqrt((xx - x) ** 2 + (yy - y) ** 2)
-            valid_mask = ~np.isnan(chm_data) & (distances <= adaptive_max_radius)
-            if not np.any(valid_mask):
-                corrected_geometries.append(cast(Point, geom))
-                position_corrected.append(False)
-                correction_distances.append(0.0)
-                continue
-
-            scores = (chm_data * height_weight) - (distances * (1.0 - height_weight))
-            scores = np.where(valid_mask, scores, -np.inf)
-
-            if np.all(np.isneginf(scores)):
-                corrected_geometries.append(cast(Point, geom))
-                position_corrected.append(False)
-                correction_distances.append(0.0)
-                continue
-
-            best_index = int(np.nanargmax(scores))
-            best_row, best_col = np.unravel_index(best_index, chm_data.shape)
-            corrected_point = Point(float(xx[best_row, best_col]), float(yy[best_row, best_col]))
-            corrected_geometries.append(corrected_point)
-            position_corrected.append(True)
-            correction_distance = float(geom.distance(corrected_point))
-            if correction_distance > adaptive_max_radius + 1e-6:
-                raise RuntimeError(
-                    "Correction distance exceeds adaptive radius. "
-                    f"distance={correction_distance:.2f}m, "
-                    f"adaptive_max_radius={adaptive_max_radius:.2f}m"
+                peak = _select_best_peak(
+                    chm_data=chm_window,
+                    center_row=radius_px,
+                    center_col=radius_px,
+                    pixel_size=pixel_size,
+                    search_radius_m=adaptive_max_radius,
+                    min_peak_height_m=min_peak_height_m,
+                    footprint_size=footprint_size,
                 )
-            correction_distances.append(correction_distance)
+
+                if peak is None:
+                    corrected_geometries[idx] = cast(Point, geom)
+                    position_corrected[idx] = False
+                    correction_distances[idx] = 0.0
+                    continue
+
+                peak_row_local, peak_col_local, snap_distance, _ = peak
+                global_row = row - radius_px + peak_row_local
+                global_col = col - radius_px + peak_col_local
+                peak_x, peak_y = raster_xy(
+                    src.transform,
+                    global_row,
+                    global_col,
+                    offset="center",
+                )
+                corrected_point = Point(float(peak_x), float(peak_y))
+                corrected_geometries[idx] = corrected_point
+                position_corrected[idx] = True
+                correction_distances[idx] = float(snap_distance)
+
+        for idx, geom in enumerate(trees_gdf.geometry):
+            if corrected_geometries[idx] is None:
+                corrected_geometries[idx] = (
+                    Point() if geom is None or geom.is_empty else cast(Point, geom)
+                )
 
     trees_gdf["position_corrected"] = pd.Series(position_corrected, dtype=bool)
     trees_gdf["correction_distance"] = pd.Series(correction_distances, dtype=float)
     trees_gdf = trees_gdf.set_geometry(
-        gpd.GeoSeries(corrected_geometries, index=trees_gdf.index, crs=trees_gdf.crs)
+        gpd.GeoSeries(
+            [cast(Point, geom) if geom is not None else Point() for geom in corrected_geometries],
+            index=trees_gdf.index,
+            crs=trees_gdf.crs,
+        )
     )
 
     metadata = {
         "adaptive_max_radius": adaptive_max_radius,
         percentile_key: p_distance,
-        "safety_factor": safety_factor,
         "sample_size": sample_size,
         "sampled_trees": len(sampled_indices),
+        "sampling_radius_m": sampling_radius_m,
+        "min_peak_height_m": min_peak_height_m,
+        "footprint_size": footprint_size,
+        "tile_size_px": tile_size_px,
     }
 
     return trees_gdf, metadata
@@ -435,18 +573,22 @@ def extract_all_features(
     trees_gdf = ensure_project_crs(trees_gdf)
 
     tree_correction = feature_config.get("tree_position_correction", {})
-    percentile = float(tree_correction.get("percentile", 75.0))
-    height_weight = float(tree_correction.get("height_weight", 0.7))
-    safety_factor = float(tree_correction.get("safety_factor", 1.5))
+    percentile = float(tree_correction.get("percentile", 90.0))
     sample_size = int(tree_correction.get("sample_size", 1000))
+    sampling_radius_m = float(tree_correction.get("sampling_radius_m", _DEFAULT_SAMPLING_RADIUS_M))
+    min_peak_height_m = float(tree_correction.get("min_peak_height_m", _DEFAULT_MIN_PEAK_HEIGHT_M))
+    footprint_size = int(tree_correction.get("footprint_size", _DEFAULT_FOOTPRINT_SIZE))
+    tile_size_px = int(tree_correction.get("tile_size_px", _DEFAULT_TILE_SIZE_PX))
 
     corrected_gdf, correction_metadata = correct_tree_positions(
         trees_gdf=trees_gdf,
         chm_path=chm_path,
         percentile=percentile,
-        height_weight=height_weight,
-        safety_factor=safety_factor,
         sample_size=sample_size,
+        sampling_radius_m=sampling_radius_m,
+        min_peak_height_m=min_peak_height_m,
+        footprint_size=footprint_size,
+        tile_size_px=tile_size_px,
     )
 
     processing_cfg = feature_config.get("processing", {})

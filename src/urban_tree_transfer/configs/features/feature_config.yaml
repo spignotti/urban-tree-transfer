@@ -188,10 +188,12 @@ genus_classification:
   min_samples_for_analysis: 500
 
 # =============================================================================
-# TREE POSITION CORRECTION (Hybrid Approach: Adaptive Radius + Scoring)
+# TREE POSITION CORRECTION (Local Peaks + Adaptive Radius)
 # =============================================================================
 tree_position_correction:
-  percentile: 75.0           # Use P75 of peak distances for adaptive radius
-  height_weight: 0.7         # Weight for height vs distance in scoring
-  safety_factor: 1.5         # Multiplier for adaptive radius (P75 × 1.5)
+  percentile: 90.0           # Use P90 of peak distances for adaptive radius
+  sampling_radius_m: 5.0     # Sampling radius for peak distance estimation
+  min_peak_height_m: 3.0     # Minimum CHM height to qualify as a peak
+  footprint_size: 3          # Local maxima footprint size (odd integer)
   sample_size: 1000          # Trees to sample for radius estimation
+  tile_size_px: 512          # Tile size for windowed CHM correction

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed - Phase 2: Code Review Fixes
 
+- Fix tile-based CHM correction window bounds handling for negative offsets
 - Fix edge NaN logic in `filter_nan_trees()` to use per-tree edge NaN counting (quality.py:166-234)
   - Add `max_edge_nan_months` parameter to filter trees with excessive edge NaN values
   - Add `min_valid_months` parameter to ensure sufficient data for interpolation
@@ -211,6 +212,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed - Phase 2: Feature Engineering
 
+- Change tree position correction to legacy snap-to-peak logic with local maxima scoring
+  - Use P90 adaptive radius without safety factor and 5m sampling radius
+  - Add minimum peak height filter and local maxima footprint
+  - Add tile-based CHM processing for large-scale performance
 - Implement genus-specific CHM normalization in quality pipeline (PRD 002d Improvement 3):
   - Change from city-level to genus×city-level normalization for `CHM_1m_zscore` and `CHM_1m_percentile`
   - Prevents genus-leakage by removing genus-mean effect from features
