@@ -375,8 +375,12 @@ def correct_tree_positions(
                     Point() if geom is None or geom.is_empty else cast(Point, geom)
                 )
 
-    trees_gdf["position_corrected"] = pd.Series(position_corrected, dtype=bool)
-    trees_gdf["correction_distance"] = pd.Series(correction_distances, dtype=float)
+    trees_gdf["position_corrected"] = pd.Series(
+        position_corrected, dtype=bool, index=trees_gdf.index
+    )
+    trees_gdf["correction_distance"] = pd.Series(
+        correction_distances, dtype=float, index=trees_gdf.index
+    )
     trees_gdf = trees_gdf.set_geometry(
         gpd.GeoSeries(
             [cast(Point, geom) if geom is not None else Point() for geom in corrected_geometries],

@@ -47,6 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Provide clear error messages indicating which notebook to run if JSON is missing
 - Update test_filter_nan_trees_ignores_non_temporal_columns to account for new filtering parameters
   - Test now explicitly sets min_valid_months=1 to match test expectations
+- Fix position correction index mismatch for non-zero-based GeoDataFrame indices (extraction.py:378-386)
+  - Add explicit `index=trees_gdf.index` parameter to `pd.Series()` for position_corrected and correction_distance
+  - Previously caused silent NaN assignment when input GeoDataFrame had non-sequential indices (e.g., Leipzig after Berlin filtering)
+  - GeoSeries geometry assignment already had correct index handling, now columns match
 
 ### Added - Phase 2: Feature Engineering
 
