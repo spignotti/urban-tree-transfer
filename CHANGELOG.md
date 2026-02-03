@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Phase 1: Leipzig Tile Coverage
+
+- Replace Leipzig elevation tile URLs for "Kreisfreie Stadt Leipzig" (previously used "Landkreis Leipzig")
+- Previous tiles covered Landkreis Leipzig (rural district south of city): X 300-356km, Y 5648-5704km
+- New tiles correctly cover Stadt Leipzig (city proper): X 306-328km, Y 5678-5702km
+- Reduces tiles from 512/516 to 116/116 (DOM/DGM) with 100% coverage of city boundaries
+- Previous configuration resulted in only 21% CHM coverage (bottom 20% of city area)
+- New configuration provides complete citywide coverage for CHM generation
+
 ### Fixed - Phase 1: Leipzig Elevation Download
 
 - Increase Leipzig elevation download timeout from 300s to 600s (10 minutes)
