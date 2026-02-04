@@ -1,6 +1,6 @@
 # Google Drive Folder Structure
 
-**Last Updated**: 2026-02-04
+**Last Updated**: 2026-02-02
 **Purpose**: Standardized folder structure for all project phases
 
 ---
@@ -10,41 +10,21 @@
 ```
 /content/drive/MyDrive/dev/urban-tree-transfer/
 │
-├── data/                                    # Input data only
-│   ├── phase_1_processing/                 # Phase 1 data files
+├── data/                                    # All data (input & output)
+│   │
+│   ├── phase_1_processing/                 # Phase 1 outputs
 │   │   ├── trees/
 │   │   │   └── trees_filtered_viable.gpkg  # Combined Berlin + Leipzig trees
 │   │   ├── chm/
 │   │   │   ├── CHM_1m_berlin.tif          # Berlin canopy height model
 │   │   │   └── CHM_1m_leipzig.tif         # Leipzig canopy height model
-│   │   └── sentinel2/
-│   │       ├── S2_berlin_2021_01.tif      # Berlin S2 composites (12 months)
-│   │       ├── S2_berlin_2021_02.tif
-│   │       ├── ...
-│   │       ├── S2_leipzig_2021_01.tif     # Leipzig S2 composites (12 months)
-│   │       ├── S2_leipzig_2021_02.tif
-│   │       └── ...
-│   │
-│   ├── phase_2_features/                   # Phase 2 data files
-│   │   ├── trees_with_features_berlin.gpkg # From 02a (with all temporal features)
-│   │   ├── trees_with_features_leipzig.gpkg
-│   │   ├── trees_clean_berlin.gpkg         # From 02b (quality-controlled, 0 NaN)
-│   │   └── trees_clean_leipzig.gpkg
-│   │
-│   └── phase_2_splits/                     # Phase 2c data files (10 GeoPackages)
-│       ├── berlin_train.gpkg               # Baseline splits (5 files)
-│       ├── berlin_val.gpkg
-│       ├── berlin_test.gpkg
-│       ├── leipzig_finetune.gpkg
-│       ├── leipzig_test.gpkg
-│       ├── berlin_train_filtered.gpkg      # Filtered splits (5 files)
-│       ├── berlin_val_filtered.gpkg
-│       ├── berlin_test_filtered.gpkg
-│       ├── leipzig_finetune_filtered.gpkg
-│       └── leipzig_test_filtered.gpkg
-│
-├── outputs/                                 # All outputs (metadata, logs, figures)
-│   ├── phase_1/                            # Phase 1 outputs
+│   │   ├── sentinel2/
+│   │   │   ├── S2_berlin_2021_01.tif      # Berlin S2 composites (12 months)
+│   │   │   ├── S2_berlin_2021_02.tif
+│   │   │   ├── ...
+│   │   │   ├── S2_leipzig_2021_01.tif     # Leipzig S2 composites (12 months)
+│   │   │   ├── S2_leipzig_2021_02.tif
+│   │   │   └── ...
 │   │   ├── metadata/                       # Phase 1 metadata
 │   │   │   ├── trees_cadastre_summary.json
 │   │   │   ├── sentinel2_tasks.json
@@ -52,7 +32,11 @@
 │   │   └── logs/                           # Phase 1 execution logs
 │   │       └── 01_data_processing_execution.json
 │   │
-│   ├── phase_2/                            # Phase 2 outputs
+│   ├── phase_2_features/                   # Phase 2a/2b outputs
+│   │   ├── trees_with_features_berlin.gpkg # From 02a (with all temporal features)
+│   │   ├── trees_with_features_leipzig.gpkg
+│   │   ├── trees_clean_berlin.gpkg         # From 02b (quality-controlled, 0 NaN)
+│   │   ├── trees_clean_leipzig.gpkg
 │   │   ├── metadata/                       # Phase 2 metadata & exploratory JSONs
 │   │   │   ├── temporal_selection.json     # From exp_01
 │   │   │   ├── chm_assessment.json         # From exp_02
@@ -79,12 +63,22 @@
 │   │       ├── exp_05_spatial/
 │   │       └── exp_06_proximity/
 │   │
-│   └── phase_2_splits/                     # Phase 2c outputs
-│       ├── metadata/                       # Phase 2c metadata
+│   └── phase_2_splits/                     # Phase 2c outputs (10 GeoPackages)
+│       ├── berlin_train.gpkg               # Baseline splits (5 files)
+│       ├── berlin_val.gpkg
+│       ├── berlin_test.gpkg
+│       ├── leipzig_finetune.gpkg
+│       ├── leipzig_test.gpkg
+│       ├── berlin_train_filtered.gpkg      # Filtered splits (5 files)
+│       ├── berlin_val_filtered.gpkg
+│       ├── berlin_test_filtered.gpkg
+│       ├── leipzig_finetune_filtered.gpkg
+│       ├── leipzig_test_filtered.gpkg
+│       ├── metadata/                        # Phase 2c metadata
 │       │   └── phase_2_final_summary.json
-│       ├── logs/                           # Phase 2c execution logs
+│       ├── logs/                            # Phase 2c execution logs
 │       │   └── 02c_final_preparation_execution.json
-│       └── figures/                        # Phase 2c visualizations
+│       └── figures/                         # Phase 2c visualizations
 │           └── 02c_final_prep/
 │               ├── split_size_comparison.png
 │               └── genus_distribution_comparison.png
@@ -97,14 +91,15 @@
 
 ## 🎯 Design Principles
 
-### **Separation of Data and Outputs**
-- `data/` contains only data files (GeoPackages, GeoTIFFs) - large binary files
-- `outputs/` contains metadata, logs, and figures - small, version-controllable files
+### **Consistent with Phase 1**
+All metadata, logs, and figures are stored **inside the data directory** for each phase, not in a separate `outputs/` folder.
 
 ### **Self-Contained Phases**
-Each phase has two directories:
-- `data/phase_N/` - Data files (GeoPackages, GeoTIFFs)
-- `outputs/phase_N/` - Metadata (JSON), logs, figures (PNG)
+Each phase folder contains:
+- ✅ Data files (GeoPackages, GeoTIFFs)
+- ✅ Metadata (JSON configs)
+- ✅ Logs (execution records)
+- ✅ Figures (visualizations)
 
 ### **Idempotent Pipelines**
 All runner notebooks check if outputs exist and skip processing if found. This allows safe re-runs without data loss.
@@ -196,18 +191,18 @@ mkdir -p ~/MyDrive/dev/urban-tree-transfer/data/{phase_1_processing,phase_2_feat
 After completing phases, download these from Drive to commit:
 ```bash
 # Phase 1
-outputs/phase_1/metadata/*.json
-outputs/phase_1/logs/*.json
+data/phase_1_processing/metadata/*.json
+data/phase_1_processing/logs/*.json
 
 # Phase 2
-outputs/phase_2/metadata/*.json
-outputs/phase_2/logs/*.json
-outputs/phase_2_splits/metadata/*.json
-outputs/phase_2_splits/logs/*.json
+data/phase_2_features/metadata/*.json
+data/phase_2_features/logs/*.json
+data/phase_2_splits/metadata/*.json
+data/phase_2_splits/logs/*.json
 
 # Optional: figures
-outputs/phase_2/figures/**/*.png
-outputs/phase_2_splits/figures/**/*.png
+data/phase_2_features/figures/**/*.png
+data/phase_2_splits/figures/**/*.png
 ```
 
 ### Backup Strategy
