@@ -1,0 +1,99 @@
+{
+  "notebook": "exp_02_chm_assessment",
+  "execution_start": "2026-02-04T10:11:51.271645",
+  "execution_end": "2026-02-04T10:21:18.193179",
+  "steps": [
+    {
+      "name": "Data Loading & Validation",
+      "status": "success",
+      "start_time": "2026-02-04T10:11:52.368155",
+      "end_time": "2026-02-04T10:14:22.882633",
+      "records": 1072999,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Discriminative Power (ANOVA eta-squared)",
+      "status": "success",
+      "start_time": "2026-02-04T10:14:22.892221",
+      "end_time": "2026-02-04T10:14:34.991298",
+      "records": 2,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Cross-City Consistency (Cohen's d)",
+      "status": "error",
+      "start_time": "2026-02-04T10:14:35.003090",
+      "end_time": "2026-02-04T10:14:37.681809",
+      "records": null,
+      "warnings": [],
+      "errors": [
+        "zero-dimensional arrays cannot be concatenated"
+      ]
+    },
+    {
+      "name": "Cross-City Consistency (Cohen's d)",
+      "status": "success",
+      "start_time": "2026-02-04T10:18:42.637800",
+      "end_time": "2026-02-04T10:18:57.387174",
+      "records": 30,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Feature Engineering Validation",
+      "status": "success",
+      "start_time": "2026-02-04T10:19:28.418963",
+      "end_time": "2026-02-04T10:19:32.213158",
+      "records": 1072999,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Plant Year Threshold Analysis",
+      "status": "success",
+      "start_time": "2026-02-04T10:19:36.214784",
+      "end_time": "2026-02-04T10:19:37.825725",
+      "records": 317,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Genus Inventory & Classification",
+      "status": "success",
+      "start_time": "2026-02-04T10:19:40.400733",
+      "end_time": "2026-02-04T10:19:40.617985",
+      "records": 30,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Visualizations",
+      "status": "success",
+      "start_time": "2026-02-04T10:19:50.084914",
+      "end_time": "2026-02-04T10:21:17.983699",
+      "records": 7,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Output Validation",
+      "status": "success",
+      "start_time": "2026-02-04T10:21:17.992891",
+      "end_time": "2026-02-04T10:21:17.993892",
+      "records": 4,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "JSON Output",
+      "status": "success",
+      "start_time": "2026-02-04T10:21:18.003632",
+      "end_time": "2026-02-04T10:21:18.175224",
+      "records": 1,
+      "warnings": [],
+      "errors": []
+    }
+  ]
+}
