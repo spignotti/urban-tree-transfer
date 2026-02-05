@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Outlier Thresholds",
+  "type": "object",
+  "required": ["zscore", "mahalanobis", "iqr"],
+  "properties": {
+    "zscore": {
+      "type": "object",
+      "required": ["threshold", "min_feature_count"],
+      "properties": {
+        "threshold": {"type": "number"},
+        "min_feature_count": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": true
+    },
+    "mahalanobis": {
+      "type": "object",
+      "required": ["alpha"],
+      "properties": {
+        "alpha": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": true
+    },
+    "iqr": {
+      "type": "object",
+      "required": ["multiplier"],
+      "properties": {
+        "multiplier": {"type": "number", "minimum": 0}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

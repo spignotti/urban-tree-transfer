@@ -55,20 +55,31 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
-# Project-specific
+# Project-specific data (large files, not for repo)
 data/
-docs/literature/
 *.gpkg
 *.parquet
 *.tif
 *.tiff
 *.geotiff
 
+# Literature work (thesis preparation, not for code repo)
+docs/literature/*
+!docs/literature/LITERATURE.md
+
+# Thesis drafts and templates (not for code repo)
+docs/thesis/
+*.docx
+*.odt
+*_template.md
+*_draft.md
+
 # Credentials
 .env
 *.json
 !configs/**/*.json
 !outputs/**/*.json
+!src/**/*.json
 credentials/
 secrets/
 

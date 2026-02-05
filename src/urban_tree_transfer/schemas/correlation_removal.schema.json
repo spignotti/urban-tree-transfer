@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Correlation Removal",
+  "type": "object",
+  "required": ["temporal_removal"],
+  "properties": {
+    "temporal_removal": {
+      "type": "object",
+      "required": ["removed_temporal_features"],
+      "properties": {
+        "removed_temporal_features": {
+          "type": "array",
+          "items": {"type": "string"},
+          "minItems": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "validation": {
+      "type": "object",
+      "properties": {
+        "max_vif": {"type": "number"},
+        "vif_threshold": {"type": "number"},
+        "passed": {"type": "boolean"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

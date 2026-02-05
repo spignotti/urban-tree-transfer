@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Temporal Selection",
+  "type": "object",
+  "required": ["selected_months", "selection_method"],
+  "properties": {
+    "selected_months": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 1, "maximum": 12},
+      "minItems": 1
+    },
+    "selection_method": {"type": "string"},
+    "cross_city_validation": {
+      "type": "object",
+      "properties": {
+        "spearman_rho": {"type": "number"},
+        "p_value": {"type": "number"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
