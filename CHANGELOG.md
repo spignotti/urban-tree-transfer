@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Dependencies: Google Colab Compatibility
+
+- Fix NumPy version constraint for Google Colab compatibility (pyproject.toml:16)
+  - Change `numpy>=2.0.0` → `numpy>=1.26.0,<2.0` to prevent Colab import errors
+  - NumPy 2.x introduced breaking changes in internal APIs (`_core._multiarray_umath._blas_supports_fpe` removed)
+  - Resolves AttributeError when importing package in Colab after force-reinstall
+  - NumPy 1.26.x is fully compatible with project code (no API changes needed)
+  - Add MEMORY.md with Colab installation best practices (never use `--force-reinstall`)
+  - UV lockfile regenerated: numpy 2.4.1 → 1.26.4, rasterio 1.5.0 → 1.4.4
+
 ### Fixed - Phase 2: NaN Filtering Logic
 
 - Fix edge NaN counting in `filter_nan_trees()` to count consecutive edge NaN values (quality.py:207-243)
