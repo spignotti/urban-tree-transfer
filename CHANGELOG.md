@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Documentation
+
+- Add German literature folder and initial literature list template (docs/literature)
+- Normalize literature list with extracted PDF metadata and ignore docs/literature
+- Update literature list from provided Harvard citations and add coverage notes
+- Reorder literature missing-citation notes and remove unneeded entries
+
+### Added - Phase 2: Parquet Export for ML Efficiency
+
+- Add Parquet export alongside GeoPackage output in Phase 2c (PRD 002c)
+  - `export_splits_to_parquet()` - Export splits as Parquet files (no geometry, Snappy compression)
+  - `export_geometry_lookup()` - Single Parquet file with tree_id, city, split, x, y for visualization
+  - 10 Parquet files (5 baseline + 5 filtered) + 1 geometry lookup file
+  - Analysis metadata preserved: categorical (tree_type, species_latin, genus_german, species_german), temporal (plant_year), QC (position_corrected, correction_distance)
+  - GeoPackages: Drop height_m before export (cadastral height redundant with CHM features)
+  - Parquet: Drop geometry (→ geometry_lookup.parquet), same schema as GeoPackages otherwise
+  - 5-10× faster loading in Phase 3 notebooks vs. GeoPackage
+  - Inline validation in 02c notebook (row counts, geometry removal, schema verification)
+  - 6 unit tests for export functions (geometry dropping, metadata handling, coordinate extraction)
+- Add pyarrow dependency for Parquet support (pyproject.toml)
+- Update 02c_final_preparation.ipynb with Parquet export cell block
+
 ### Fixed - Dependencies: Google Colab Compatibility
 
 - Fix Colab installation issues caused by `--force-reinstall` flag (pyproject.toml:16)

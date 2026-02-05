@@ -3,11 +3,13 @@
 This module handles:
 - Correlation analysis within feature groups
 - Redundant feature identification and removal
+- Parquet export for ML-ready datasets
 """
 
 from __future__ import annotations
 
 import warnings
+from pathlib import Path
 from typing import Any, cast
 
 import geopandas as gpd
@@ -17,6 +19,16 @@ import pandas as pd
 from urban_tree_transfer.config import PROJECT_CRS
 from urban_tree_transfer.utils.final_validation import validate_zero_nan
 from urban_tree_transfer.utils.schema_validation import validate_phase2c_output
+
+# Columns to drop when exporting to Parquet (keep metadata for Phase 3 analysis)
+_PARQUET_DROP_COLUMNS = [
+    "geometry",  # Available in geometry_lookup.parquet
+    "height_m",  # Redundant with CHM features (cadastral height not needed)
+]
+# KEEP for Phase 3 analysis:
+# - Categorical: species_latin, genus_german, species_german, tree_type
+# - Temporal: plant_year (error metrics analysis)
+# - QC: position_corrected, correction_distance (position quality analysis)
 
 
 def compute_feature_correlations(
@@ -198,3 +210,133 @@ def remove_redundant_features(
 
     existing = [col for col in safe_remove if col in trees_gdf.columns]
     return cast(gpd.GeoDataFrame, trees_gdf.drop(columns=existing).copy())
+
+
+def export_splits_to_parquet(
+    splits: dict[str, gpd.GeoDataFrame],
+    output_dir: Path,
+    drop_metadata_columns: list[str] | None = None,
+) -> dict[str, Path]:
+    """Export GeoDataFrame splits to Parquet files (without geometry).
+
+    Drops geometry and specified metadata columns, then saves each split
+    as a Parquet file with Snappy compression.
+
+    Args:
+        splits: Mapping of split name (e.g. "berlin_train") to GeoDataFrame.
+        output_dir: Directory to write Parquet files into.
+        drop_metadata_columns: Additional columns to drop beyond geometry. If None, uses default
+            list of non-ML columns (species, plant_year, height_m, etc.).
+
+    Returns:
+        Mapping of split name to output Parquet path.
+    """
+    if not splits:
+        raise ValueError("splits must be a non-empty dict.")
+
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    if drop_metadata_columns is None:
+        drop_metadata_columns = _PARQUET_DROP_COLUMNS
+
+    parquet_paths: dict[str, Path] = {}
+
+    for split_name, gdf in splits.items():
+        if gdf.empty:
+            raise ValueError(f"Split '{split_name}' is empty.")
+        if gdf.crs is None:
+            raise ValueError(f"Split '{split_name}' has no CRS defined.")
+        if str(gdf.crs) != PROJECT_CRS:
+            raise ValueError(f"Split '{split_name}' has CRS {gdf.crs}, expected {PROJECT_CRS}.")
+
+        # Drop columns (only those that exist)
+        cols_to_drop = [col for col in drop_metadata_columns if col in gdf.columns]
+
+        # Convert to regular DataFrame (drops geometry automatically if removed)
+        df = pd.DataFrame(gdf.drop(columns=cols_to_drop))
+
+        # Ensure geometry is not present
+        if "geometry" in df.columns:
+            df = df.drop(columns=["geometry"])
+
+        # Export to Parquet with Snappy compression
+        output_path = output_dir / f"{split_name}.parquet"
+        df.to_parquet(output_path, engine="pyarrow", compression="snappy", index=False)
+
+        parquet_paths[split_name] = output_path
+
+    return parquet_paths
+
+
+def export_geometry_lookup(
+    splits: dict[str, gpd.GeoDataFrame],
+    output_path: Path,
+) -> int:
+    """Export geometry lookup table for all trees across splits.
+
+    Creates a single Parquet file with tree_id, city, split, filtered, x, y
+    for later visualization of predictions on maps.
+
+    Args:
+        splits: Mapping of split name to GeoDataFrame. Names must follow pattern
+            "{city}_{split}" or "{city}_{split}_filtered".
+        output_path: Path for the output Parquet file.
+
+    Returns:
+        Number of unique trees in the lookup.
+    """
+    if not splits:
+        raise ValueError("splits must be a non-empty dict.")
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    lookup_records: list[dict[str, Any]] = []
+
+    for split_name, gdf in splits.items():
+        if gdf.empty:
+            continue
+        if gdf.crs is None:
+            raise ValueError(f"Split '{split_name}' has no CRS defined.")
+        if str(gdf.crs) != PROJECT_CRS:
+            raise ValueError(f"Split '{split_name}' has CRS {gdf.crs}, expected {PROJECT_CRS}.")
+
+        # Required columns
+        if "tree_id" not in gdf.columns:
+            raise ValueError(f"Split '{split_name}' missing 'tree_id' column.")
+        if "city" not in gdf.columns:
+            raise ValueError(f"Split '{split_name}' missing 'city' column.")
+
+        # Parse filtered flag from split name
+        is_filtered = split_name.endswith("_filtered")
+
+        # Extract coordinates
+        for _, row in gdf.iterrows():
+            geom = row.geometry
+            if geom is None or geom.is_empty:
+                continue
+
+            lookup_records.append(
+                {
+                    "tree_id": row["tree_id"],
+                    "city": row["city"],
+                    "split": split_name,
+                    "filtered": is_filtered,
+                    "x": float(geom.x),
+                    "y": float(geom.y),
+                }
+            )
+
+    if not lookup_records:
+        raise ValueError("No valid geometry records found in splits.")
+
+    # Create DataFrame and deduplicate (keep filtered=True version)
+    lookup_df = pd.DataFrame(lookup_records)
+    lookup_df = lookup_df.sort_values("filtered", ascending=False)  # True sorts before False
+    lookup_df = lookup_df.drop_duplicates(subset=["tree_id"], keep="first")
+
+    # Export to Parquet
+    lookup_df.to_parquet(output_path, engine="pyarrow", compression="snappy", index=False)
+
+    return len(lookup_df)
