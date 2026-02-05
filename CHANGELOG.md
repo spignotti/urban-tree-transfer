@@ -108,6 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed - Exploratory Notebooks
 
 - Fix exp_03 correlation analysis to resolve base-name aliases and non-zero-padded months when deriving common months
+- Fix exp_04 outlier thresholds configuration cell formatting
 
 ### Added - Phase 2: Feature Engineering
 
