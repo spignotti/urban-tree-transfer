@@ -121,7 +121,61 @@ Vergleich verschiedener Strategien für das Fine-Tuning von Neural Networks.
 
 ---
 
-## 5. Class Weighting Experimente
+## 5. Intelligent Sample Selection für Fine-Tuning (Tong et al. 2019)
+
+### Beschreibung
+
+Anstatt zufälliger Auswahl der Leipzig-Samples für Fine-Tuning könnte eine intelligente Sample-Selection-Strategie verwendet werden, wie von Tong et al. (2019) für Cross-Region Transfer vorgeschlagen.
+
+### Ansatz nach Tong et al. (2019)
+
+**Paper:** Tong, X.-Y., Xia, G.-S., Lu, Q., Shen, H., Li, S., You, S. & Zhang, L. (2019). Land-cover classification with high-resolution remote sensing images using transferable deep models. _Remote Sensing of Environment_, 237, 111322.
+
+**Methodischer Ablauf:**
+
+1. **Pseudo-Labeling:** Pre-trained Berlin-Modell klassifiziert alle Leipzig-Samples
+2. **Confidence Filtering:** Nur Samples mit hoher Prediction Confidence (z.B. >0.9) werden behalten
+3. **Sample Retrieval:** Für jedes ausgewählte Leipzig-Sample werden ähnliche Berlin-Samples gesucht (z.B. via Euclidean Distance im Feature Space)
+4. **Selective Fine-Tuning:** Modell wird mit Pseudo-Labels + retrieved Berlin-Samples fine-tuned
+
+### Vorteile
+
+- **Targeted Learning:** Fokus auf schwierige Grenzfälle statt zufälliges Sampling
+- **Data Efficiency:** Möglicherweise bessere Performance mit weniger Samples
+- **Distribution Matching:** Retrieved Berlin-Samples helfen, Domain Shift zu reduzieren
+
+### Warum nicht implementiert?
+
+- **Erhöhte Komplexität:** Benötigt zusätzliche Komponenten (Confidence Thresholding, Similarity Search, Sample Retrieval)
+- **Zeitbudget:** Würde zusätzliche Experimente und Hyperparameter (Confidence-Threshold, Retrieval-K) einführen
+- **Baseline-Fokus:** Random Sampling ist etablierter Standard für Learning Curves und ermöglicht direkten Literaturvergleich
+- **Risiko:** Pseudo-Labels können falsch sein und Fehler verstärken (Self-Fulfilling Bias)
+
+### Implementierte Vereinfachung
+
+- **Stratified Random Sampling:** Zufällige Auswahl mit Genus-Proportionserhalt
+- Garantiert unbiased Evaluation der reinen Transferierbarkeit
+
+### Potenzial für Folgearbeit
+
+Wenn die Random-Sampling Fine-Tuning-Kurven zeigen, dass selbst mit 100% Leipzig-Daten die Berlin-Performance nicht erreicht wird, wäre Intelligent Sample Selection ein logischer nächster Schritt:
+
+- **Active Learning:** Modell wählt selbst informative Samples aus
+- **Uncertainty Sampling:** Samples mit hoher Prediction-Unsicherheit priorisieren
+- **Diversity Sampling:** Maximiere Feature-Space Coverage
+- **Hybrid Approach:** Kombination aus Pseudo-Labels (hohe Confidence) und echten Labels (niedrige Confidence)
+
+### Erwartete Verbesserungen
+
+Basierend auf Tong et al. (2019) könnte Intelligent Sample Selection die Sample Efficiency um 20-40% steigern:
+
+- Beispiel: Mit 25% intelligent selected Samples dieselbe Performance wie 40% random Samples
+
+**→ Wichtig für Diskussion/Future Work im Paper erwähnen!**
+
+---
+
+## 6. Class Weighting Experimente
 
 ### Beschreibung
 
@@ -148,7 +202,7 @@ Systematischer Vergleich verschiedener Class-Weighting-Strategien.
 
 ---
 
-## 6. Ensemble-Methoden
+## 7. Ensemble-Methoden
 
 ### Beschreibung
 
@@ -175,7 +229,7 @@ ML + NN Ensemble könnte interessant sein, falls beide Modelltypen unterschiedli
 
 ---
 
-## 7. Alternative Transfer-Szenarien
+## 8. Alternative Transfer-Szenarien
 
 ### Beschreibung
 
@@ -203,7 +257,7 @@ Neben Berlin → Leipzig könnten weitere Szenarien getestet werden.
 
 ---
 
-## 8. From-Scratch Baselines bei allen Fraktionen
+## 9. From-Scratch Baselines bei allen Fraktionen
 
 ### Beschreibung
 
@@ -233,7 +287,7 @@ Statt nur eine From-Scratch Baseline bei 100% Leipzig-Daten zu trainieren, könn
 
 ---
 
-## 9. Explainability und Interpretierbarkeit
+## 10. Explainability und Interpretierbarkeit
 
 ### Beschreibung
 
@@ -264,18 +318,19 @@ Tiefgehende Analyse, warum Modelle bestimmte Entscheidungen treffen.
 
 ## Zusammenfassung
 
-| Erweiterung                     | Status                    | Priorität für Folgearbeit       |
-| ------------------------------- | ------------------------- | ------------------------------- |
-| Transfer-optimiertes Training   | Nicht implementiert       | Hoch (bei schlechtem Zero-Shot) |
-| Multi-Seed Evaluation           | Kompromiss (Bootstrap CI) | Mittel                          |
-| Alternative NN-Architekturen    | 1D-CNN gewählt            | Niedrig                         |
-| Multiple Fine-Tuning Strategien | Single-Strategy           | Mittel                          |
-| Class Weighting Experimente     | Balanced gewählt          | Niedrig                         |
-| Ensemble-Methoden               | Nicht implementiert       | Niedrig                         |
-| Alternative Transfer-Szenarien  | Nicht implementiert       | Hoch (mehr Städte)              |
-| From-Scratch alle Fraktionen    | Nur 100% Baseline         | Mittel                          |
-| Explainability                  | Basis implementiert       | Mittel                          |
+| Erweiterung                              | Status                    | Priorität für Folgearbeit       |
+| ---------------------------------------- | ------------------------- | ------------------------------- |
+| Transfer-optimiertes Training            | Nicht implementiert       | Hoch (bei schlechtem Zero-Shot) |
+| Multi-Seed Evaluation                    | Kompromiss (Bootstrap CI) | Mittel                          |
+| Alternative NN-Architekturen             | 1D-CNN gewählt            | Niedrig                         |
+| Multiple Fine-Tuning Strategien          | Single-Strategy           | Mittel                          |
+| Intelligent Sample Selection (Tong 2019) | Nicht implementiert       | Hoch (für Data Efficiency)      |
+| Class Weighting Experimente              | Balanced gewählt          | Niedrig                         |
+| Ensemble-Methoden                        | Nicht implementiert       | Niedrig                         |
+| Alternative Transfer-Szenarien           | Nicht implementiert       | Hoch (mehr Städte)              |
+| From-Scratch alle Fraktionen             | Nur 100% Baseline         | Mittel                          |
+| Explainability                           | Basis implementiert       | Mittel                          |
 
 ---
 
-_Letzte Aktualisierung: 2026-02-03_
+_Letzte Aktualisierung: 2026-02-06_

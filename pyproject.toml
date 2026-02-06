@@ -33,6 +33,7 @@ dev = [
     "nbformat>=5.10.4",
     "nbconvert>=7.17.0",
     "ipykernel>=7.1.0",
+    "pypdf>=6.6.2",
 ]
 
 [build-system]

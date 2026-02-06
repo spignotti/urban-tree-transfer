@@ -28,7 +28,13 @@
 - Kollert, A., Bremer, M., Löw, M., & Rutzinger, M. (2021). Exploring the potential of land surface phenology and seasonal cloud free composites of one year of Sentinel-2 imagery for tree species mapping in a mountainous region. Int J Appl Earth Obs Geoinformation, 94, 102208.
 - Grabska, E., Hostert, P., Pflugmacher, D. & Ostapowicz, K. (2019). Forest Stand Species Mapping Using the Sentinel-2 Time Series. Remote Sens., 11, 1197.
 - Immitzer, M., Neuwirth, M., Böck, S., Brenner, H., Vuolo, F. & Atzberger, C. (2019). Optimal Input Features for Tree Species Classification in Central Europe Based on Multi-Temporal Sentinel-2 Data. Remote Sens., 11(2599).
+- Neumann, M., Pinto, A.S., Zhai, X. & Houlsby, N. (2019). In-domain representation learning for remote sensing. ISPRS Annals of the Photogrammetry, Remote Sensing and Spatial Information Sciences, IV-2/W7, 159-166. https://doi.org/10.5194/isprs-annals-IV-2-W7-159-2019
 - Persson, M., Lindberg, E. & Reese, H. (2018). Tree Species Classification with Multi-Temporal Sentinel-2 Data. Remote Sens., 10(11), 1794.
+- Roberts, D.R., Bahn, V., Ciuti, S., Boyce, M.S., Elith, J., Guillera-Arroita, G., Hauenstein, S., Lahoz-Monfort, J.J., Schröder, B., Thuiller, W., Warton, D.I., Wintle, B.A., Hartig, F. & Dormann, C.F. (2017). Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure. Ecography, 40(8), 913-929. https://doi.org/10.1111/ecog.02881
+- Rußwurm, M. & Körner, M. (2020). Self-attention for raw optical Satellite Time Series Classification. ISPRS Journal of Photogrammetry and Remote Sensing, 169, 421-435. https://doi.org/10.1016/j.isprsjprs.2020.06.006
+- Tong, X.-Y., Xia, G.-S., Lu, Q., Shen, H., Li, S., You, S. & Zhang, L. (2019). Land-cover classification with high-resolution remote sensing images using transferable deep models. Remote Sensing of Environment, 237, 111322. https://doi.org/10.1016/j.rse.2019.111322
+- Tuia, D., Persello, C. & Bruzzone, L. (2016). Domain Adaptation for the Classification of Remote Sensing Data: An Overview of Recent Advances. IEEE Geoscience and Remote Sensing Magazine, 4(2), 41-57. https://doi.org/10.1109/MGRS.2016.2548504
+- Tuia, D., Roscher, R., Wegner, J.D., Jacobs, N., Zhu, X.X. & Camps-Valls, G. (2021). Toward a Collective Agenda on AI for Earth Science Data Analysis. IEEE Geoscience and Remote Sensing Magazine, 9(2), 88-104. https://doi.org/10.1109/MGRS.2020.3043504
 
 ## Services und Datenquellen (als Quellenangaben erfassen)
 
@@ -38,7 +44,6 @@ Diese Quellen sind Services/Datensaetze und sollten ebenfalls im Harvard-Stil zi
 - Google Earth Engine (GEE) fuer Datenabruf und Verarbeitung.
 - LiDAR/CHM-Daten (je nach Stadt: Landesvermessung/Geoportal).
 - Baumkataster via WFS (Berlin/Leipzig).
-- Pleiades/Planet (falls genutzt).
 
 **Service-Template**
 

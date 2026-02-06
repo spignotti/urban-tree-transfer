@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Normalize literature list with extracted PDF metadata and ignore docs/literature
 - Update literature list from provided Harvard citations and add coverage notes
 - Reorder literature missing-citation notes and remove unneeded entries
+- Document remaining PRD 002d items in methodological extensions and move PRD to done
 
 ### Added - Phase 2: Parquet Export for ML Efficiency
 

@@ -247,6 +247,8 @@ Alle anderen Klassen (Wolken, Schatten, Wasser, Schnee, Cirrus) werden maskiert.
 
 **13 Indizes:** NDVI, EVI, GNDVI, NDre1, NDVIre, CIre, IRECI, RTVIcore, NDWI, MSI, NDII, kNDVI, VARI
 
+> **📝 Note:** Die Auswahl dieser 13 Vegetationsindizes erfolgte basierend auf einer breiten Abdeckung relevanter spektraler Eigenschaften (Greenness, Red-Edge, Moisture). Eine vollständige literaturbasi erte Begründung jedes Indexes (mit Referenzen zu Immitzer et al. 2019, Grabska et al. 2019, Hemmerling et al. 2021) steht noch aus und sollte in einer wissenschaftlichen Publikation ergänzt werden.
+
 ### Schlüssel-Parameter
 
 | Parameter   | Wert       | Begründung                       |
