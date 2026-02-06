@@ -14,11 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Change deprecated `labels=` to `tick_labels=` in boxplot (5 instances)
   - Fix undefined `dpi` variable in spatial clustering visualization (`dpi=dpi` → `dpi=300`)
 - Add pointpats>=2.5.0 dependency for Ripley's K spatial clustering analysis
+  - Auto-install pointpats in notebook cell 3 if not available (Colab compatibility)
   - Enables biological context analysis in exp_04 (previously skipped)
   - Required for spatial autocorrelation testing of outliers
-- Fix unicode glyph warning in plotting.py
-  - Configure DejaVu Sans font for unicode checkmark support (✓/✗)
-  - Prevents "Glyph 10003 missing from font" warnings in figure exports
+- Fix unicode glyph warning for Colab environments
+  - Add warnings.filterwarnings to suppress "Glyph missing from font" warnings
+  - Colab uses Liberation Sans which lacks some unicode glyphs (✓/✗)
+  - Warning suppression prevents cluttered output while preserving functionality
 
 ### Changed - Documentation
 
