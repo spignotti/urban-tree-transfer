@@ -146,6 +146,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fix exp_03 correlation analysis to resolve base-name aliases and non-zero-padded months when deriving common months
 - Fix exp_04 outlier thresholds configuration cell formatting
+- Fix exp_05 Moran's I calculation cell to avoid memory blow-ups by processing cities and lags sequentially
+- Fix exp_06 proximity analysis configuration cell formatting for readability
+- Fix exp_06 first cell unterminated string literal in Colab setup block
 
 ### Added - Phase 2: Feature Engineering
 
