@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - CI Tooling
+
+- Fix pyright type annotation in plotting utilities by importing `Figure`
+- Normalize extract_pdf_simple imports/formatting to satisfy ruff
+
 ### Fixed - Exploratory Notebooks & Dependencies
 
 - Fix pointpats import error in exp_04 outlier thresholds notebook

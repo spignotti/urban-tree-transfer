@@ -1,13 +1,13 @@
 """Publication-quality plotting utilities."""
 
-# pyright: reportMissingImports=false, reportMissingModuleSource=false
-
 from __future__ import annotations
 
+# pyright: reportMissingImports=false, reportMissingModuleSource=false
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+from matplotlib.figure import Figure
 
 PUBLICATION_STYLE = {
     "style": "seaborn-v0_8-whitegrid",
@@ -29,7 +29,7 @@ def setup_plotting() -> None:
     plt.rcParams["font.family"] = "DejaVu Sans"
 
 
-def save_figure(fig: plt.Figure, path: Path, dpi: int = 300) -> None:
+def save_figure(fig: Figure, path: Path, dpi: int = 300) -> None:
     """Save figure with consistent settings."""
     path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(path, dpi=dpi, bbox_inches="tight")
