@@ -331,10 +331,8 @@ def export_geometry_lookup(
     if not lookup_records:
         raise ValueError("No valid geometry records found in splits.")
 
-    # Create DataFrame and deduplicate (keep filtered=True version)
+    # Create DataFrame (no deduplication - trees appear once per split they belong to)
     lookup_df = pd.DataFrame(lookup_records)
-    lookup_df = lookup_df.sort_values("filtered", ascending=False)  # True sorts before False
-    lookup_df = lookup_df.drop_duplicates(subset=["tree_id"], keep="first")
 
     # Export to Parquet
     lookup_df.to_parquet(output_path, engine="pyarrow", compression="snappy", index=False)

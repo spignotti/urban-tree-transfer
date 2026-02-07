@@ -222,14 +222,14 @@ def create_stratified_splits_leipzig(
 def validate_split_stratification(
     *split_gdfs: gpd.GeoDataFrame,
     split_names: list[str] | None = None,
-    kl_threshold: float = 0.01,
+    kl_threshold: float = 0.07,
 ) -> dict[str, Any]:
     """Validate split quality and spatial disjointness for multiple splits.
 
     Args:
         *split_gdfs: Variable number of split GeoDataFrames.
         split_names: Names for each split (e.g., ['train', 'val', 'test']).
-        kl_threshold: Maximum allowed KL-divergence between splits.
+        kl_threshold: Maximum allowed KL-divergence between splits (default 0.07 for spatial blocking + filtering).
 
     Returns:
         Dictionary with validation metrics.

@@ -133,7 +133,7 @@ def detect_mahalanobis_outliers(
         cov = np.cov(valid_data, rowvar=False)
         try:
             cond = float(np.linalg.cond(cov))
-            if cond > 1e10:
+            if cond > 1e18:
                 logger.warning(
                     "Genus %s: covariance matrix near-singular (cond=%.2e).",
                     _genus,

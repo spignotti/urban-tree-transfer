@@ -1,0 +1,139 @@
+{
+  "version": "1.0",
+  "created": "2026-02-07T12:03:19.221936+00:00",
+  "random_seed": 42,
+  "configurations": {
+    "block_size_m": 1200,
+    "proximity_threshold_m": 5,
+    "z_threshold": 3.0,
+    "mahalanobis_alpha": 0.001,
+    "iqr_multiplier": 1.5,
+    "features_removed": 40
+  },
+  "outlier_stats": {
+    "berlin": {
+      "high_count": 301,
+      "medium_count": 15956,
+      "low_count": 75303,
+      "none_count": 738593,
+      "per_method_counts": {
+        "zscore": 19881,
+        "mahalanobis": 77691,
+        "iqr": 10546
+      },
+      "total_trees": 830153,
+      "trees_removed": 0
+    },
+    "leipzig": {
+      "high_count": 26,
+      "medium_count": 3716,
+      "low_count": 17514,
+      "none_count": 132373,
+      "per_method_counts": {
+        "zscore": 4133,
+        "mahalanobis": 18336,
+        "iqr": 2555
+      },
+      "total_trees": 153629,
+      "trees_removed": 0
+    }
+  },
+  "proximity_filter_stats": {
+    "berlin": {
+      "original_count": 830153,
+      "removed_count": 170887,
+      "retained_count": 659266,
+      "retention_rate": 0.7941499940372437,
+      "threshold_used": 5.0
+    },
+    "leipzig": {
+      "original_count": 153629,
+      "removed_count": 30873,
+      "retained_count": 122756,
+      "retention_rate": 0.799041847567842,
+      "threshold_used": 5.0
+    }
+  },
+  "baseline_splits": {
+    "berlin": {
+      "train": {
+        "count": 600299,
+        "blocks": 471
+      },
+      "val": {
+        "count": 120874,
+        "blocks": 91
+      },
+      "test": {
+        "count": 108980,
+        "blocks": 95
+      }
+    },
+    "leipzig": {
+      "finetune": {
+        "count": 122538,
+        "blocks": 178
+      },
+      "test": {
+        "count": 31091,
+        "blocks": 50
+      }
+    }
+  },
+  "filtered_splits": {
+    "berlin": {
+      "train": {
+        "count": 471815,
+        "blocks": 454
+      },
+      "val": {
+        "count": 99603,
+        "blocks": 106
+      },
+      "test": {
+        "count": 87848,
+        "blocks": 97
+      }
+    },
+    "leipzig": {
+      "finetune": {
+        "count": 91080,
+        "blocks": 176
+      },
+      "test": {
+        "count": 31676,
+        "blocks": 51
+      }
+    }
+  },
+  "validation": {
+    "berlin_baseline": {
+      "spatial_overlap": 0,
+      "kl_divergences": {
+        "train_vs_val": 0.01545191498632779,
+        "train_vs_test": 0.028666147334717288,
+        "val_vs_test": 0.04846121528216184
+      }
+    },
+    "berlin_filtered": {
+      "spatial_overlap": 0,
+      "kl_divergences": {
+        "train_vs_val": 0.023787848672421688,
+        "train_vs_test": 0.017345603406518827,
+        "val_vs_test": 0.035865425006908265
+      }
+    },
+    "leipzig_baseline": {
+      "spatial_overlap": 0,
+      "kl_divergences": {
+        "finetune_vs_test": 0.05314048712420538
+      }
+    },
+    "leipzig_filtered": {
+      "spatial_overlap": 0,
+      "kl_divergences": {
+        "finetune_vs_test": 0.060738836845601614
+      }
+    }
+  }
+}

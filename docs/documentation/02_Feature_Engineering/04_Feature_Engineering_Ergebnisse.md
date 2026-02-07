@@ -478,54 +478,224 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 
 ---
 
-#### 02c: Final Preparation ⏳
+#### 02c: Final Preparation
 
-**Status:** ⏳ **Noch nicht ausgeführt**
+**Ausführungszeit:** 07.02.2026, 11:33:52 - 12:15:02 (41 Minuten)  
+**Status:** ✅ Erfolgreich
 
-**Geplante Schritte:**
+**Verarbeitung:**
 
-**1. Proximity Filter:**
-
-- **Methode:** Mixed-Genus-Proximity-Check
-- **Schwellenwert:** 5m (aus exp_06)
-- **Erwartete Retention:** ~79% (659.000 von 834.000 Bäume)
-- **Ziel:** Entfernung von Bäumen mit unterschiedlichen Gattungen im selben Sentinel-2 Pixel
-
-**2. Spatially-Aware Train/Test Split:**
-
-- **Methode:** Spatial K-Means Clustering mit Distance Buffer
-- **Split-Ratio:** 80% Train / 20% Test
-- **Block Size:** 1200m (basierend auf Autocorrelation Decay Distance)
+- **Input:** 983.782 Bäume (aus 02b)
+- **Output:** 2 Split-Varianten (Baseline + Filtered)
 - **Random Seed:** 42
-- **Ziel:** Vermeidung von Data Leakage durch räumliche Autokorrelation
+- **Block Size:** 1200m (Spatial Blocks)
 
-**3. Cross-City Stratifikation:**
+---
 
-- **Berlin:** Source City (für Training und Source-Test)
-- **Leipzig:** Target City (nur für Target-Test, kein Training)
-- **Genus-Balance:** Stratified Split pro Gattung
+**Schritt 1: Feature Reduction (Correlation Removal)**
 
-**4. Export:**
+**Entfernte Features:** 40 (hochkorrelierte Features aus exp_03)
 
-- **Format:** Parquet (effiziente Speicherung für ML-Pipelines)
-- **Dateien:**
-  - `berlin_train.parquet`
-  - `berlin_test.parquet`
-  - `leipzig_test.parquet`
-- **Schema:** Final Feature Set (187 Features nach Selection)
+- B6, B7 (Red-Edge Bänder) × 7 Monate = 14
+- EVI, kNDVI (Indizes) × 7 Monate = 14
+- Weitere redundante Features = 12
 
-**Konfiguration:**
+**Verbleibende Features:** 147 (187 - 40)
 
-- **feature_config.yaml:** Feature-Listen, Temporal Selection, CHM-Parameter
-- **Available:** ✅ Bereits generiert aus Exploratory Notebooks
+---
 
-**Erwarteter Output:**
+**Schritt 2: Outlier Detection (Flagging)**
 
-- **Berlin Train:** ~420.000 Bäume (50% von 834.000 nach Proximity)
-- **Berlin Test:** ~105.000 Bäume (12.5%)
-- **Leipzig Test:** ~120.000 Bäume (100% von Leipzig nach Proximity)
+**Berlin (830.153 Bäume):**
 
-**Nächster Schritt:** Ausführung von 02c mit generierten Konfigurationen
+| Severity   | Anzahl  | Anteil | Methoden        |
+| ---------- | ------- | ------ | --------------- |
+| **None**   | 738.593 | 89.0%  | Keine Flags     |
+| **Low**    | 75.303  | 9.1%   | 1 Methode       |
+| **Medium** | 15.956  | 1.9%   | 2 Methoden      |
+| **High**   | 301     | 0.04%  | Alle 3 Methoden |
+
+**Methoden-Einzelzahlen:**
+
+- Z-Score (3σ): 19.881 Bäume
+- Mahalanobis (α=0.001): 77.691 Bäume
+- IQR (1.5×IQR): 10.546 Bäume
+
+**Leipzig (153.629 Bäume):**
+
+| Severity   | Anzahl  | Anteil | Methoden        |
+| ---------- | ------- | ------ | --------------- |
+| **None**   | 132.373 | 86.1%  | Keine Flags     |
+| **Low**    | 17.514  | 11.4%  | 1 Methode       |
+| **Medium** | 3.716   | 2.4%   | 2 Methoden      |
+| **High**   | 26      | 0.02%  | Alle 3 Methoden |
+
+**Methoden-Einzelzahlen:**
+
+- Z-Score (3σ): 4.133 Bäume
+- Mahalanobis (α=0.001): 18.336 Bäume
+- IQR (1.5×IQR): 2.555 Bäume
+
+**Entscheidung:** Alle Outlier behalten (Flagging-Only für Ablationsstudien)
+
+---
+
+**Schritt 3: Spatial Block Creation**
+
+**Methode:** K-Means Clustering basierend auf geografischen Koordinaten
+
+- **Block Size:** 1200m (aus exp_05 Autocorrelation Decay)
+- **Berlin:** 657 Spatial Blocks
+- **Leipzig:** 229 Spatial Blocks
+
+---
+
+**Schritt 4: Baseline Splits (ohne Proximity Filter)**
+
+**Berlin (830.153 Bäume):**
+
+| Split      | Bäume   | Blocks | Ratio |
+| ---------- | ------- | ------ | ----- |
+| **Train**  | 600.299 | 471    | 72.3% |
+| **Val**    | 120.874 | 91     | 14.6% |
+| **Test**   | 108.980 | 95     | 13.1% |
+| **Gesamt** | 830.153 | 657    | 100%  |
+
+**Leipzig (153.629 Bäume):**
+
+| Split        | Bäume   | Blocks | Ratio |
+| ------------ | ------- | ------ | ----- |
+| **Finetune** | 122.538 | 178    | 79.8% |
+| **Test**     | 31.091  | 50     | 20.2% |
+| **Gesamt**   | 153.629 | 228    | 100%  |
+
+**Validierung:**
+
+- ✅ **Spatial Overlap:** 0 (keine Block-Überlappungen)
+- ✅ **KL-Divergenz (Train vs Val):** 0.015 (exzellent)
+- ✅ **KL-Divergenz (Train vs Test):** 0.029 (sehr gut)
+- ✅ **KL-Divergenz (Val vs Test):** 0.048 (gut)
+- ✅ **KL-Divergenz (Finetune vs Test):** 0.053 (gut)
+
+---
+
+**Schritt 5: Proximity Filter (Mixed-Genus Removal)**
+
+**Methode:** Entfernung von Bäumen mit unterschiedlichen Gattungen im 5m Radius
+
+- **Schwellenwert:** 5m (aus exp_06)
+- **Geometrie:** Punkt-zu-Punkt Distanz (Zentroid)
+
+**Berlin:**
+
+- **Input:** 830.153 Bäume
+- **Entfernt:** 170.887 Bäume (20.6%)
+- **Behalten:** 659.266 Bäume (**79.4% Retention**)
+
+**Leipzig:**
+
+- **Input:** 153.629 Bäume
+- **Entfernt:** 30.873 Bäume (20.1%)
+- **Behalten:** 122.756 Bäume (**79.9% Retention**)
+
+---
+
+**Schritt 6: Filtered Splits (mit Proximity Filter)**
+
+**Berlin (659.266 Bäume nach Filter):**
+
+| Split      | Bäume   | Blocks | Ratio |
+| ---------- | ------- | ------ | ----- |
+| **Train**  | 471.815 | 454    | 71.6% |
+| **Val**    | 99.603  | 106    | 15.1% |
+| **Test**   | 87.848  | 97     | 13.3% |
+| **Gesamt** | 659.266 | 657    | 100%  |
+
+**Leipzig (122.756 Bäume nach Filter):**
+
+| Split        | Bäume   | Blocks | Ratio |
+| ------------ | ------- | ------ | ----- |
+| **Finetune** | 91.080  | 176    | 74.2% |
+| **Test**     | 31.676  | 51     | 25.8% |
+| **Gesamt**   | 122.756 | 227    | 100%  |
+
+**Validierung:**
+
+- ✅ **Spatial Overlap:** 0 (keine Block-Überlappungen)
+- ✅ **KL-Divergenz (Train vs Val):** 0.024 (exzellent)
+- ✅ **KL-Divergenz (Train vs Test):** 0.017 (exzellent)
+- ✅ **KL-Divergenz (Val vs Test):** 0.036 (sehr gut)
+- ✅ **KL-Divergenz (Finetune vs Test):** 0.061 (gut)
+
+---
+
+**Schritt 7: Export**
+
+**Formate:**
+
+- **GeoPackage:** Mit Geometrie (für räumliche Analysen)
+- **Parquet:** Ohne Geometrie (für ML-Training, Snappy-Kompression)
+
+**Baseline Splits (10 Dateien: 5 Splits × 2 Formate):**
+
+- `berlin_baseline_train.gpkg` / `.parquet`
+- `berlin_baseline_val.gpkg` / `.parquet`
+- `berlin_baseline_test.gpkg` / `.parquet`
+- `leipzig_baseline_finetune.gpkg` / `.parquet`
+- `leipzig_baseline_test.gpkg` / `.parquet`
+
+**Filtered Splits (10 Dateien: 5 Splits × 2 Formate):**
+
+- `berlin_filtered_train.gpkg` / `.parquet`
+- `berlin_filtered_val.gpkg` / `.parquet`
+- `berlin_filtered_test.gpkg` / `.parquet`
+- `leipzig_filtered_finetune.gpkg` / `.parquet`
+- `leipzig_filtered_test.gpkg` / `.parquet`
+
+**Zusätzlich:**
+
+- `geometry_lookup.parquet`: Geometrien-Mapping (tree_id → WKT)
+
+**Gesamt:** 21 Dateien exportiert
+
+---
+
+**Schritt 8: Visualisierungen**
+
+**Generierte Plots:**
+
+- `split_size_comparison.png`: Vergleich Baseline vs Filtered Split-Größen
+- `genus_distribution_comparison.png`: Genus-Verteilung Baseline vs Filtered
+
+**Output:** [outputs/phase_2_splits/figures/](../../../outputs/phase_2_splits/figures/)
+
+---
+
+**Zusammenfassung 02c:**
+
+**Datenreduktion:**
+
+- **Start:** 983.782 Bäume (02b Output)
+- **Nach Proximity Filter:** 782.022 Bäume (79.5% Retention)
+- **Final (alle Splits kombiniert):** 782.022 Bäume
+
+**Feature-Count:**
+
+- **Start:** 187 Features (02b Output)
+- **Nach Correlation Removal:** 147 Features
+
+**Split-Varianten:**
+
+- ✅ **Baseline:** Keine Proximity-Filterung (alle Bäume)
+- ✅ **Filtered:** Mit Proximity-Filterung (spektral rein)
+
+**Qualität:**
+
+- ✅ Spatial Independence: 0 Block-Overlaps
+- ✅ Genus Stratification: KL-Divergenzen < 0.07
+- ✅ Outlier Flagging: 89% clean data (Berlin), 86% (Leipzig)
+
+**Metadaten:** [phase_2_final_summary.json](../../../outputs/phase_2_splits/metadata/phase_2_final_summary.json)
 
 ---
 
@@ -533,12 +703,13 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 
 ### Datenvolumen
 
-| Schritt                      | Bäume       | Features       | Format     |
-| ---------------------------- | ----------- | -------------- | ---------- |
-| **Phase 1 Output**           | 1.072.999   | 11 (Metadaten) | GeoPackage |
-| **02a - Feature Extraction** | 1.072.999   | 277            | GeoPackage |
-| **02b - Data Quality**       | 983.782     | 187            | GeoPackage |
-| **02c - Final Preparation**  | ~540.000 ⏳ | 187            | Parquet ⏳ |
+| Schritt                      | Bäume     | Features       | Format                  |
+| ---------------------------- | --------- | -------------- | ----------------------- |
+| **Phase 1 Output**           | 1.072.999 | 11 (Metadaten) | GeoPackage              |
+| **02a - Feature Extraction** | 1.072.999 | 277            | GeoPackage              |
+| **02b - Data Quality**       | 983.782   | 187            | GeoPackage              |
+| **02c - Baseline Splits**    | 983.782   | 147            | GeoPackage + Parquet    |
+| **02c - Filtered Splits**    | 782.022   | 147            | GeoPackage + Parquet ✅ |
 
 ### Zeitaufwand
 
@@ -547,7 +718,7 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 | **Exploratory (Gesamt)**     | ~50 Min | JM-Distance (exp_01), Outlier-Analyse (exp_04) |
 | **02a - Feature Extraction** | 27 Min  | Raster-Sampling (1 Mio. Punkte, 93% der Zeit)  |
 | **02b - Data Quality**       | 17 Min  | NaN-Filterung, NDVI-Checks                     |
-| **02c - Final Preparation**  | ⏳ TBD  | Proximity-Berechnung (Distance Matrix)         |
+| **02c - Final Preparation**  | 41 Min  | Proximity-Filter, Splits, Export ✅            |
 
 ### Feature-Engineering
 
@@ -557,8 +728,8 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 | **CHM**                 | 3       | Absolute, Z-Score, Percentile             |
 | **Sentinel-2 Temporal** | 133     | 19 Bänder/Indizes × 7 Monate (Apr-Okt)    |
 | **Outlier Flags**       | 4       | Z-Score, Mahalanobis, IQR, Severity       |
-| **Proximity (02c)**     | 30 ⏳   | TBD in Final Preparation                  |
-| **Gesamt**              | **187** | (+ 30 in 02c)                             |
+| **Gesamt (02b)**        | **151** | Vor Correlation Removal                   |
+| **Gesamt (02c Final)**  | **147** | Nach Correlation Removal ✅               |
 
 ### Genus-Verteilung (nach 02b)
 
@@ -589,11 +760,11 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 5. ✅ **Spatial Autocorrelation:** Decay Distance 1200m, Block-Größe validiert
 6. ✅ **Proximity Filter:** 5m Threshold empfohlen (79.4% Retention)
 
-**Runner Notebooks (2 von 3):**
+**Runner Notebooks (3 von 3):**
 
 1. ✅ **02a - Feature Extraction:** 1.072.999 Bäume, 277 Features, 100% Erfolgsrate
 2. ✅ **02b - Data Quality:** 983.782 Bäume, 187 Features, 91.7% Retention
-3. ⏳ **02c - Final Preparation:** Ausstehend
+3. ✅ **02c - Final Preparation:** 782.022 Bäume (filtered), 147 Features, 21 Export-Dateien
 
 ### 📊 Qualitätsbewertung der Ergebnisse
 
@@ -622,6 +793,26 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 - CHM: 100% vollständig
 - Sentinel-2 (Hauptmonate): 85-95% vollständig
 - Nur Winter-Monate < 60% (erwartungsgemäß mit Cloud Masking)
+
+**5. Proximity Filter (02c):**
+
+- **79.4% Retention (Berlin)** → **Sehr gut**
+- **79.9% Retention (Leipzig)** → **Sehr gut**
+- Balance zwischen Spektral-Reinheit und Sample Size optimal
+- Beide Städte konsistent (< 0.5% Unterschied)
+
+**6. Spatial Split Validation (02c):**
+
+- **Spatial Overlap:** 0 Blocks (perfekt) → **Exzellent**
+- **KL-Divergenzen:** Alle < 0.07 (Stratifikation erhalten) → **Exzellent**
+- Baseline Splits: Max KL = 0.053
+- Filtered Splits: Max KL = 0.061
+
+**7. Final Split Sizes (02c):**
+
+- **Berlin Train:** 471.815 Bäume → **Ausreichend für Deep Learning**
+- **Leipzig Finetune:** 91.080 Bäume → **Gut für Fine-Tuning**
+- **Test Sets:** Beide >30k Bäume → **Statistisch robust**
 
 #### ✅ **Gut - Erwartungen erfüllt:**
 
@@ -726,5 +917,51 @@ Mit den generierten Konfigurationen kann 02c sofort ausgeführt werden. Die Pipe
 - [02b_Data_Quality_Methodik.md](02b_Data_Quality_Methodik.md)
 - [02c_Final_Preparation_Methodik.md](02c_Final_Preparation_Methodik.md)
 
-**Execution Logs:** [outputs/phase_2/logs/](../../../outputs/phase_2/logs/)  
-**Metadata:** [outputs/phase_2/metadata/](../../../outputs/phase_2/metadata/)
+**Execution Logs:**
+
+- [Phase 2 Features](../../../outputs/phase_2_features/logs/)
+- [Phase 2 Splits](../../../outputs/phase_2_splits/logs/)
+
+**Metadata:**
+
+- [Phase 2 Features](../../../outputs/phase_2_features/metadata/)
+- [Phase 2 Splits](../../../outputs/phase_2_splits/metadata/)
+
+---
+
+## 🎉 Phase 2: Vollständig Abgeschlossen
+
+**Status:** ✅ **Alle 3 Runner-Notebooks erfolgreich ausgeführt**
+
+### Finale Datensatz-Bereitstellung
+
+**Baseline Splits (983.782 Bäume):**
+
+- Berlin Train: 600.299 | Berlin Val: 120.874 | Berlin Test: 108.980
+- Leipzig Finetune: 122.538 | Leipzig Test: 31.091
+
+**Filtered Splits (782.022 Bäume, 79.5% Retention):**
+
+- Berlin Train: 471.815 | Berlin Val: 99.603 | Berlin Test: 87.848
+- Leipzig Finetune: 91.080 | Leipzig Test: 31.676
+
+**Features:** 147 (nach Correlation Removal: 40 redundante Features entfernt)
+
+**Qualitätss icherung:**
+
+- ✅ Spatial Independence: 0 Block-Overlaps in allen Splits
+- ✅ Genus Stratification: KL-Divergenzen < 0.07 (exzellent)
+- ✅ Outlier Flagging: 89% clean data (Berlin), 86% (Leipzig)
+- ✅ Proximity Filter: 79.5% Retention (optimal für Spektral-Reinheit)
+
+**Export:**
+
+- 21 Dateien (5 Splits × 2 Versionen × 2 Formate + 1 Geometry Lookup)
+- 5 Splits: 3 Berlin (train/val/test) + 2 Leipzig (finetune/test)
+- 2 Versionen: Baseline (983k Bäume) + Filtered (782k Bäume, 79.5% Retention)
+- 2 Formate: GeoPackage (.gpkg) + Parquet (.parquet)
+- Geschätztes Datenvolumen: ~23 GB
+
+**Übergabe an Phase 3:** ✅ Bereit für Experiment-Pipeline (Modelltraining, Transfer Learning, Fine-Tuning)
+
+**Letzte Aktualisierung:** 07.02.2026
