@@ -291,3 +291,141 @@ def summarize_hypotheses(
         )
 
     return results
+
+
+def test_hypothesis(
+    hypothesis: dict[str, Any],
+    genus_data: pd.DataFrame,
+    feature_importance: pd.DataFrame | None = None,
+) -> dict[str, Any]:
+    """Test a single transfer hypothesis with statistical analysis.
+
+    Args:
+        hypothesis: Hypothesis definition with id, description, variable, test_type, etc.
+        genus_data: DataFrame with columns: genus, berlin_f1, leipzig_f1, berlin_n, transfer_gap.
+        feature_importance: Optional feature importance DataFrame.
+
+    Returns:
+        Dict with keys: id, description, test_type, statistic, p_value, conclusion.
+    """
+    from scipy import stats
+
+    hyp_id = hypothesis.get("id", "unknown")
+    description = hypothesis.get("description", "")
+    test_type = hypothesis.get("test_type", "correlation")
+
+    result = {
+        "id": hyp_id,
+        "description": description,
+        "test_type": test_type,
+    }
+
+    try:
+        if test_type == "correlation":
+            # Test correlation between two variables
+            x_var = hypothesis.get("x_variable", "")
+            y_var = hypothesis.get("y_variable", "")
+
+            if x_var not in genus_data.columns or y_var not in genus_data.columns:
+                result["conclusion"] = f"Missing required columns: {x_var}, {y_var}"
+                return result
+
+            x_series: pd.Series = genus_data[x_var].dropna()  # type: ignore[assignment]
+            y_series: pd.Series = genus_data[y_var].dropna()  # type: ignore[assignment]
+
+            # Align data
+            common_idx = x_series.index.intersection(y_series.index)
+            x_series = x_series.loc[common_idx]
+            y_series = y_series.loc[common_idx]
+
+            if len(x_series) < 3:
+                result["conclusion"] = "Insufficient data for correlation test"
+                return result
+
+            # Pearson correlation (use tuple unpacking for backwards compatibility)
+            corr_stat, corr_pval = stats.pearsonr(x_series, y_series)  # type: ignore[misc]
+            statistic = float(corr_stat)  # type: ignore[arg-type]
+            p_value = float(corr_pval)  # type: ignore[arg-type]
+            result["statistic"] = statistic
+            result["p_value"] = p_value
+            result["conclusion"] = (
+                f"Significant correlation (r={statistic:.3f}, p={p_value:.4f})"
+                if p_value < 0.05
+                else f"No significant correlation (r={statistic:.3f}, p={p_value:.4f})"
+            )
+
+        elif test_type == "mann_whitney":
+            # Compare two groups
+            group_var = hypothesis.get("group_variable", "")
+            metric_var = hypothesis.get("metric_variable", "transfer_gap")
+            group1_val = hypothesis.get("group1_value", "")
+            group2_val = hypothesis.get("group2_value", "")
+
+            if group_var not in genus_data.columns:
+                result["conclusion"] = f"Missing group column: {group_var}"
+                return result
+
+            group1_series: pd.Series = genus_data[genus_data[group_var] == group1_val][
+                metric_var
+            ].dropna()  # type: ignore[assignment]
+            group2_series: pd.Series = genus_data[genus_data[group_var] == group2_val][
+                metric_var
+            ].dropna()  # type: ignore[assignment]
+
+            if len(group1_series) < 2 or len(group2_series) < 2:
+                result["conclusion"] = "Insufficient data for Mann-Whitney U test"
+                return result
+
+            # Use tuple unpacking for backwards compatibility
+            mw_stat, mw_pval = stats.mannwhitneyu(  # type: ignore[misc]
+                group1_series, group2_series, alternative="two-sided"
+            )
+            statistic = float(mw_stat)  # type: ignore[arg-type]
+            p_value = float(mw_pval)  # type: ignore[arg-type]
+            result["statistic"] = statistic
+            result["p_value"] = p_value
+            result["conclusion"] = (
+                f"Significant difference (U={statistic:.1f}, p={p_value:.4f})"
+                if p_value < 0.05
+                else f"No significant difference (U={statistic:.1f}, p={p_value:.4f})"
+            )
+
+        elif test_type == "spearman":
+            # Spearman rank correlation
+            x_var = hypothesis.get("x_variable", "")
+            y_var = hypothesis.get("y_variable", "")
+
+            if x_var not in genus_data.columns or y_var not in genus_data.columns:
+                result["conclusion"] = f"Missing required columns: {x_var}, {y_var}"
+                return result
+
+            x_series: pd.Series = genus_data[x_var].dropna()  # type: ignore[assignment]
+            y_series: pd.Series = genus_data[y_var].dropna()  # type: ignore[assignment]
+
+            common_idx = x_series.index.intersection(y_series.index)
+            x_series = x_series.loc[common_idx]
+            y_series = y_series.loc[common_idx]
+
+            if len(x_series) < 3:
+                result["conclusion"] = "Insufficient data for Spearman test"
+                return result
+
+            # Use tuple unpacking for backwards compatibility
+            spearman_stat, spearman_pval = stats.spearmanr(x_series, y_series)  # type: ignore[misc]
+            statistic = float(spearman_stat)  # type: ignore[arg-type]
+            p_value = float(spearman_pval)  # type: ignore[arg-type]
+            result["statistic"] = statistic
+            result["p_value"] = p_value
+            result["conclusion"] = (
+                f"Significant rank correlation (rho={statistic:.3f}, p={p_value:.4f})"
+                if p_value < 0.05
+                else f"No significant rank correlation (rho={statistic:.3f}, p={p_value:.4f})"
+            )
+
+        else:
+            result["conclusion"] = f"Unknown test type: {test_type}"
+
+    except Exception as e:
+        result["conclusion"] = f"Test failed: {e!s}"
+
+    return result

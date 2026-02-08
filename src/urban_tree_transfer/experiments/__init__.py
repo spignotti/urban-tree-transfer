@@ -36,6 +36,7 @@ from urban_tree_transfer.experiments.evaluation import (
     compute_confusion_matrix,
     compute_metrics,
     compute_per_class_metrics,
+    fit_power_law,
 )
 from urban_tree_transfer.experiments.hp_tuning import (
     build_objective,
@@ -74,6 +75,7 @@ from urban_tree_transfer.experiments.transfer import (
     compute_transfer_robustness_ranking,
     mcnemar_test,
     summarize_hypotheses,
+    test_hypothesis,
 )
 from urban_tree_transfer.experiments.visualization import (
     map_to_german_names,
@@ -147,6 +149,7 @@ __all__ = [
     "evaluate_feature_subsets",
     "finetune_neural_network",
     "finetune_xgboost",
+    "fit_power_law",
     "fix_missing_genus_german",
     "get_chm_features",
     "get_dataset_suffix",
@@ -199,6 +202,7 @@ __all__ = [
     "select_optimal_features",
     "suggest_params_from_space",
     "summarize_hypotheses",
+    "test_hypothesis",
     "train_cnn",
     "train_final_model",
     "train_with_cv",

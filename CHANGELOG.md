@@ -7,6 +7,136 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Phase 3: PRD 003e Audit Fixes - Complete (✅ 2026-02-07)
+
+**Phase 4: Testing & Polish**
+- L1: Add visualization test coverage (8 new tests)
+  - Added smoke tests for 8 priority visualization functions
+  - `test_plot_per_genus_comparison`: Berlin vs Leipzig per-genus F1 comparison
+  - `test_plot_sample_loss_by_genus`: Proximity filtering impact by genus
+  - `test_plot_outlier_distribution`: Outlier severity distribution stacked bars
+  - `test_plot_performance_ladder`: Sorted ranking plot for algorithm comparison
+  - `test_plot_transfer_conifer_deciduous`: Aggregate conifer vs deciduous transfer
+  - `test_plot_finetuning_ml_vs_nn`: Side-by-side ML vs NN fine-tuning curves
+  - `test_plot_feature_importance`: Top-k feature importance bar chart
+  - `test_plot_optuna_history`: Optuna optimization history (skipped if optuna not installed)
+  - All tests verify: function runs without error, output file created, correct structure
+  - Total visualization tests: 21 (20 passed, 1 skipped)
+- L3: exp_10 coarse grid search
+  - Added grid search iteration over configured parameter spaces
+  - RF: 24 configs (n_estimators × max_depth × min_samples_split × min_samples_leaf)
+  - XGBoost: 48 configs (n_estimators × max_depth × learning_rate × subsample × colsample_bytree × reg_lambda)
+  - Tracks best params and metrics across all grid combinations
+  - Saves `best_params` to algorithm_comparison.json
+  - Previously: single default config per model (incorrect)
+  - Now: exhaustive coarse grid search as specified in PRD 003b
+- L4: Test split filtering policy
+  - Fixed 03a to NEVER apply proximity filtering to test splits
+  - Test splits always use `proximity='baseline'` regardless of setup decisions
+  - Rationale: Test data must represent real-world distribution for unbiased evaluation
+  - Train/val/finetune splits: apply setup decisions as configured
+  - Berlin test and Leipzig test: always baseline (no proximity filtering)
+  - Added clear logging to distinguish test vs non-test split handling
+  - Updated execution log with test_split_policy documentation
+
+### Fixed - Phase 3: PRD 003e Audit Fixes - Phase 3 Complete (✅ 2026-02-07)
+
+- Complete all runner notebooks: 03b (Berlin Optimization), 03c (Transfer Evaluation), 03d (Fine-tuning)
+
+  **03b_berlin_optimization.ipynb** (C2, C3, H4, M4, L2):
+  - Optuna HP tuning for ML champion: TPE sampler, median pruner, spatial block CV, 50 trials
+  - NN champion training: Optuna HP tuning, infer CNN1D structural params, train final model
+  - Post-training error analysis: Confusion matrix, per-genus F1, confused pairs, conifer vs deciduous, feature importance
+  - Save label_encoder.pkl separately with label_to_idx and idx_to_label dictionaries
+  - Execution log with runtime tracking and config hash
+  - From 3 cells → 11 cells
+  - Outputs: berlin_ml_champion.pkl, berlin_nn_champion.pt, berlin_scaler.pkl, label_encoder.pkl, hp_tuning_ml.json, hp_tuning_nn.json, berlin_evaluation.json
+
+  **03c_transfer_evaluation.ipynb** (M5, 6.1-6.4):
+  - Load both ML and NN champions (not just ML)
+  - Zero-shot evaluation with bootstrap confidence intervals
+  - Transfer gap analysis: absolute drop, relative drop, transfer efficiency
+  - Leipzig from-scratch baseline with Leipzig-specific scaler (M5)
+  - Feature stability: Spearman correlation between Berlin and Leipzig feature rankings
+  - Per-genus transfer robustness classification (robust/medium/poor)
+  - Hypothesis testing: 4 literature-backed hypotheses (Pearson, Mann-Whitney U, Spearman)
+  - Visualization: confusion comparison, per-genus transfer plots
+  - From 3 cells → 11 cells
+  - Outputs: transfer_evaluation.json, confusion_comparison.png, per_genus_transfer.png
+
+  **03d_finetuning.ipynb** (C4, C5, M5, 6.1-6.4, L2):
+  - ML fine-tuning with warm-start XGBoost (C4): training.finetune_xgboost() instead of from-scratch
+  - NN fine-tuning with warm-start CNN1D: training.finetune_cnn()
+  - Stratified subsets (C5): training.create_stratified_subsets() maintains genus balance, not df.sample()
+  - From-scratch baselines with Leipzig-specific scaler (M5) for fair comparison
+  - McNemar significance tests (6.1): fine-tuning vs zero-shot, fine-tuning vs from-scratch
+  - Power-law curve fitting (6.2): y = a * x^b with 95% recovery extrapolation
+  - Per-genus recovery analysis (6.3): F1 at each fraction by genus, identify best/worst recovering genera
+  - ML vs NN comparison (6.4): learning curves for both champions
+  - 5 visualization figures: ML curve, ML vs NN, power-law fit, per-genus heatmap, baselines comparison
+  - Execution log (L2): runtime, final F1 scores, power-law params, McNemar significance flags
+  - From 3 cells → 11 cells
+  - Outputs: finetuning_curve.json, ml_finetuning_curve.png, ml_vs_nn_finetuning.png, power_law_fit.png, per_genus_recovery.png, finetuning_vs_baselines.png
+
+### Fixed - Phase 3: PRD 003e Audit Fixes - Phase 2 Complete (✅ 2026-02-07)
+
+- Complete exploratory notebooks exp_08, exp_08b, exp_08c, exp_09 with sequential decision pipeline (PRD 003e H1, H2, C1)
+  - exp_08 (CHM Ablation): Per-feature decision logic with 3 thresholds (importance >0.25, gap increase >0.05, improvement <0.03)
+    - Compute feature importance for all CHM features
+    - Evaluate each CHM feature individually against thresholds
+    - Map included features to variant name (no_chm, zscore_only, percentile_only, both_engineered, raw_chm)
+    - Write chm_strategy to setup_decisions.json with per_feature_results and ablation_results
+  - exp_08b (Proximity Ablation): Load CHM decision and apply sequentially
+    - Load chm_strategy from setup_decisions.json (fails if exp_08 not run)
+    - Apply CHM strategy to both proximity variants (baseline, filtered)
+    - Apply decision rules: max_sample_loss (0.20), min_improvement (0.02)
+    - Write proximity_strategy to setup_decisions.json with sample_counts
+  - exp_08c (Outlier Ablation): Load CHM + proximity decisions and apply sequentially
+    - Load chm_strategy and proximity_strategy (fails if prior notebooks not run)
+    - Load correct proximity variant dataset (baseline or filtered)
+    - Apply both CHM and proximity strategies before outlier ablation
+    - Apply decision rules: max_sample_loss (0.15), min_improvement (0.02)
+    - Write outlier_strategy to setup_decisions.json
+  - exp_09 (Feature Reduction): Load all 3 decisions and apply sequentially
+    - Load chm_strategy, proximity_strategy, outlier_strategy (fails if prior notebooks not run)
+    - Apply all 3 strategies sequentially to get final dataset
+    - Compute feature importance on correctly filtered dataset
+    - Test candidate feature subset sizes [30, 50, 80, 144]
+    - Select optimal k using Pareto criterion (smallest k with F1 >= best - 0.01)
+    - Write feature_set and selected_features to setup_decisions.json (completes pipeline)
+  - All notebooks include schema validation and proper error messages for missing dependencies
+  - Sequential pipeline ensures no stale data: exp_08 → exp_08b → exp_08c → exp_09 → complete JSON
+
+### Fixed - Phase 3: PRD 003e Audit Fixes - Phase 1 Complete (✅ 2026-02-07)
+
+- Fix CNN1D.learning_rate attribute for fine-tuning compatibility (PRD 003e C6)
+  - Add `self.learning_rate` instance attribute in CNN1D.__init__
+  - Store actual learning_rate used in train_cnn() for fine-tuning reference
+  - Update _init_params dict to include learning_rate for serialization
+  - Add defensive fallback in finetune_neural_network() using getattr()
+  - Resolves AttributeError when finetune_neural_network() accesses pretrained_model.learning_rate
+- Add decision_rules to phase3_config.yaml for all ablation sections (PRD 003e H5)
+  - CHM ablation: importance_threshold (0.25), min_improvement (0.03), max_gap_increase (0.05)
+  - Proximity ablation: min_improvement (0.02), max_sample_loss (0.20), prefer_larger_dataset
+  - Outlier ablation: min_improvement (0.02), max_sample_loss (0.15), prefer_no_removal
+  - Enables exploratory notebooks to apply quantitative decision rules
+- Replace config hypotheses with PRD 003c literature-backed versions (PRD 003e M1)
+  - H1: Genera with more Berlin samples transfer better (Pearson r, negative correlation)
+  - H2: Nadelbäume have lower transfer gap than Laubbäume (Mann-Whitney U, Fassnacht 2016)
+  - H3: Early leaf-out genera (BETULA, SALIX) have higher transfer gap (Hemmerling 2021)
+  - H4: High Red-Edge importance genera transfer better (Spearman ρ, Immitzer 2019)
+  - Each hypothesis includes test method, metrics, expected direction, and literature reference
+- Tighten setup_decisions.schema.json required fields for reproducibility (PRD 003e M2)
+  - chm_strategy: require decision, reasoning, ablation_results
+  - proximity_strategy: require decision, reasoning, ablation_results
+  - outlier_strategy: require decision, reasoning, ablation_results
+  - feature_set: require n_features, reasoning
+  - Add new fields: included_features, per_feature_results, sample_counts, importance_ranking
+  - Keep rationale as optional (deprecated) for backwards compatibility
+- Align ml_warm_start_estimators config to PRD 003d specification (PRD 003e M3)
+  - Change from 200 to 100 estimators to match PRD and finetune_xgboost() default
+  - Notebooks will read from config in Phase 3 implementation
+
 ### Added - Phase 3: 100% PRD Compliance (✅ Completed 2026-02-07)
 
 - Add missing config helper functions to `config/loader.py` per PRD 003 Section 3.2

@@ -570,3 +570,54 @@ def analyze_species_breakdown(
             results[genus_label] = pd.DataFrame(rows)
 
     return results
+
+
+def fit_power_law(
+    x_data: np.ndarray,
+    y_data: np.ndarray,
+    target_y: float | None = None,
+) -> dict[str, float | None]:
+    """Fit power-law curve y = a * x^b to fine-tuning data.
+
+    Args:
+        x_data: Sample sizes (independent variable).
+        y_data: F1 scores (dependent variable).
+        target_y: Optional target F1 to extrapolate required samples.
+
+    Returns:
+        Dict with keys: a, b, r_squared, extrapolated_x (None if target not provided or not achievable).
+    """
+    from scipy.optimize import curve_fit
+
+    def power_law(x: np.ndarray, a: float, b: float) -> np.ndarray:
+        return a * np.power(x, b)
+
+    # Fit power law
+    try:
+        params, _ = curve_fit(power_law, x_data, y_data, p0=[0.1, 0.5], maxfev=10000)
+        a, b = params
+    except RuntimeError:
+        # Fitting failed
+        return {"a": 0.0, "b": 0.0, "r_squared": 0.0, "extrapolated_x": None}
+
+    # Compute R²
+    y_pred = power_law(x_data, a, b)
+    ss_res = np.sum((y_data - y_pred) ** 2)
+    ss_tot = np.sum((y_data - np.mean(y_data)) ** 2)
+    r_squared = 1 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
+
+    # Extrapolate to target if provided
+    extrapolated_x = None
+    if target_y is not None and b != 0 and a > 0 and target_y > 0:
+        # Solve: target_y = a * x^b => x = (target_y / a)^(1/b)
+        extrapolated_x = float(np.power(target_y / a, 1 / b))
+        # Check if extrapolation is reasonable (within 10x of max x_data)
+        if extrapolated_x > 10 * x_data.max() or extrapolated_x < x_data.min():
+            extrapolated_x = None
+
+    return {
+        "a": float(a),
+        "b": float(b),
+        "r_squared": float(r_squared),
+        "extrapolated_x": extrapolated_x,
+    }

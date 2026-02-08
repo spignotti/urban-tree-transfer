@@ -18,7 +18,7 @@ except ImportError:  # pragma: no cover - optional dependency
     torch = None  # type: ignore[assignment]
 
 from urban_tree_transfer.config import RANDOM_SEED
-from urban_tree_transfer.experiments.models import CNN1D, train_cnn
+from urban_tree_transfer.experiments.models import CNN1D, DEFAULT_CNN_PARAMS, train_cnn
 
 
 def create_spatial_block_cv(
@@ -367,7 +367,10 @@ def finetune_neural_network(
         if torch is None:
             raise ImportError("PyTorch is required for CNN1D fine-tuning.")
 
-        original_lr = pretrained_model.learning_rate
+        # Defensive: fallback to default if learning_rate not stored
+        original_lr = getattr(
+            pretrained_model, "learning_rate", DEFAULT_CNN_PARAMS["learning_rate"]
+        )
         new_lr = original_lr * lr_factor
 
         train_cnn(

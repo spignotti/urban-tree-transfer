@@ -276,7 +276,11 @@ else:
                 "kernel_size": kernel_size,
                 "dropout": dropout,
                 "dense_units": list(dense_units),
+                "learning_rate": DEFAULT_CNN_PARAMS["learning_rate"],
             }
+
+            # Store learning_rate as instance attribute for fine-tuning
+            self.learning_rate = DEFAULT_CNN_PARAMS["learning_rate"]
 
             if n_temporal_bases <= 0 or n_months <= 0 or n_classes <= 1:
                 raise ValueError("n_temporal_bases, n_months, and n_classes must be positive.")
@@ -440,6 +444,9 @@ def train_cnn(
 
     if best_state is not None:
         model.load_state_dict(best_state)
+
+    # Store actual learning rate used for fine-tuning reference
+    model.learning_rate = learning_rate
 
     return history
 

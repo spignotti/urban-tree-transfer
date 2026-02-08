@@ -78,6 +78,11 @@ setup_ablation:
       - name: raw_chm
         features: [CHM_1m]
         description: "Raw CHM height only"
+    decision_rules:
+      importance_threshold: 0.25
+      min_improvement: 0.03
+      max_gap_increase: 0.05
+      prefer_simpler: true
 
   proximity:
     variants:
@@ -85,6 +90,10 @@ setup_ablation:
         description: "No proximity filtering"
       - name: filtered
         description: "Proximity-filtered dataset (exp_06 decision)"
+    decision_rules:
+      min_improvement: 0.02
+      max_sample_loss: 0.20
+      prefer_larger_dataset: true
 
   outliers:
     variants:
@@ -94,6 +103,10 @@ setup_ablation:
         description: "Remove only high-severity outliers"
       - name: remove_high_medium
         description: "Remove high + medium outliers"
+    decision_rules:
+      min_improvement: 0.02
+      max_sample_loss: 0.15
+      prefer_no_removal: true
 
   feature_reduction:
     candidate_k: [30, 50, 80, 144]
@@ -219,26 +232,40 @@ transfer_evaluation:
     medium: 0.15
   hypotheses:
     - id: H1
-      description: "ML model transfers better than NN model"
-      metric: weighted_f1
-      direction: greater
+      description: "Genera with more Berlin training samples transfer better"
+      test: pearson_correlation
+      x_metric: berlin_sample_count
+      y_metric: transfer_gap
+      expected_direction: negative
+      literature: "Sample size theory"
     - id: H2
-      description: "Conifers transfer more robustly than deciduous"
-      metric: conifer_deciduous_gap
-      direction: greater
+      description: "Nadelbäume have lower transfer gap than Laubbäume"
+      test: mann_whitney_u
+      groups:
+        conifer: [PINUS, PICEA]
+        deciduous: [TILIA, ACER, QUERCUS, PLATANUS, AESCULUS, BETULA, FRAXINUS, ROBINIA]
+      expected_direction: "conifer < deciduous"
+      literature: "Fassnacht 2016"
     - id: H3
-      description: "Genus robustness correlates with feature stability"
-      metric: spearman_rho
-      direction: greater
+      description: "Genera with early leaf-out (BETULA, SALIX) have higher transfer gap"
+      test: group_comparison
+      groups:
+        early: [BETULA, SALIX]
+        mid_season: [TILIA, ACER, QUERCUS, PLATANUS, AESCULUS, FRAXINUS, ROBINIA]
+      expected_direction: "early > mid_season"
+      literature: "Hemmerling 2021"
     - id: H4
-      description: "Transfer gap is significant vs. Berlin baseline"
-      metric: transfer_gap
-      direction: greater
+      description: "Genera with high Red-Edge feature importance transfer better"
+      test: spearman_correlation
+      x_metric: red_edge_importance
+      y_metric: transfer_f1
+      expected_direction: positive
+      literature: "Immitzer 2019"
 
 # Phase 3.5: Fine-Tuning (03d)
 finetuning:
   fractions: [0.10, 0.25, 0.50, 1.0]
-  ml_warm_start_estimators: 200
+  ml_warm_start_estimators: 100
   nn_lr_factor: 0.1
   powerlaw:
     fit_function: "y = a * x^b"

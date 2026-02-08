@@ -177,3 +177,103 @@ def test_plot_significance_matrix(tmp_path: Path) -> None:
     output_path = tmp_path / "significance.png"
     plot_significance_matrix(df, output_path)
     assert output_path.exists()
+
+
+def test_plot_per_genus_comparison(tmp_path: Path) -> None:
+    from urban_tree_transfer.experiments.visualization import plot_per_genus_comparison
+
+    results_a = {"TILIA": 0.7, "ACER": 0.6}
+    results_b = {"TILIA": 0.8, "ACER": 0.5}
+    genus_labels = ["TILIA", "ACER"]
+    output_path = tmp_path / "per_genus_comparison.png"
+    plot_per_genus_comparison(results_a, results_b, "Berlin", "Leipzig", genus_labels, output_path)
+    assert output_path.exists()
+
+
+def test_plot_sample_loss_by_genus(tmp_path: Path) -> None:
+    from urban_tree_transfer.experiments.visualization import plot_sample_loss_by_genus
+
+    baseline_counts = pd.Series([100, 80], index=["TILIA", "ACER"])
+    filtered_counts = pd.Series([90, 70], index=["TILIA", "ACER"])
+    genus_labels = ["TILIA", "ACER"]
+    output_path = tmp_path / "sample_loss_by_genus.png"
+    plot_sample_loss_by_genus(baseline_counts, filtered_counts, genus_labels, output_path)
+    assert output_path.exists()
+
+
+def test_plot_outlier_distribution(tmp_path: Path) -> None:
+    from urban_tree_transfer.experiments.visualization import plot_outlier_distribution
+
+    severity_by_genus = pd.DataFrame(
+        {"TILIA": [10, 5, 2], "ACER": [8, 6, 3]}, index=["low", "medium", "high"]
+    )
+    genus_labels = ["TILIA", "ACER"]
+    output_path = tmp_path / "outlier_distribution.png"
+    plot_outlier_distribution(severity_by_genus, genus_labels, output_path)
+    assert output_path.exists()
+
+
+def test_plot_performance_ladder(tmp_path: Path) -> None:
+    from urban_tree_transfer.experiments.visualization import plot_performance_ladder
+
+    results = pd.DataFrame(
+        {
+            "name": ["RF", "XGB"],
+            "f1_score": [0.6, 0.55],
+            "category": ["model", "model"],
+        }
+    )
+    output_path = tmp_path / "performance_ladder.png"
+    plot_performance_ladder(results, output_path, highlight_champions=["RF"])
+    assert output_path.exists()
+
+
+def test_plot_transfer_conifer_deciduous(tmp_path: Path) -> None:
+    from urban_tree_transfer.experiments.visualization import plot_transfer_conifer_deciduous
+
+    transfer_data = {
+        "PINUS": {"berlin_f1": 0.7, "leipzig_f1": 0.6},
+        "TILIA": {"berlin_f1": 0.8, "leipzig_f1": 0.75},
+    }
+    conifer_genera = {"PINUS"}
+    output_path = tmp_path / "transfer_conifer_deciduous.png"
+    plot_transfer_conifer_deciduous(transfer_data, conifer_genera, output_path)
+    assert output_path.exists()
+
+
+def test_plot_finetuning_ml_vs_nn(tmp_path: Path) -> None:
+    from urban_tree_transfer.experiments.visualization import plot_finetuning_ml_vs_nn
+
+    ml_results = [{"fraction": 0.1, "f1_score": 0.4}, {"fraction": 1.0, "f1_score": 0.6}]
+    nn_results = [{"fraction": 0.1, "f1_score": 0.35}, {"fraction": 1.0, "f1_score": 0.55}]
+    output_path = tmp_path / "ml_vs_nn.png"
+    plot_finetuning_ml_vs_nn(ml_results, nn_results, output_path)
+    assert output_path.exists()
+
+
+def test_plot_feature_importance(tmp_path: Path) -> None:
+    from urban_tree_transfer.experiments.visualization import plot_feature_importance
+
+    importance_df = pd.DataFrame({"feature": ["A", "B", "C"], "importance": [0.5, 0.3, 0.2]})
+    output_path = tmp_path / "feature_importance.png"
+    plot_feature_importance(importance_df, output_path, top_k=3)
+    assert output_path.exists()
+
+
+def test_plot_optuna_history(tmp_path: Path) -> None:
+    import pytest
+
+    from urban_tree_transfer.experiments.visualization import plot_optuna_history
+
+    try:
+        import optuna
+    except ImportError:
+        pytest.skip("optuna not installed")
+
+    # Create a minimal study
+    study = optuna.create_study(direction="maximize")
+    study.optimize(lambda trial: trial.suggest_float("x", 0, 1) * 0.5, n_trials=3)
+
+    output_path = tmp_path / "optuna_history.png"
+    plot_optuna_history(study, output_path)
+    assert output_path.exists()
