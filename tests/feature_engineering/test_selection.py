@@ -202,7 +202,7 @@ def test_export_geometry_lookup_schema(tmp_path) -> None:
     lookup = pd.read_parquet(output_path)
     assert set(lookup.columns) == {"tree_id", "city", "split", "filtered", "x", "y"}
     assert n_trees == 4  # All unique trees
-    assert len(lookup) == 4  # Deduplication preserves all unique trees
+    assert len(lookup) == 6  # Trees appear once per split (4 + 2 = 6 rows)
 
 
 def test_export_geometry_lookup_coordinates(tmp_path) -> None:

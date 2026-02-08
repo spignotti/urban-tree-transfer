@@ -122,3 +122,28 @@ def validate_spatial_autocorrelation(json_path: Path) -> dict[str, Any]:
 def validate_proximity_filter(json_path: Path) -> dict[str, Any]:
     """Load and validate proximity_filter.json."""
     return _load_and_validate(json_path, "proximity_filter.schema.json")
+
+
+def validate_setup_decisions(json_path: Path) -> dict[str, Any]:
+    """Load and validate setup_decisions.json."""
+    return _load_and_validate(json_path, "setup_decisions.schema.json")
+
+
+def validate_algorithm_comparison(json_path: Path) -> dict[str, Any]:
+    """Load and validate algorithm_comparison.json."""
+    return _load_and_validate(json_path, "algorithm_comparison.schema.json")
+
+
+def validate_hp_tuning_result(json_path: Path) -> dict[str, Any]:
+    """Load and validate hp_tuning_result.json."""
+    return _load_and_validate(json_path, "hp_tuning_result.schema.json")
+
+
+def validate_evaluation_metrics(json_path: Path) -> dict[str, Any]:
+    """Load and validate evaluation_metrics.json."""
+    return _load_and_validate(json_path, "evaluation_metrics.schema.json")
+
+
+def validate_finetuning_curve(json_path: Path) -> dict[str, Any]:
+    """Load and validate finetuning_curve.json."""
+    return _load_and_validate(json_path, "finetuning_curve.schema.json")

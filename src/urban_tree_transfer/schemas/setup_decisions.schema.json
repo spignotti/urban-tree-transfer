@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Phase 3 Setup Decisions",
+  "type": "object",
+  "required": [
+    "chm_strategy",
+    "proximity_strategy",
+    "outlier_strategy",
+    "feature_set",
+    "selected_features"
+  ],
+  "properties": {
+    "chm_strategy": {
+      "type": "object",
+      "required": ["decision", "reasoning", "ablation_results"],
+      "properties": {
+        "decision": {"type": "string"},
+        "included_features": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "reasoning": {"type": "string"},
+        "per_feature_results": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "ablation_results": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "val_f1_mean": {"type": "number"},
+        "train_val_gap": {"type": "number"},
+        "rationale": {"type": "string"}
+      }
+    },
+    "proximity_strategy": {
+      "type": "object",
+      "required": ["decision", "reasoning", "ablation_results"],
+      "properties": {
+        "decision": {"type": "string"},
+        "reasoning": {"type": "string"},
+        "sample_counts": {
+          "type": "object",
+          "properties": {
+            "baseline_n": {"type": "integer"},
+            "filtered_n": {"type": "integer"},
+            "sample_loss_pct": {"type": "number"}
+          }
+        },
+        "ablation_results": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "val_f1_mean": {"type": "number"},
+        "train_val_gap": {"type": "number"},
+        "samples_retained": {"type": "number"},
+        "rationale": {"type": "string"}
+      }
+    },
+    "outlier_strategy": {
+      "type": "object",
+      "required": ["decision", "reasoning", "ablation_results"],
+      "properties": {
+        "decision": {"type": "string"},
+        "reasoning": {"type": "string"},
+        "sample_counts": {
+          "type": "object",
+          "properties": {
+            "baseline_n": {"type": "integer"},
+            "filtered_n": {"type": "integer"},
+            "sample_loss_pct": {"type": "number"}
+          }
+        },
+        "ablation_results": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "val_f1_mean": {"type": "number"},
+        "train_val_gap": {"type": "number"},
+        "samples_retained": {"type": "number"},
+        "rationale": {"type": "string"}
+      }
+    },
+    "feature_set": {
+      "type": "object",
+      "required": ["n_features", "reasoning"],
+      "properties": {
+        "n_features": {"type": "integer", "minimum": 1},
+        "reasoning": {"type": "string"},
+        "importance_ranking": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "ablation_results": {
+          "type": "array",
+          "items": {"type": "object"}
+        },
+        "val_f1_mean": {"type": "number"},
+        "train_val_gap": {"type": "number"},
+        "rationale": {"type": "string"}
+      }
+    },
+    "selected_features": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string"}
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,275 @@
+# Phase 3 Experiment Configuration
+# All hyperparameters, thresholds, and experiment settings
+
+global:
+  random_seed: 42
+  n_jobs: -1
+  cv_folds: 3
+  spatial_block_size_m: 500
+
+# Genus grouping for aggregate analyses
+# Extend based on actual genus list in dataset
+# These are defaults used for plots and aggregated metrics
+# NOTE: Update if dataset includes more conifer genera
+
+genus_groups:
+  conifer: [PINUS, PICEA]
+  deciduous: [TILIA, ACER, QUERCUS, PLATANUS, AESCULUS, BETULA, FRAXINUS, ROBINIA]
+
+# Plant year bins for post-hoc analysis
+plant_year_decades:
+  - label: "vor 1960"
+    max_year: 1959
+  - label: "1960-79"
+    min_year: 1960
+    max_year: 1979
+  - label: "1980-99"
+    min_year: 1980
+    max_year: 1999
+  - label: "2000-19"
+    min_year: 2000
+    max_year: 2019
+  - label: "ab 2020"
+    min_year: 2020
+
+visualization:
+  use_german_names: true
+  dpi: 300
+  figure_format: png
+  figsize_single: [8, 6]
+  figsize_double: [14, 6]
+  figsize_table: [10, 4]
+  figsize_large: [12, 8]
+
+metrics:
+  primary: weighted_f1
+  secondary:
+    - macro_f1
+    - accuracy
+  per_class: true
+  confidence_intervals: true
+  ci_method: bootstrap
+  n_bootstrap: 1000
+  confidence_level: 0.95
+
+# Phase 3.1: Setup Ablations
+setup_ablation:
+  chm:
+    features:
+      - name: CHM_1m
+        description: "Raw CHM height (absolute meters, overfitting risk)"
+      - name: CHM_1m_zscore
+        description: "Z-score normalized within genus×city"
+      - name: CHM_1m_percentile
+        description: "Percentile rank within genus×city (0-100)"
+    variants:
+      - name: no_chm
+        features: []
+        description: "Sentinel-2 only (baseline, transfer-safe)"
+      - name: zscore_only
+        features: [CHM_1m_zscore]
+        description: "Z-score normalized CHM"
+      - name: percentile_only
+        features: [CHM_1m_percentile]
+        description: "Percentile rank CHM"
+      - name: both_engineered
+        features: [CHM_1m_zscore, CHM_1m_percentile]
+        description: "Both engineered CHM features"
+      - name: raw_chm
+        features: [CHM_1m]
+        description: "Raw CHM height only"
+    decision_rules:
+      importance_threshold: 0.25
+      min_improvement: 0.03
+      max_gap_increase: 0.05
+      prefer_simpler: true
+
+  proximity:
+    variants:
+      - name: baseline
+        description: "No proximity filtering"
+      - name: filtered
+        description: "Proximity-filtered dataset (exp_06 decision)"
+    decision_rules:
+      min_improvement: 0.02
+      max_sample_loss: 0.20
+      prefer_larger_dataset: true
+
+  outliers:
+    variants:
+      - name: no_removal
+        description: "Keep all trees (baseline)"
+      - name: remove_high
+        description: "Remove only high-severity outliers"
+      - name: remove_high_medium
+        description: "Remove high + medium outliers"
+    decision_rules:
+      min_improvement: 0.02
+      max_sample_loss: 0.15
+      prefer_no_removal: true
+
+  feature_reduction:
+    candidate_k: [30, 50, 80, 144]
+    selection_metric: weighted_f1
+    pareto_tradeoff:
+      weight_f1: 0.7
+      weight_features: 0.3
+
+# Phase 3.2: Algorithm Comparison (exp_10)
+algorithm_comparison:
+  baselines:
+    - name: majority
+      type: baseline
+      description: "Always predict most frequent class"
+    - name: stratified_random
+      type: baseline
+      description: "Random prediction weighted by class distribution"
+    - name: spatial_only_rf
+      type: baseline
+      description: "Random Forest on x/y coordinates only"
+
+  models:
+    random_forest:
+      type: ml
+      grid:
+        n_estimators: [200]
+        max_depth: [10, 20, 30]
+        min_samples_split: [2, 5]
+        min_samples_leaf: [1, 2]
+    xgboost:
+      type: ml
+      grid:
+        n_estimators: [200, 400]
+        max_depth: [4, 6, 8]
+        learning_rate: [0.05, 0.1]
+        subsample: [0.8, 1.0]
+        colsample_bytree: [0.8, 1.0]
+        reg_lambda: [1.0, 2.0]
+    cnn_1d:
+      type: nn
+      baseline:
+        conv_filters: [64, 128, 128]
+        kernel_size: 3
+        dropout: 0.3
+        dense_units: [256, 128]
+        learning_rate: 0.001
+        batch_size: 64
+        epochs: 50
+        early_stopping_patience: 10
+    tabnet:
+      type: nn
+      baseline:
+        n_d: 64
+        n_a: 64
+        n_steps: 5
+        gamma: 1.5
+        lambda_sparse: 0.001
+        optimizer_params:
+          lr: 0.02
+        scheduler_params:
+          step_size: 50
+          gamma: 0.9
+        mask_type: entmax
+
+  selection_criteria:
+    min_val_f1: 0.50
+    max_train_val_gap: 0.35
+
+# Phase 3.3: Hyperparameter Tuning (03b)
+hp_tuning:
+  optuna:
+    sampler: tpe
+    pruner: median
+    n_trials: 50
+    timeout_seconds: 7200
+
+  search_spaces:
+    random_forest:
+      n_estimators: [200, 600]
+      max_depth: [5, 40]
+      min_samples_split: [2, 10]
+      min_samples_leaf: [1, 5]
+      max_features: ["sqrt", "log2", null]
+    xgboost:
+      n_estimators: [200, 800]
+      max_depth: [3, 10]
+      learning_rate: [0.01, 0.3]
+      subsample: [0.6, 1.0]
+      colsample_bytree: [0.6, 1.0]
+      reg_lambda: [0.5, 3.0]
+      reg_alpha: [0.0, 1.0]
+      min_child_weight: [1, 10]
+    cnn_1d:
+      conv_filters:
+        - [32, 64, 128]
+        - [64, 128, 128]
+      kernel_size: [3, 5]
+      dropout: [0.2, 0.5]
+      dense_units:
+        - [128, 64]
+        - [256, 128]
+      learning_rate: [0.0005, 0.003]
+      batch_size: [32, 64, 128]
+      epochs: [50, 80]
+      early_stopping_patience: [8, 15]
+    tabnet:
+      n_d: [32, 128]
+      n_a: [32, 128]
+      n_steps: [3, 8]
+      gamma: [1.1, 2.0]
+      lambda_sparse: [0.0001, 0.01]
+      optimizer_params:
+        lr: [0.005, 0.05]
+      scheduler_params:
+        step_size: [30, 80]
+        gamma: [0.8, 0.99]
+      mask_type: ["entmax", "sparsemax"]
+
+# Phase 3.4: Transfer Evaluation (03c)
+transfer_evaluation:
+  robustness_thresholds:
+    robust: 0.05
+    medium: 0.15
+  hypotheses:
+    - id: H1
+      description: "Genera with more Berlin training samples transfer better"
+      test: pearson_correlation
+      x_metric: berlin_sample_count
+      y_metric: transfer_gap
+      expected_direction: negative
+      literature: "Sample size theory"
+    - id: H2
+      description: "Nadelbäume have lower transfer gap than Laubbäume"
+      test: mann_whitney_u
+      groups:
+        conifer: [PINUS, PICEA]
+        deciduous: [TILIA, ACER, QUERCUS, PLATANUS, AESCULUS, BETULA, FRAXINUS, ROBINIA]
+      expected_direction: "conifer < deciduous"
+      literature: "Fassnacht 2016"
+    - id: H3
+      description: "Genera with early leaf-out (BETULA, SALIX) have higher transfer gap"
+      test: group_comparison
+      groups:
+        early: [BETULA, SALIX]
+        mid_season: [TILIA, ACER, QUERCUS, PLATANUS, AESCULUS, FRAXINUS, ROBINIA]
+      expected_direction: "early > mid_season"
+      literature: "Hemmerling 2021"
+    - id: H4
+      description: "Genera with high Red-Edge feature importance transfer better"
+      test: spearman_correlation
+      x_metric: red_edge_importance
+      y_metric: transfer_f1
+      expected_direction: positive
+      literature: "Immitzer 2019"
+
+# Phase 3.5: Fine-Tuning (03d)
+finetuning:
+  fractions: [0.10, 0.25, 0.50, 1.0]
+  ml_warm_start_estimators: 100
+  nn_lr_factor: 0.1
+  powerlaw:
+    fit_function: "y = a * x^b"
+    min_points: 4
+  significance:
+    test: mcnemar
+    alpha: 0.05

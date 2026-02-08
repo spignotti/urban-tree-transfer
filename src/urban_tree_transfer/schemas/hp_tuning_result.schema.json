@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Hyperparameter Tuning Result",
+  "type": "object",
+  "required": ["model_name", "best_score", "best_params", "trials"],
+  "properties": {
+    "model_name": {"type": "string"},
+    "best_score": {"type": "number"},
+    "best_params": {"type": "object"},
+    "trials": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["value", "params"],
+        "properties": {
+          "value": {"type": "number"},
+          "params": {"type": "object"},
+          "train_val_gap": {"type": "number"}
+        }
+      }
+    },
+    "metadata": {"type": "object"}
+  }
+}

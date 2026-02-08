@@ -337,4 +337,4 @@ def export_geometry_lookup(
     # Export to Parquet
     lookup_df.to_parquet(output_path, engine="pyarrow", compression="snappy", index=False)
 
-    return len(lookup_df)
+    return int(lookup_df["tree_id"].nunique())

@@ -1,9 +1,30 @@
 # PRD: Phase 3 Experiments
 
 **PRD ID:** 003
-**Status:** Draft
+**Status:** In Progress
 **Created:** 2026-02-03
-**Last Updated:** 2026-02-03
+**Last Updated:** 2026-02-07
+**Implementation Started:** 2026-02-07
+
+## Implementation Progress
+
+**✅ Phase 3.0: Infrastructure (Completed 2026-02-07)**
+- ✅ `experiments/data_loading.py` - Dataset loading, genus_german fixing, feature extraction
+- ✅ `experiments/preprocessing.py` - Scaling, label encoding
+- ✅ `experiments/evaluation.py` - Metrics computation, bootstrap confidence intervals
+- ✅ `experiments/__init__.py` - Module exports
+- ✅ All tests passing (94/94), lint/format/typecheck successful
+
+**🔄 Phase 3.1: Models & Training (Next Priority)**
+- ❌ `experiments/models.py` - Model factory (RF, XGBoost, 1D-CNN, TabNet)
+- ❌ `experiments/training.py` - Spatial CV, training loops
+- ❌ `experiments/ablation.py` - Ablation utilities
+
+**⏸️ Phase 3.2-3.5: Experiments**
+- ❌ Setup Fixation (PRD 003a)
+- ❌ Berlin Optimization (PRD 003b)
+- ❌ Transfer Evaluation (PRD 003c)
+- ❌ Fine-tuning (PRD 003d)
 
 ---
 
@@ -2404,6 +2425,9 @@ Google Drive/
 
 # Install package from GitHub
 !pip install git+https://github.com/SilasPignotti/urban-tree-transfer.git -q
+
+# Install optional ML dependencies (Colab runtime)
+!pip install torch pytorch-tabnet -q
 
 # Mount Google Drive
 from google.colab import drive

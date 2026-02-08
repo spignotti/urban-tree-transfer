@@ -41,6 +41,7 @@ def pre_commit(session: nox.Session) -> None:
 @nox.session
 def test(session: nox.Session) -> None:
     """Run unit tests."""
+    session.run("uv", "sync", "--active", external=True)
     session.env["EXECUTE_NOTEBOOKS"] = "1"
     session.env["NOTEBOOK_TEST_MODE"] = "1"
     if sys.platform == "darwin":
@@ -80,6 +81,7 @@ def test(session: nox.Session) -> None:
 @nox.session
 def test_integration(session: nox.Session) -> None:
     """Run integration tests (hits external APIs)."""
+    session.run("uv", "sync", "--active", external=True)
     session.run(
         "uv", "run", "--active", "pytest", "tests/integration", "-v", "--timeout=60", external=True
     )
@@ -91,6 +93,7 @@ def ci(session: nox.Session) -> None:
     session.run("uv", "run", "--active", "ruff", "check", ".", external=True)
     session.run("uv", "run", "--active", "ruff", "format", "--check", ".", external=True)
     session.run("uv", "run", "--active", "pyright", external=True)
+    session.run("uv", "sync", "--active", external=True)
     session.env["EXECUTE_NOTEBOOKS"] = "1"
     session.env["NOTEBOOK_TEST_MODE"] = "1"
     if sys.platform == "darwin":

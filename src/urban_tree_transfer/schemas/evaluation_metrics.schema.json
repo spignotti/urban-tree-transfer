@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Evaluation Metrics",
+  "type": "object",
+  "required": ["metrics"],
+  "properties": {
+    "metrics": {
+      "type": "object",
+      "required": ["f1_score", "precision", "recall", "accuracy"],
+      "properties": {
+        "f1_score": {"type": "number"},
+        "precision": {"type": "number"},
+        "recall": {"type": "number"},
+        "accuracy": {"type": "number"}
+      }
+    },
+    "confidence_intervals": {
+      "type": "object",
+      "properties": {
+        "f1_score": {"type": "object"},
+        "precision": {"type": "object"},
+        "recall": {"type": "object"},
+        "accuracy": {"type": "object"}
+      }
+    },
+    "per_class": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["genus", "precision", "recall", "f1_score", "support"],
+        "properties": {
+          "genus": {"type": "string"},
+          "precision": {"type": "number"},
+          "recall": {"type": "number"},
+          "f1_score": {"type": "number"},
+          "support": {"type": "number"}
+        }
+      }
+    },
+    "confusion_matrix": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {"type": "number"}
+      }
+    },
+    "metadata": {"type": "object"}
+  }
+}

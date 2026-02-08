@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Algorithm Comparison Results",
+  "type": "object",
+  "required": ["algorithms", "ml_champion", "nn_champion"],
+  "properties": {
+    "algorithms": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "type", "val_f1_mean", "train_f1_mean", "train_val_gap"],
+        "properties": {
+          "name": {"type": "string"},
+          "type": {"type": "string"},
+          "val_f1_mean": {"type": "number"},
+          "val_f1_std": {"type": "number"},
+          "train_f1_mean": {"type": "number"},
+          "train_val_gap": {"type": "number"},
+          "fit_time_sec": {"type": "number"},
+          "params": {"type": "object"}
+        }
+      }
+    },
+    "ml_champion": {
+      "type": "object",
+      "required": ["name", "val_f1_mean"],
+      "properties": {
+        "name": {"type": "string"},
+        "val_f1_mean": {"type": "number"},
+        "params": {"type": "object"}
+      }
+    },
+    "nn_champion": {
+      "type": "object",
+      "required": ["name", "val_f1_mean"],
+      "properties": {
+        "name": {"type": "string"},
+        "val_f1_mean": {"type": "number"},
+        "params": {"type": "object"}
+      }
+    },
+    "baselines": {
+      "type": "array",
+      "items": {"type": "object"}
+    },
+    "metadata": {
+      "type": "object"
+    }
+  }
+}

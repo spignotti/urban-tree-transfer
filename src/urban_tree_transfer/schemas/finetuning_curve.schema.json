@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Fine-tuning Curve",
+  "type": "object",
+  "required": ["results"],
+  "properties": {
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["fraction", "model_type", "metrics"],
+        "properties": {
+          "fraction": {"type": "number"},
+          "model_type": {"type": "string"},
+          "metrics": {
+            "type": "object",
+            "required": ["f1_score", "precision", "recall", "accuracy"],
+            "properties": {
+              "f1_score": {"type": "number"},
+              "precision": {"type": "number"},
+              "recall": {"type": "number"},
+              "accuracy": {"type": "number"}
+            }
+          },
+          "confidence_intervals": {"type": "object"}
+        }
+      }
+    },
+    "powerlaw_fit": {"type": "object"},
+    "metadata": {"type": "object"}
+  }
+}

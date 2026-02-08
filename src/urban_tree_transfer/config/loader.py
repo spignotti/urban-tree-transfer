@@ -65,6 +65,63 @@ def load_feature_config(config_dir: Path | None = None) -> dict[str, Any]:
     return load_yaml(path)
 
 
+def load_experiment_config(config_dir: Path | None = None) -> dict[str, Any]:
+    """Load Phase 3 experiment configuration.
+
+    Args:
+        config_dir: Optional override for config directory.
+                   Defaults to package's configs/experiments/ directory.
+
+    Returns:
+        Experiment configuration dictionary.
+    """
+    if config_dir is None:
+        config_dir = get_config_dir() / "experiments"
+    path = config_dir / "phase3_config.yaml"
+    return load_yaml(path)
+
+
+def get_algorithm_config(algorithm_name: str) -> dict[str, Any]:
+    """Get configuration for a specific algorithm.
+
+    Args:
+        algorithm_name: Algorithm name (e.g., "random_forest", "xgboost", "cnn_1d", "tabnet")
+
+    Returns:
+        Algorithm configuration dictionary containing type, coarse_grid, and optuna_space.
+    """
+    config = load_experiment_config()
+    if algorithm_name not in config["algorithms"]:
+        raise ValueError(f"Unknown algorithm: {algorithm_name}")
+    return config["algorithms"][algorithm_name]
+
+
+def get_coarse_grid(algorithm_name: str) -> dict[str, list]:
+    """Get coarse hyperparameter grid for an algorithm.
+
+    Args:
+        algorithm_name: Algorithm name (e.g., "random_forest", "xgboost")
+
+    Returns:
+        Dictionary mapping hyperparameter names to lists of values to try.
+    """
+    algo_config = get_algorithm_config(algorithm_name)
+    return algo_config["coarse_grid"]
+
+
+def get_optuna_space(algorithm_name: str) -> dict[str, dict]:
+    """Get Optuna search space for an algorithm.
+
+    Args:
+        algorithm_name: Algorithm name (e.g., "random_forest", "xgboost", "cnn_1d", "tabnet")
+
+    Returns:
+        Dictionary mapping hyperparameter names to Optuna search space definitions.
+    """
+    algo_config = get_algorithm_config(algorithm_name)
+    return algo_config["optuna_space"]
+
+
 def get_metadata_columns(config: dict[str, Any] | None = None) -> list[str]:
     """Get list of metadata columns to preserve through pipeline.
 

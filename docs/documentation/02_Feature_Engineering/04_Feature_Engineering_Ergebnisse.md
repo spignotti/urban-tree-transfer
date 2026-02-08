@@ -1,20 +1,20 @@
 # Phase 2: Feature Engineering Ergebnisse
 
-**Phase:** Feature Engineering  
-**Ausführungszeitraum:** 03.02.2026 - 06.02.2026  
-**Status:** ⏳ In Bearbeitung (02c ausstehend)
+**Phase:** Feature Engineering
+**Ausführungszeitraum:** 03.02.2026 - 07.02.2026
+**Status:** ✅ **Abgeschlossen**
 
 ---
 
 ## Überblick
 
-Phase 2 wurde in zwei Hauptschritten sowie sechs explorativen Analysen durchgeführt. Die Feature-Extraktion und Datenqualitätskontrolle sind abgeschlossen. Die finale Datensatzvorbereitung mit Splits steht noch aus.
+Phase 2 wurde vollständig durchgeführt: drei Kern-Runner-Notebooks sowie sechs explorative Analysen. Die Feature-Extraktion, Datenqualitätskontrolle und finale Datensatzvorbereitung mit Splits sind abgeschlossen.
 
 **Kern-Pipeline:**
 
 - **02a - Feature Extraction:** ✅ Abgeschlossen
 - **02b - Data Quality:** ✅ Abgeschlossen
-- **02c - Final Preparation:** ⏳ Ausstehend
+- **02c - Final Preparation:** ✅ **Abgeschlossen**
 
 **Exploratory Analyses:** 6 Notebooks erfolgreich ausgeführt, Konfigurationen generiert
 
@@ -41,7 +41,7 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 
 **Ergebnisse:**
 
-- **Ausgewählte Monate:** 4, 5, 6, 7, 8, 9, 10 (April-Oktober)
+- **Ausgewählte Monate:** 4, 5, 6, 7, 8, 9, 10, 11 (April-November, 8 Monate)
 - **Cross-City Consistency:** Spearman ρ = 0.951 (p < 0.001)
   - **Interpretation:** Hohe Konsistenz zwischen Berlin und Leipzig
   - Durchschnittliche JM-Selektion ist stadtübergreifend valide
@@ -56,7 +56,7 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 | **5** | **0.8825** | 5 |
 | **10** | **0.8589** | 6 |
 | **4** | **0.8441** | 7 |
-| 11 | 0.8272 | ❌ Ausgeschlossen |
+| **11** | **0.8079** | 8 ✅ Inkludiert |
 | 3 | 0.8005 | ❌ Ausgeschlossen |
 | 2 | 0.7819 | ❌ Ausgeschlossen |
 | 1 | 0.7084 | ❌ Ausgeschlossen |
@@ -65,8 +65,8 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 **Interpretation:**
 
 - **Peak-Season (Juni-August):** Maximale spektrale Unterschiede durch vollständige Belaubung
-- **Übergangsmonate (Apr/Mai, Sep/Okt):** Phänologische Variabilität erhöht Diskriminierung
-- **Winter/Frühjahr (Nov-März):** Zu geringe Separabilität für Laubbäume
+- **Übergangsmonate (Apr/Mai, Sep/Okt/Nov):** Phänologische Variabilität erhöht Diskriminierung
+- **Winter/Frühjahr (Dez-März):** Zu geringe Separabilität für Laubbäume
 
 **Output:** [temporal_selection.json](../../../outputs/phase_2/metadata/temporal_selection.json)
 
@@ -161,9 +161,10 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 
 **Feature-Reduktion:**
 
-- **Vor:** 23 Bänder/Indizes pro Monat × 7 Monate + 3 CHM = 164 Features
-- **Nach:** 19 Bänder/Indizes pro Monat × 7 Monate + 3 CHM = 136 Features
-- **Reduktion:** 28 Features entfernt (17% weniger)
+- **Vor:** 23 Bänder/Indizes pro Monat × 12 Monate + 3 CHM = 279 Features (vor Temporal Selection)
+- **Nach Temporal Selection:** 23 Bänder/Indizes × 8 Monate + 3 CHM = 187 Features
+- **Nach Correlation Removal:** 18 Bänder/Indizes × 8 Monate + 3 CHM = 147 Features
+- **Reduktion:** 132 Features entfernt (47% weniger)
 
 **Output:** [correlation_removal.json](../../../outputs/phase_2/metadata/correlation_removal.json)
 
@@ -437,18 +438,21 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 |-----------|--------|-----------|
 | Metadaten | 11 | tree_id, genus_latin, city, plant_year |
 | CHM | 3 | CHM_1m, CHM_1m_zscore, CHM_1m_percentile |
-| Sentinel-2 (7 Monate) | 19 × 7 = 133 | B2-B12 (ohne B6, B7), NDVI, GNDVI, etc. |
-| Proximity-Statistiken | 30 | (noch nicht berechnet in 02b) |
-| Outlier-Flags | 4 | outlier_zscore, outlier_mahalanobis, outlier_iqr, outlier_severity |
-| **Gesamt** | **187** | (vor Proximity-Berechnung in 02c) |
+| Sentinel-2 (8 Monate) | 18 × 8 = 144 | B2-B12 (ohne B6, B7), NDVI, EVI, etc. |
+| Outlier-Flags | 5 | outlier_zscore, outlier_mahalanobis, outlier_iqr, outlier_severity, outlier_method_count |
+| **Gesamt** | **163** | (nach Correlation Removal in 02b) |
 
 **Qualitätsfilter:**
 
 **1. Plant Year Filter:**
 
-- **Begründung:** Bäume ohne Pflanzjahr können nicht für Altersanalysen verwendet werden
-- **Berlin:** 15.371 entfernt (1.7%)
-- **Leipzig:** 6.860 entfernt (4.1%)
+- **Kriterium:** Entferne nur zu jung gepflanzte Bäume (plant_year > 2019)
+- **NaN-Behandlung:** Bäume ohne Pflanzjahr werden **BEHALTEN**
+  - **Begründung:** 20% Datenverlust nur wegen fehlender Metadaten wäre unverhältnismäßig
+  - plant_year ist kein ML-Feature, nur für nachgelagerte Altersanalysen relevant
+  - Bei Altersanalysen in Phase 3 müssen NaN-Bäume manuell gefiltert werden
+- **Berlin:** 15.371 entfernt (zu junge Bäume, 1.7%), 81.431 NaN behalten (9.0%)
+- **Leipzig:** 6.860 entfernt (zu junge Bäume, 4.1%), ~15k NaN behalten
 
 **2. NaN Filter:**
 
@@ -496,11 +500,13 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 
 **Entfernte Features:** 40 (hochkorrelierte Features aus exp_03)
 
-- B6, B7 (Red-Edge Bänder) × 7 Monate = 14
-- EVI, kNDVI (Indizes) × 7 Monate = 14
-- Weitere redundante Features = 12
+- B6, B7 (Red-Edge Bänder) × 8 Monate = 16
+- GNDVI, NDII, kNDVI (Indizes) × 8 Monate = 24
 
 **Verbleibende Features:** 147 (187 - 40)
+- **Spektralbänder:** 8 (B2, B3, B4, B5, B8, B8A, B11, B12) × 8 Monate = 64
+- **Vegetation Indizes:** 10 (NDVI, EVI, VARI, NDre1, NDVIre, CIre, IRECI, RTVIcore, NDWI, MSI) × 8 Monate = 80
+- **CHM Features:** 3 (CHM_1m, CHM_1m_zscore, CHM_1m_percentile)
 
 ---
 
@@ -724,12 +730,12 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 
 | Kategorie               | Anzahl  | Details                                   |
 | ----------------------- | ------- | ----------------------------------------- |
-| **Metadaten**           | 11      | tree_id, genus, species, plant_year, etc. |
+| **Metadaten**           | 10      | tree_id, genus, species, plant_year, city, block_id, tree_type, position_corrected, correction_distance, (genus_german hat NaNs) |
 | **CHM**                 | 3       | Absolute, Z-Score, Percentile             |
-| **Sentinel-2 Temporal** | 133     | 19 Bänder/Indizes × 7 Monate (Apr-Okt)    |
-| **Outlier Flags**       | 4       | Z-Score, Mahalanobis, IQR, Severity       |
-| **Gesamt (02b)**        | **151** | Vor Correlation Removal                   |
-| **Gesamt (02c Final)**  | **147** | Nach Correlation Removal ✅               |
+| **Sentinel-2 Temporal** | 144     | 18 Bänder/Indizes × 8 Monate (Apr-Nov)    |
+| **Outlier Flags**       | 5       | Z-Score, Mahalanobis, IQR, Severity, Method Count |
+| **Target**              | 1       | genus_latin                               |
+| **Gesamt (02c Final)**  | **163** | Nach Correlation Removal ✅               |
 
 ### Genus-Verteilung (nach 02b)
 
@@ -753,7 +759,7 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 
 **Exploratory Analyses (6 von 6):**
 
-1. ✅ **Temporal Selection:** 7 Monate ausgewählt (Apr-Okt), hohe Cross-City-Konsistenz (ρ=0.95)
+1. ✅ **Temporal Selection:** 8 Monate ausgewählt (Apr-Nov, Monate 4-11), hohe Cross-City-Konsistenz (ρ=0.95)
 2. ✅ **CHM Assessment:** Low Transfer Risk (d=0.18), CHM inkludiert
 3. ✅ **Correlation Removal:** 4 Features entfernt (B6, B7, EVI, kNDVI)
 4. ✅ **Outlier Detection:** 3 Methoden, Flagging implementiert (0.04% High-Severity)
@@ -860,7 +866,7 @@ Sechs Exploratory Notebooks wurden zur Bestimmung optimaler Konfigurationen durc
 **Konfigurationen vorhanden:** ✅
 
 - `feature_config.yaml`: Temporal Selection, CHM-Parameter
-- `temporal_selection.json`: 7 Monate (4-10)
+- `temporal_selection.json`: 8 Monate (4-11 = Apr-Nov)
 - `correlation_removal.json`: Feature-Ausschlüsse
 - `proximity_filter.json`: 5m Threshold
 - `outlier_thresholds.json`: Z-Score, Mahalanobis, IQR
