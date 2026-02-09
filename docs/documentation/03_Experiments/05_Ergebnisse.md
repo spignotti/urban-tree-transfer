@@ -12,10 +12,10 @@ Phase 3 testet das zentrale Transfer-Learning-Szenario: **Berlin-trainierte Mode
 
 **Fortschritt:**
 
-- **Exploratory Phase:** ✅ Abgeschlossen (exp_07 - exp_10)
+- **Exploratory Phase:** ✅ Abgeschlossen (exp_07 - exp_11)
 - **Runner Phase:** 🔄 In Arbeit (03a Setup, 03b Berlin Optimization)
 
-**Exploratory Analyses:** 6 Notebooks erfolgreich ausgeführt (mit Einschränkungen bei exp_10), Setup-Konfigurationen und Champions festgelegt
+**Exploratory Analyses:** 7 Notebooks erfolgreich ausgeführt, Setup-Konfigurationen festgelegt
 
 ---
 
@@ -302,50 +302,90 @@ Outlier-Removal bringt keine messbare Verbesserung (F1-Differenz innerhalb CV-Va
 ### Exp 10: Genus Selection Validation
 
 **Ausführungsdatum:** [PENDING]
-**Status:** [PENDING]
-**Zweck:** Validierung der Genus-Auswahl nach Setup-Decisions und Finalisierung der Klassenliste
+**Status:** ⚠️ [PENDING]
+**Zweck:** Validierung der Genus-Auswahl nach Setup-Decisions und Finalisierung der Klassenliste mittels JM-basierter Separability-Analyse
 
 **Datenbasis:**
+
 - Berlin Train: [X] Bäume nach Setup-Decisions
 - Leipzig Finetune: [X] Bäume
 - Features: 50 (finale Feature-Selektion aus exp_09)
 
 #### Analyse 1: Sample Count Validation
 
-**Methode:** Zählung verfügbarer Samples pro Genus in beiden Städten nach Setup-Decisions
+**Methode:** Zählung verfügbarer Samples pro Genus in beiden Städten nach Setup-Decisions (≥50 Samples Mindestanzahl)
 
 **Ergebnis:** [PENDING]
 
 **Implikation:** [PENDING]
 
-#### Analyse 2: Separability & Grouping
+#### Analyse 2: Separability & Grouping (JM-Distance)
 
-**Methode:** Hierarchisches Clustering (Ward-Linkage) auf Genus-Centroids im finalen 50-Feature-Space
+**Methode:** Jeffries-Matusita Distance Matrix zur Messung paarweiser Genus-Trennbarkeit, gefolgt von hierarchischem Clustering (Ward-Linkage) zur Gruppierung schlecht separierbarer Genera
+
+**JM-Distance erklärt:**
+
+- Probabilistische Separabilitätsmetrik: JM = 2(1 - e^(-B)), wobei B = Bhattacharyya Distance
+- Wertebereich: 0 (identische Verteilungen) bis 2 (perfekt separierbar)
+- Standard in Remote Sensing für Class Separability Analysis
 
 **Ergebnis:** [PENDING]
+
+**Finale Genus-Gruppen:** [N Gruppen]
 
 **Implikation:** [PENDING]
 
 #### Finale Entscheidung
 
-**Gewählte Strategie:** [PENDING]
+**Gewählte Strategie:** [PENDING - JM-based grouping mit Percentile-Threshold]
 
-**Finale Genus-Liste:** [N Klassen]
+**Finale Klassen:** [N Klassen (Einzelgenera + Gruppen)]
 
 **Begründung:** [PENDING]
+
+**Outputs:**
+
+- setup_decisions.json (erweitert um genus_selection)
+- jm_separability_heatmap.png
+- jm_dendrogram.png
+- genus_groups_overview.png
 
 ---
 
 ### Exp 11: Algorithm Comparison
 
 **Ausführungsdatum:** [PENDING]
-**Status:** 🔄 Pending (abhängig von exp_10)
-**Abhängigkeit:** exp_10 (verwendet finale Genus-Liste)
+**Status:** ⚠️ Pending (abhängig von exp_10)
+**Abhängigkeit:** exp_10 (verwendet finale Genus-Liste und gruppierte Klassen)
 
-**Zweck:** Vergleich von 4 Algorithmen (RF, XGBoost, CNN-1D, TabNet) mit Coarse Grid Search
+**Zweck:** Vergleich von 4 Algorithmen (RF, XGBoost, CNN-1D, TabNet) mit Coarse Grid Search zur Auswahl von 2 Champions für Hyperparameter-Tuning
 
-[Weitere Details nach Ausführung]
+**Datenbasis:**
 
+- Berlin Train/Val/Test: Nach Genus-Filterung und -Gruppierung
+- Features: 50 (aus exp_09)
+- Klassen: [N finale Klassen aus exp_10]
+
+#### Getestete Algorithmen
+
+[PENDING - Tabelle mit RF, XGBoost, CNN-1D, TabNet]
+
+#### Champion-Auswahl
+
+**ML Champion:** [PENDING]
+**NN Champion:** [PENDING]
+
+**Auswahlkriterien:**
+
+- Höchstes Validation F1
+- Train-Val Gap < 0.40 (wenn möglich)
+- Stabilität über CV-Folds
+
+**Outputs:**
+
+- algorithm_comparison.json
+- algorithm_comparison.png
+- per_algorithm_metrics.png
 
 ---
 
@@ -378,7 +418,7 @@ Pareto-Optimum bei 50 Features – höchstes Val F1 bei moderatem Gap. Top-30 ve
 
 ---
 
-### Exp 10: Algorithm Comparison
+### Exp 11: Algorithm Comparison
 
 **Ausführungsdatum:** 09.02.2026  
 **Status:** ⚠️ Teilweise abgeschlossen (Early Selection)  
@@ -491,7 +531,7 @@ CNN-1D: Parameter nicht verfügbar (Training-Fehler)
 #### Outputs
 
 - [algorithm_comparison.json](../../../outputs/phase_3_experiments/metadata/algorithm_comparison.json): Vollständige Metrik-Tabelle mit Best-Params
-- [algorithm_comparison.png](../../../outputs/phase_3_experiments/figures/exp_10_algorithm_comparison/algorithm_comparison.png): Visualisierung (falls generiert)
+- [algorithm_comparison.png](../../../outputs/phase_3_experiments/figures/exp_11_algorithm_comparison/algorithm_comparison.png): Visualisierung (falls generiert)
 
 ---
 
@@ -523,12 +563,16 @@ Nach den vier Ablationsstudien wurde folgende Konfiguration für alle nachfolgen
 - exp_08b: Proximity Filter Ablation
 - exp_08c: Outlier Removal Ablation
 - exp_09: Feature Reduction
-- exp_10: Algorithm Comparison (mit Einschränkungen - siehe Hinweise oben)
 
-**In Arbeit:** 🔄
+**In Planung:** ⏳
+
+- exp_10: Genus Selection Validation (JM-based)
+- exp_11: Algorithm Comparison
+
+**Runner Notebooks In Arbeit:** 🔄
 
 - 03a: Setup Fixation (Datensatzvorbereitung mit finaler Konfiguration)
-- 03b: Berlin Optimization (Champion HP-Tuning für XGBoost und CNN-1D)
+- 03b: Berlin Optimization (Champion HP-Tuning)
 
 **Ausstehend:** ⏳
 

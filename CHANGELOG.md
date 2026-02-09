@@ -7,9 +7,90 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - exp_10: JM-Based Genus Grouping (✅ 2026-02-09)
+
+- Replace centroid-distance separability with JM-based separability on Berlin train only (no leakage)
+- Use percentile-based adaptive JM thresholding for grouping
+- Extend genus selection export with `genus_german_mapping`
+- Update 03a to map both `genus_latin` and `genus_german` using setup_decisions genus selection
+
+### Fixed - Genus Selection Pipeline Integration (✅ 2026-02-09)
+
+**Context:** exp_10 and 03a had workflow inconsistencies where exp_10 expected 03a outputs (circular dependency) and 03a applied genus filtering in a redundant second pass. Additionally, `genus_german` was never fixed for PRUNUS/SOPHORA.
+
+**exp_10_genus_selection_validation.ipynb Fixes:**
+
+- **Remove 03a dependency:** Load setup_decisions.json from exp_09 instead of from 03a (which hasn't run yet)
+- **Extend setup_decisions.json:** Add `genus_selection` section to setup_decisions.json instead of creating separate genus_selection_final.json
+- **Fix validation logic:** Add validation that all required setup keys (chm_strategy, proximity_strategy, outlier_strategy, selected_features) exist before proceeding
+- **Update documentation:** Clarify that exp_10 runs BEFORE 03a, not after
+- **Update outputs:** Export extended setup_decisions.json and update next steps to show correct workflow (03a runs after exp_10)
+
+**03a_setup_fixation.ipynb Fixes:**
+
+- **Load genus_selection early:** Check for `genus_selection` in setup_decisions.json at Section 1 (not Section 5)
+- **Integrate filtering in main loop:** Apply genus filtering directly in Section 2 processing loop (before saving datasets)
+- **Fix genus_german:** Call `data_loading.fix_missing_genus_german()` on all splits before saving (fixes PRUNUS/SOPHORA missing German names)
+- **Single-pass processing:** Datasets saved only once with all filters applied (no redundant Section 2.5 overwriting)
+- **Remove redundant sections:** Delete Section 5 (old genus loading) and Section 2.5 (old genus filtering)
+- **Add data_loading import:** Import data_loading module for fix_missing_genus_german() function
+- **Update dependencies:** Require setup_decisions.json from exp_09 + exp_10 (genus_selection section)
+- **Update next steps:** Show conditional workflow (if genus_selection missing, run exp_10 first)
+
+**Methodological Documentation:**
+
+- Create `docs/documentation/03_Experiments/methodical_extensions_exp11.md`
+- Document required changes for exp_11 (not implemented yet, per user request)
+- exp_11 should load preprocessed datasets from phase_3_experiments/ (not apply filtering itself)
+- exp_11 should read genus_selection from setup_decisions.json (not separate file)
+
+**Workflow Changes:**
+
+- **Before:** exp_08 → exp_09 → 03a → exp_10 → exp_11 (circular dependency!)
+- **After:** exp_08 → exp_09 → exp_10 → exp_11 → 03a (linear workflow ✅)
+
+### Fixed - Documentation Workflow Order Updates (✅ 2026-02-10)
+
+**Context:** Comprehensive documentation review to ensure all references reflect corrected workflow order exp_10 → exp_11 → 03a, AND update methodology descriptions from Centroid-Euclidean to JM-Distance.
+
+**Updated Files:**
+
+- **docs/documentation/03_Experiments/00_Experiment_Overview.md:** Corrected workflow diagram, dependencies table, and champion selection placeholders
+- **docs/documentation/03_Experiments/05_Ergebnisse.md:** Updated figure paths from exp_10_algorithm_comparison to exp_11_algorithm_comparison, removed "ALTE ERGEBNISSE" markers, added JM-Distance explanation in exp_10 section
+- **docs/documentation/03_Experiments/06_Methodische_Erweiterungen.md:** Rewrote Section 12 to clarify exp_11 workflow positioning (exploratory phase, runs BEFORE 03a)
+- **docs/documentation/03_Experiments/01_Setup_Fixierung.md:** Updated exp_10 methodology from "Centroid Euclidean Distance" to "JM-Distance (Jeffries-Matusita)" with adaptive percentile threshold, corrected output config path
+- **docs/documentation/02_Feature_Engineering/05_Methodische_Erweiterungen.md:** Updated genus grouping methodology to JM-Distance based separability with mathematical formulas and rationale, corrected output format
+- **docs/presentation/02_methodik.md:** Changed champion selection date reference from exp_10 to exp_11
+- **docs/presentation/03_ergebnisse.md:** Updated exploratory analysis range and algorithm comparison references from exp_10 to exp_11
+
+**Key Methodological Updates:**
+
+- **OLD:** Centroid-based Euclidean Distance for genus separability
+- **NEW:** JM-Distance (Jeffries-Matusita) with sample-level pairwise calculation
+- Added adaptive percentile-based threshold (20th percentile) for grouping decisions
+- JM Formula documented: JM = 2(1 - e^(-B)), where B = Bhattacharyya Distance
+- Range: JM=0 (identical) to JM=2 (perfectly separable)
+- Standard method in Remote Sensing for Class Separability
+
+**Key Clarifications:**
+
+- exp_10 = Genus Selection Validation (JM-Distance grouping)
+- exp_11 = Algorithm Comparison (champion selection XGBoost + CNN-1D)
+- 03a = Setup Fixation (applies exp_10 genus decisions to create ML-ready datasets)
+- Workflow is linear with no circular dependencies
+
+**Technical Details:**
+
+- exp_10 validates Phase 2 splits with setup decisions applied
+- exp_10 extends setup_decisions.json with genus_selection section
+- 03a loads genus_selection from setup_decisions.json
+- 03a applies genus filtering + fix_missing_genus_german() in single pass
+- 03a saves final ML-ready datasets (one write operation per split)
+
 ### Added - exp_10: Genus Selection Validation & exp_10→exp_11 Renumbering (✅ 2026-02-09)
 
 **Exploratory Notebook: exp_10_genus_selection_validation.ipynb**
+
 - Create new notebook for post-setup-decisions genus validation and grouping
 - Load setup_decisions.json and apply all strategies (CHM, proximity, outlier, feature selection)
 - Validate sample counts after filtering (≥500 samples per genus threshold)
@@ -22,6 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 11 cells following exp_07/exp_09 patterns with comprehensive documentation
 
 **exp_10 → exp_11 Renumbering**
+
 - Rename exp_10_algorithm_comparison.ipynb → exp_11_algorithm_comparison.ipynb (preserves git history)
 - Add genus config import to exp_11: loads genus_selection_final.json after data loading
 - Map original genera to final classes (handles grouped genera via genus_to_final mapping)
@@ -31,6 +113,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update dependency: exp_11 now depends on exp_10 (genus selection)
 
 **Runner Notebook Integration**
+
 - Update 03a_setup_fixation.ipynb: add informational genus validation check
   - Reports if genus_selection_final.json exists and shows final class count
   - Non-blocking check (doesn't halt execution if missing)
@@ -45,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Same filtering logic as 03b/03c for all splits
 
 **Documentation Updates**
+
 - Update 00_Experiment_Overview.md:
   - Add exp_10 row to exploratory notebooks table (genus selection validation)
   - Rename exp_10 → exp_11 in algorithm comparison row
@@ -77,6 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Update folder reference: exp_10_algorithm_comparison/ → exp_11_algorithm_comparison/
 
 **Context & Rationale**
+
 - Phase 1 filters to 30 genera (≥500 samples per genus)
 - Setup decisions (CHM, proximity, outlier, features) reduce dataset further
 - Risk: Some genera may fall below 500-sample threshold after filtering
@@ -87,6 +172,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensures consistent class list across all Phase 3 experiments
 
 **Methodological Note**
+
 - Genus grouping (e.g., Rosaceae) maintains optimistic separability
 - Trade-off: More samples per class vs. loss of genus-level granularity
 - Future work: Compare performance of grouped vs. ungrouped classifications
@@ -94,6 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added - exp_10: Grid Search Optimization Documentation (✅ 2026-02-09)
 
 **Methodological Documentation**
+
 - Add Section 11 "Grid Search Optimierung" to 06_Methodische_Erweiterungen.md
 - Document pragmatic champion selection approach for exp_10 Algorithm Comparison
 - Provide 4 optimization strategies for future runs (Progressive Grid, Early Stopping, Optuna, Parallelization)
@@ -101,6 +188,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update summary table with Grid Search entry and timestamp (2026-02-09)
 
 **Context:**
+
 - exp_10 grid search too time-consuming (96 XGBoost configs = 8-16h)
 - Early stopping after 10 configs showed clear XGBoost superiority (F1: 0.4489 vs RF: 0.4334)
 - CNN-1D chosen over TabNet (better suited for temporal Sentinel-2 data, no extra dependency)
@@ -109,6 +197,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added - exp_07: Cross-City Baseline Analysis (✅ 2026-02-09)
 
 **Exploratory Notebook Implementation**
+
 - Complete rewrite of exp_07_cross_city_baseline.ipynb following Phase 3 patterns
 - Implements all 6 required descriptive analyses for Berlin vs Leipzig comparison
 - Analysis 1: Class distribution comparison (stacked bar chart)
@@ -122,9 +211,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 12 cells with comprehensive documentation and interpretation guidance
 
 ### Fixed
+
 - Fix NDVI column detection in exp_07 phenological profiles (handle NDVI_XX without "mean" and align month labels)
 
 **Code Enhancements**
+
 - Add `compute_cohens_d()` function to evaluation.py for effect size computation
 - Implements pooled standard deviation formula for Cohen's d
 - Includes clear interpretation thresholds (negligible/small/medium/large)
@@ -134,11 +225,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed - Phase 3: Production-Ready Runner Notebooks (✅ 2026-02-09)
 
 **03b_berlin_optimization.ipynb Refactoring**
+
 - Restructure notebook to follow runner_template.ipynb pattern (11 sections)
 - Add GitHub token handling + separate Optuna and PyTorch installation
 - Fix output directory paths (data/phase_3_experiments/models/ not outputs/phase_3/models/)
 - Add ExecutionLog integration for all major steps
-- Fix CNN1D structural parameter detection (auto-detect temporal features with _XX suffix)
+- Fix CNN1D structural parameter detection (auto-detect temporal features with \_XX suffix)
 - Add proper NN champion handling (skip if no NN champion exists)
 - Add memory optimization (float32 conversion, gc.collect after each major section)
 - Improve error handling with try-except blocks and logging
@@ -149,6 +241,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simplified error analysis (5 key analyses: confusion matrix, per-genus F1, confused pairs, conifer/deciduous, feature importance)
 
 **03a_setup_fixation.ipynb Refactoring**
+
 - Restructure notebook to follow runner_template.ipynb pattern with proper sections
 - Add GitHub token handling from Colab Secrets with clear error messages
 - Remove unnecessary dependencies (optuna, pytorch-tabnet not needed for 03a)
@@ -161,6 +254,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - From 3 cells → 10 cells with proper structure
 
 **ablation.py Enhancements**
+
 - Add `optimize_dtypes()` function for memory optimization (float64→float32, int optimization)
 - Add automatic test split policy enforcement in `prepare_ablation_dataset()`
 - Test splits always use baseline proximity (no filtering) for unbiased evaluation
@@ -170,12 +264,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add validation for missing setup_decisions keys with clear error messages
 
 **Test Coverage**
+
 - Add `test_optimize_dtypes()` for memory optimization verification
 - Add `test_prepare_ablation_dataset_test_split_policy()` for automatic baseline override
 - Add `test_prepare_ablation_dataset_memory_optimization()` for dtype conversion
 - All 12 ablation tests passing (previously 9 tests)
 
 **Code Quality**
+
 - All lint checks passing (ruff check)
 - All format checks passing (ruff format)
 - All type checks passing (pyright 0 errors)
@@ -184,6 +280,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed - Phase 3: PRD 003e Audit Fixes - Complete (✅ 2026-02-07)
 
 **Phase 4: Testing & Polish**
+
 - L1: Add visualization test coverage (8 new tests)
   - Added smoke tests for 8 priority visualization functions
   - `test_plot_per_genus_comparison`: Berlin vs Leipzig per-genus F1 comparison
@@ -244,7 +341,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Stratified subsets (C5): training.create_stratified_subsets() maintains genus balance, not df.sample()
   - From-scratch baselines with Leipzig-specific scaler (M5) for fair comparison
   - McNemar significance tests (6.1): fine-tuning vs zero-shot, fine-tuning vs from-scratch
-  - Power-law curve fitting (6.2): y = a * x^b with 95% recovery extrapolation
+  - Power-law curve fitting (6.2): y = a \* x^b with 95% recovery extrapolation
   - Per-genus recovery analysis (6.3): F1 at each fraction by genus, identify best/worst recovering genera
   - ML vs NN comparison (6.4): learning curves for both champions
   - 5 visualization figures: ML curve, ML vs NN, power-law fit, per-genus heatmap, baselines comparison
@@ -284,9 +381,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed - Phase 3: PRD 003e Audit Fixes - Phase 1 Complete (✅ 2026-02-07)
 
 - Fix CNN1D.learning_rate attribute for fine-tuning compatibility (PRD 003e C6)
-  - Add `self.learning_rate` instance attribute in CNN1D.__init__
+  - Add `self.learning_rate` instance attribute in CNN1D.**init**
   - Store actual learning_rate used in train_cnn() for fine-tuning reference
-  - Update _init_params dict to include learning_rate for serialization
+  - Update \_init_params dict to include learning_rate for serialization
   - Add defensive fallback in finetune_neural_network() using getattr()
   - Resolves AttributeError when finetune_neural_network() accesses pretrained_model.learning_rate
 - Add decision_rules to phase3_config.yaml for all ablation sections (PRD 003e H5)
@@ -823,6 +920,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add `scripts/gee_sentinel_preview.js` for manual GEE Sentinel-2 preview (Berlin/Leipzig)
 
 ### Changed
+
 - Change documentation structure to include Phase 1 methodology
 - Change nox sessions to run `uv` with active environment to avoid warnings
 - Change notebook to clone repo for metadata commits (large data stays on Drive)
@@ -835,6 +933,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refactor tree position correction to adaptive radius + scoring, including correction distance metadata
 
 ### Fixed
+
 - Fix Berlin Atom feed downloads by resolving section links to ZIP tiles and validating ZIP responses
 - Fix Berlin DOM/DGM extraction by adding XYZ ASCII to GeoTIFF conversion (Berlin provides .txt/.xyz point clouds, not GeoTIFF)
 - Fix Phase 2 interpolation to validate interior NaN resolution (quality.py:292-324)
@@ -851,7 +950,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix feature base extraction brittleness in filter_nan_trees (quality.py:183-189)
   - Validate suffix is exactly 2 digits before treating as month suffix
   - Handles multi-underscore features like CHM_1m_zscore_05 correctly
-  - Previously failed with rsplit("_", 1) on features with multiple underscores
+  - Previously failed with rsplit("\_", 1) on features with multiple underscores
 - Fix split stratification validation to enforce KL threshold
 - Fix mixed-genus proximity computation performance with STRtree (O(n²) → O(n log n))
 - Fix VIF validation availability for selection outputs
@@ -864,13 +963,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix large raster file handling by adding BIGTIFF=IF_SAFER to mosaic, clip, and reproject operations
 
 ### Changed
+
 - Add parallel downloads for elevation tiles (4 workers by default, configurable)
 - Add retry logic with exponential backoff for failed downloads (3 retries)
 - Add resume support for elevation downloads (skips already downloaded tiles)
 - Elevation downloads now continue with partial data if some tiles fail
+
 ## [0.1.0] - YYYY-MM-DD
 
 ### Added
+
 - Initial project setup
 - Basic project structure
 - Core functionality implementation
@@ -883,13 +985,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Guidelines for Maintaining This Changelog
 
 ### Version Format
+
 - Use [Semantic Versioning](https://semver.org/): MAJOR.MINOR.PATCH
   - **MAJOR**: Incompatible API changes
   - **MINOR**: Backwards-compatible new features
   - **PATCH**: Backwards-compatible bug fixes
 
 ### Categories
+
 Use these standard categories in order:
+
 1. **Added** - New features
 2. **Changed** - Changes in existing functionality
 3. **Deprecated** - Soon-to-be removed features
@@ -898,6 +1003,7 @@ Use these standard categories in order:
 6. **Security** - Security-related changes
 
 ### Writing Entries
+
 - Write entries in **present tense** (e.g., "Add feature" not "Added feature")
 - Start each entry with a **verb** (Add, Change, Fix, Remove, etc.)
 - Be **specific** and **concise**
@@ -908,37 +1014,46 @@ Use these standard categories in order:
 ### Examples
 
 #### Good Entries ✅
+
 ```markdown
 ### Added
+
 - Add user authentication with JWT tokens (#45)
 - Add support for PostgreSQL database backend
 - Add comprehensive API documentation with examples
 
 ### Fixed
+
 - Fix memory leak in data processing pipeline (#67)
 - Fix incorrect calculation in statistics module (#72)
 ```
 
 #### Bad Entries ❌
+
 ```markdown
 ### Added
+
 - Added stuff
 - Various improvements
 - Updated code
 
 ### Fixed
+
 - Fixed bug (too vague)
 - Refactored everything (not user-facing)
 ```
 
 ### When to Update
+
 - Update `[Unreleased]` section as you develop
 - Create a new version section when releasing
 - Move items from `[Unreleased]` to the new version
 - Update the version links at the bottom
 
 ### Version Links (Optional)
+
 If using Git tags, add comparison links at the bottom:
+
 ```markdown
 [unreleased]: https://github.com/username/repo/compare/v0.2.0...HEAD
 [0.2.0]: https://github.com/username/repo/compare/v0.1.0...v0.2.0
@@ -950,26 +1065,33 @@ If using Git tags, add comparison links at the bottom:
 ## Template for New Releases
 
 When releasing a new version, copy this template:
+
 ```markdown
 ## [X.Y.Z] - YYYY-MM-DD
 
 ### Added
-- 
+
+-
 
 ### Changed
-- 
+
+-
 
 ### Deprecated
-- 
+
+-
 
 ### Removed
-- 
+
+-
 
 ### Fixed
-- 
+
+-
 
 ### Security
-- 
+
+-
 ```
 
 Remove empty sections before publishing.

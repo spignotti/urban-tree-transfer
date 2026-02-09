@@ -591,30 +591,43 @@ Phase 3 exp_11+: Algorithm Training
 **Ort:** `notebooks/exploratory/exp_10_genus_selection_validation.ipynb`
 
 **Analysen:**
+
 1. Setup-Decisions laden und anwenden (CHM, Proximity, Outlier, Features)
 2. Sample-Counts auf finalem Datensatz validieren (≥500 Threshold)
-3. Genus-Separabilität im finalen Feature-Space berechnen (Euclidean Distance)
-4. Hierarchisches Clustering (Ward-Linkage) für Genus-Gruppierung
-5. Schlecht separierbare Genera gruppieren (z.B. Rosaceae-Gruppe)
+3. Genus-Separabilität mittels **JM-Distance** (Jeffries-Matusita) berechnen - sample-level pairwise distance, nur Berlin Train
+4. Hierarchisches Clustering (Ward-Linkage) auf JM-Matrix für Genus-Gruppierung
+5. Adaptive Percentile-Threshold (z.B. 20th) zur Identifikation schlecht separierbarer Genera
+6. Schlecht separierbare Genera gruppieren (z.B. JM < Threshold)
 
-**Output:** `genus_selection_final.json` (genutzt von exp_11, 03b, 03c, 03d)
+**Output:** `setup_decisions.json` (erweitert um `genus_selection` Section, genutzt von exp_11, 03a, 03b, 03c, 03d)
 
 ### Strategie: Exclude & Group
 
 **Stufe 1:** Exclude Low-Sample Genera
+
 - Entferne Genera mit <500 Samples in mindestens einer Stadt
 - Begründung: Statistische Power (RF benötigt ~100-200 Samples, wir nutzen 500 für Transfer-Robustheit)
 
 **Stufe 2:** Group Similar Genera
-- Hierarchisches Clustering auf Genus-Centroids im finalen Feature-Space
-- Gruppiere Genera mit geringer Inter-Genus-Distanz (Distance < Threshold)
-- Z.B. Rosaceae-Gruppe: PRUNUS + MALUS + PYRUS
-- **Vorteil:** Mehr Samples pro Klasse, optimistische Trennbarkeit
+
+- **Methode:** Jeffries-Matusita Distance (JM-Distance) zur Messung der spektralen Separabilität zwischen Genera
+- **JM-Formel:** JM = 2(1 - e^(-B)), wobei B = Bhattacharyya Distance
+- **Threshold:** Percentile-basiert (z.B. 20th percentile der pairwise JM-Distribution)
+- Gruppiere Genera-Paare mit JM < Threshold
+- Z.B. Rosaceae-Gruppe: PRUNUS + MALUS + PYRUS (wenn JM(PRUNUS, MALUS) < Threshold)
+- **Vorteil:** Objektive, probabilistische Separabilitätsmessung; mehr Samples pro Klasse
 - **Nachteil:** Verlust von Granularität
+
+**Begründung für JM-Distance:**
+
+- Berücksichtigt vollständige Verteilungsform (nicht nur Centroids)
+- Standard in Remote Sensing für Class Separability (Richards & Jia 2006)
+- Werte: JM=0 (identisch), JM=2 (perfekt separierbar)
 
 ### Methodische Validität: Genus-Filtering nach Spatial Splits
 
 **✅ Methodisch unproblematisch**, weil:
+
 1. Block-Grenzen (1200m) sind geografisch fix (nicht genus-abhängig)
 2. Train/Val/Test Block-Zuordnungen bleiben unverändert
 3. Räumliche Autokorrelations-Prevention bleibt intakt
@@ -628,14 +641,15 @@ Phase 3 exp_11+: Algorithm Training
 
 Aktuelle Analyse nutzt gruppierte Genera für optimistische Trennbarkeit.
 Zukünftige Studien sollten untersuchen:
+
 - Performance-Unterschied: Gruppiert vs. Einzeln
 - Trade-off: Granularität vs. Klassifikations-Accuracy
 - Genus-spezifische Insights die durch Gruppierung verloren gehen
 
 ### Referenzen
 
-- Breiman, L. (2001). Random Forests. *Machine Learning*, 45(1), 5-32.
-- Belgiu, M., & Drăguţ, L. (2016). Random forest in remote sensing. *ISPRS Journal*, 114, 24-31.
+- Breiman, L. (2001). Random Forests. _Machine Learning_, 45(1), 5-32.
+- Belgiu, M., & Drăguţ, L. (2016). Random forest in remote sensing. _ISPRS Journal_, 114, 24-31.
 
 ---
 

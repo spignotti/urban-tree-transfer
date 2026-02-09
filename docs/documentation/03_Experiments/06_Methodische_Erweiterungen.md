@@ -325,6 +325,7 @@ Der vollständige Grid Search in exp_11/exp_11 Algorithm Comparison ist sehr zei
 ### Problem
 
 **Zeitaufwand bei vollständigem Grid Search:**
+
 - XGBoost: 96 Konfigurationen × 5-10 min/config = 8-16 Stunden
 - Random Forest: 12 Konfigurationen × 3-5 min/config = 36-60 Minuten
 - Bei begrenzter Zeit nicht praktikabel für erste Durchläufe
@@ -336,6 +337,7 @@ Nach 10/96 XGBoost configs: F1 = 0.4489 (besser als RF nach 12/12 configs: 0.433
 ### Implementierte Lösung für aktuellen Run
 
 **Manuelle Champion-Auswahl basierend auf Teilergebnissen:**
+
 - XGBoost als ML-Champion nach 10/96 configs (F1: 0.4489)
 - CNN-1D als NN-Champion (besser geeignet für temporale Daten als TabNet)
 - Begründung ist methodisch vertretbar bei klarem Trend
@@ -396,12 +398,14 @@ scores = cross_val_score(model, X, y, cv=cv, n_jobs=-1)
 ### Begründung für manuelle Entscheidung
 
 **Methodisch akzeptabel, weil:**
+
 1. Nach 10 configs ist XGBoost-Überlegenheit statistisch klar (0.4489 vs. 0.4334)
 2. XGBoost ist in Remote Sensing etabliert (Immitzer et al. 2019, Grabska et al. 2019)
 3. Vollständige Grid Search würde wahrscheinlich nur bessere XGBoost-Params finden, nicht RF überholen
 4. Zeitdruck rechtfertigt pragmatische Entscheidung bei klarem Trend
 
 **Neural Network Wahl:**
+
 - CNN-1D optimal für temporale Sentinel-2 Daten (17 Temporal Bases × 8 Monate)
 - Etabliert in Literatur für Zeitreihen-Klassifikation (Pelletier et al. 2019)
 - TabNet nicht verfügbar (Installation würde zusätzliche Dependency erfordern)
@@ -412,6 +416,54 @@ scores = cross_val_score(model, X, y, cv=cv, n_jobs=-1)
 - Progressive Grid Search implementieren als Standard-Workflow
 - Optuna-basierte Algorithm Comparison evaluieren
 - Multi-Seed Evaluation der Champions für robustere Varianzschätzung
+
+---
+
+---
+
+## 12. exp_11 Algorithm Comparison - Workflow-Positioning
+
+### Beschreibung
+
+exp_11 (Algorithm Comparison) ist Teil der **explorativen Phase** und sollte unabhängig von 03a (Setup Fixation) lauffähig sein.
+
+### IST-Zustand (Korrekt seit 2026-02-10)
+
+- exp_11 lädt direkt aus **Phase 2c** (`phase_2_splits/`)
+- Wendet Genus-Filterung basierend auf `setup_decisions.json` an (erweitert durch exp_10)
+- Standalone-Notebook: Keine Abhängigkeit von 03a
+
+### Workflow-Reihenfolge
+
+```
+exp_10 (Genus Selection) → exp_11 (Algorithm Comparison) → 03a (Setup Fixation)
+```
+
+- **exp_10:** Erstellt `genus_selection` in `setup_decisions.json` (JM-based grouping)
+- **exp_11:** Lädt exp_10-Konfiguration, filtert Phase 2c Daten, vergleicht Algorithmen
+- **03a:** Lädt exp_10-Konfiguration, wendet Finals zu ML-ready Datasets an
+
+### Begründung der Architektur
+
+- **Explorative Flexibilität:** exp_11 kann unabhängig von 03a re-runs durchgeführt werden
+- **Separation of Concerns:** exp_11 testet Algorithmen, 03a fixiert finale Datensätze
+- **Reproduzierbarkeit:** exp_11 dokumentiert Champion-Auswahl separat von Runner-Pipeline
+
+### Daten-Loading Pattern
+
+```python
+# exp_11: Lädt aus Phase 2c + filtert mit exp_10 genus_selection
+berlin_train = pd.read_parquet(SPLITS_DIR / "berlin_train_filtered.parquet")
+genus_selection = setup_decisions.get("genus_selection", {})
+viable_genera = genus_selection.get("genus_to_final_mapping", {}).values()
+berlin_train = berlin_train[berlin_train['genus_latin'].isin(viable_genera)].copy()
+```
+
+### Warum nicht aus 03a laden?
+
+- exp_11 ist **vor** 03a im Workflow positioniert (explorativ)
+- 03a sollte als "Downstream Consumer" von exp_11-Ergebnissen fungieren (nutzt Champion-Entscheidungen)
+- Zirkuläre Abhängigkeiten würden Pipeline-Logik brechen
 
 ---
 
@@ -430,6 +482,7 @@ scores = cross_val_score(model, X, y, cv=cv, n_jobs=-1)
 | From-Scratch alle Fraktionen             | Nur 100% Baseline            | Mittel                          |
 | Explainability                           | Basis implementiert          | Mittel                          |
 | Grid Search Optimierung                  | Manuelle Entscheidung (2026) | Mittel (Progressive/Optuna)     |
+| exp_11 Daten-Loading                     | 🔴 TODO                      | Mittel (nach exp_10+03a)        |
 
 ---
 

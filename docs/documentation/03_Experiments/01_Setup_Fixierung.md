@@ -310,11 +310,11 @@ Die Feature-Anzahl beeinflusst:
 
 **Vergleich mit publizierten Studien:**
 
-| Studie                    | Feature-Anzahl | Input-Typ                 | Accuracy | Anmerkung           |
-| ------------------------- | -------------- | ------------------------- | -------- | ------------------- |
-| Hemmerling et al. (2021)  | ~276           | 12 months × 23 features   | 82-94%   | Dense time series   |
-| Immitzer et al. (2019)    | 49             | Feature-selected          | 76%      | Top S2 features     |
-| Dieses Projekt            | 30-80          | 8 months × selected       | TBD      | RF importance-based |
+| Studie                   | Feature-Anzahl | Input-Typ               | Accuracy | Anmerkung           |
+| ------------------------ | -------------- | ----------------------- | -------- | ------------------- |
+| Hemmerling et al. (2021) | ~276           | 12 months × 23 features | 82-94%   | Dense time series   |
+| Immitzer et al. (2019)   | 49             | Feature-selected        | 76%      | Top S2 features     |
+| Dieses Projekt           | 30-80          | 8 months × selected     | TBD      | RF importance-based |
 
 **Interpretation:** Positioniert Projekt im wissenschaftlichen Kontext. Unsere Feature-Anzahl liegt im typischen Bereich für Sentinel-2 basierte Baumklassifikation.
 
@@ -323,6 +323,7 @@ Die Feature-Anzahl beeinflusst:
 **Wenn F1(Alle Features) < F1(Top-k Features):**
 
 Dokumentation:
+
 - Expliziter Hinweis auf Hughes-Effekt (Fassnacht et al. 2016)
 - Feature-Selektion ist **essentiell**, nicht optional
 - Begründung: Mit limitiertem Training-Set führen zu viele Features zu Overfitting
@@ -331,11 +332,11 @@ Dokumentation:
 
 #### Visualisierungen
 
-| Abbildung                              | Zweck                              |
-| -------------------------------------- | ---------------------------------- |
-| feature_importance_ranking.png         | Feature-Importance Ranking (alle)  |
-| pareto_curve.png                       | F1 vs. Feature-Anzahl              |
-| feature_group_contribution.png         | Beitrag S2 vs. CHM Feature-Gruppen |
+| Abbildung                               | Zweck                                                 |
+| --------------------------------------- | ----------------------------------------------------- |
+| feature_importance_ranking.png          | Feature-Importance Ranking (alle)                     |
+| pareto_curve.png                        | F1 vs. Feature-Anzahl                                 |
+| feature_group_contribution.png          | Beitrag S2 vs. CHM Feature-Gruppen                    |
 | **feature_pareto_curve_literature.png** | **Pareto mit Knee-Point + Literatur-Kontext (Imp 1)** |
 
 ---
@@ -378,10 +379,11 @@ Setup-Decisions (CHM-Strategie, Proximity, Outlier, Feature-Selektion) reduziere
 
 1. **Sample Count Validation:** Tatsächliche Genus-Counts nach Setup-Decisions
 2. **Sample Sufficiency Assessment:** Vergleich mit Literatur (RF benötigt ~100-200 Samples/Klasse)
-3. **Separability Matrix:** Genus-Centroid-Distanzen im finalen 50-Feature-Space
-4. **Hierarchical Clustering:** Ward-Linkage für Genus-Gruppierung
-5. **Grouping Decision:** Schlecht separierbare Genera gruppieren (z.B. Rosaceae-Gruppe)
-6. **KL-Divergence Validation:** Prüfung dass Splits weiterhin stratifiziert sind (Threshold: <0.15)
+3. **JM-Distance Separability Matrix:** Paarweise Jeffries-Matusita Distance zwischen allen Genera (sample-level, nur Berlin Train)
+4. **Hierarchical Clustering:** Ward-Linkage auf JM-Matrix für Genus-Gruppierung
+5. **Adaptive Threshold:** Percentile-basierte JM-Schwelle (z.B. 20th percentile) für Gruppierungsentscheidung
+6. **Grouping Decision:** Schlecht separierbare Genera gruppieren basierend auf JM < Threshold
+7. **KL-Divergence Validation:** Prüfung dass Splits weiterhin stratifiziert sind (Threshold: <0.15)
 
 ### Entscheidung
 
@@ -390,6 +392,7 @@ Setup-Decisions (CHM-Strategie, Proximity, Outlier, Feature-Selektion) reduziere
 **Gewählte Strategie:** exclude_low_sample_and_group_similar
 
 **Finale Genus-Liste:** [N Klassen]
+
 - Ausgeschlossene Genera: [...]
 - Gruppierte Genera: [...]
 
@@ -398,6 +401,7 @@ Setup-Decisions (CHM-Strategie, Proximity, Outlier, Feature-Selektion) reduziere
 ### Methodische Validität
 
 **Genus-Filtering nach Spatial Splits ist methodisch unproblematisch**, weil:
+
 1. Block-Grenzen (1200m) sind geografisch fix (nicht genus-abhängig)
 2. Train/Val/Test Block-Zuordnungen bleiben unverändert
 3. Räumliche Autokorrelations-Prevention bleibt intakt
@@ -405,7 +409,7 @@ Setup-Decisions (CHM-Strategie, Proximity, Outlier, Feature-Selektion) reduziere
 
 ### Output
 
-- **Config:** `outputs/phase_3_experiments/metadata/genus_selection_final.json`
+- **Config:** `outputs/phase_3_experiments/metadata/setup_decisions.json` (erweitert um `genus_selection` Section)
 - **Visualisierungen:**
   - `genus_sample_counts.png` - Sample-Counts mit 500-Threshold
   - `genus_separability_heatmap.png` - Genus-Distanz-Matrix im finalen Feature-Space
