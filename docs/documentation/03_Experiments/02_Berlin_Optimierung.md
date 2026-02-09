@@ -20,10 +20,15 @@ Die Berlin-Optimierung baut auf den Setup-Entscheidungen aus Phase 3.1 auf. Mit 
 
 Mit fixiertem Setup (CHM-Strategie + Datensatzwahl + Outlier-Strategie + selektierte Features) vergleichen wir:
 
-| Kategorie | Algorithmen            | Coarse Grid Configs         |
-| --------- | ---------------------- | --------------------------- |
-| ML        | Random Forest, XGBoost | 24-48 pro Algorithmus       |
-| NN        | 1D-CNN, TabNet         | Baseline + wenige Varianten |
+| Kategorie | Algorithmen            | Coarse Grid Configs         | Features                      |
+| --------- | ---------------------- | --------------------------- | ----------------------------- |
+| ML        | Random Forest, XGBoost | 24-48 pro Algorithmus       | 50 reduzierte Features        |
+| NN        | 1D-CNN, TabNet         | Baseline + wenige Varianten | ~144 volle temporale Features |
+
+**🔄 Dataset-Selektion:** Algorithmen verwenden automatisch die passende Datensatz-Variante:
+
+- ML-Algorithmen: `load_berlin_splits()` → `berlin_train.parquet` (reduzierte Features)
+- NN-Algorithmen: `load_berlin_splits_cnn()` → `berlin_train_cnn.parquet` (volle Features)
 
 ### Naive Baselines (Improvement 2)
 
@@ -32,21 +37,25 @@ Mit fixiertem Setup (CHM-Strategie + Datensatzwahl + Outlier-Strategie + selekti
 Neben ML- und NN-Algorithmen evaluieren wir drei **Naive Baselines**, die KEINE Sentinel-2 Features nutzen:
 
 #### 1. Majority Class Classifier
+
 - **Strategie:** Immer die häufigste Gattung vorhersagen
 - **Erwartete Performance:** F1 ≈ 1 / (Anzahl Klassen) bei balanciertem Datensatz
 - **Zweck:** Absolute untere Grenze
 
 #### 2. Stratified Random Classifier
+
 - **Strategie:** Zufällige Vorhersagen gewichtet nach Klassenverteilung
 - **Erwartete Performance:** Minimal besser als Majority Class
 - **Zweck:** Chance-Level Performance
 
 #### 3. Spatial-Only Random Forest
+
 - **Features:** Nur x/y-Koordinaten (UTM), KEIN Sentinel-2, KEIN CHM
 - **Erwartete Performance:** F1 ≈ 0.10-0.20 (falls räumliche Cluster existieren)
 - **Zweck:** Test ob räumliche Autokorrelation allein ausreicht
 
 **Performance Ladder:**
+
 ```
 Majority Class < Stratified Random < Spatial-Only RF << ML/NN mit S2+CHM
 ```
@@ -107,14 +116,14 @@ Szenario: Bestes pro Kategorie (gewählt)
 
 ### Optuna-Konfiguration
 
-| Parameter    | Wert         | Begründung                                                                 |
-| ------------ | ------------ | -------------------------------------------------------------------------- |
-| **Sampler**  | TPE          | Effizienter als Random bei kontinuierlichen Räumen, nutzt bisherige Trials |
-| **Pruner**   | MedianPruner | Bricht Trials ab, die unter Median der bisherigen liegen                   |
-| **n_trials** | 10–15        | Schneller Suchlauf, Ziel: < 1–2h Runtime                                   |
-| **timeout**  | 1h           | Zeitfenster für pragmatischen Speed-Run                                    |
-| **Tuning-Subset** | 100k    | Repräsentative Teilmenge für schnellere Trials                             |
-| **CV (Tuning)** | 1-Fold Group Holdout (20%) | Schnelle Schätzung, kein Voll-CV                       |
+| Parameter         | Wert                       | Begründung                                                                 |
+| ----------------- | -------------------------- | -------------------------------------------------------------------------- |
+| **Sampler**       | TPE                        | Effizienter als Random bei kontinuierlichen Räumen, nutzt bisherige Trials |
+| **Pruner**        | MedianPruner               | Bricht Trials ab, die unter Median der bisherigen liegen                   |
+| **n_trials**      | 10–15                      | Schneller Suchlauf, Ziel: < 1–2h Runtime                                   |
+| **timeout**       | 1h                         | Zeitfenster für pragmatischen Speed-Run                                    |
+| **Tuning-Subset** | 100k                       | Repräsentative Teilmenge für schnellere Trials                             |
+| **CV (Tuning)**   | 1-Fold Group Holdout (20%) | Schnelle Schätzung, kein Voll-CV                                           |
 
 **Hinweis:** Finales Training erfolgt weiterhin auf Train+Val (voller Datensatz).
 
@@ -181,11 +190,13 @@ def bootstrap_ci(y_true, y_pred, metric_fn, n_bootstrap=1000, ci=0.95):
 ```
 
 **Anwendung:**
+
 - **n_bootstrap = 1000:** Anzahl Bootstrap-Resamples
 - **ci = 0.95:** 95% Konfidenzintervall
 - **Output Format:** `F1 = 0.623 (95% CI: [0.598, 0.647])`
 
 **Vergleich mit Naive Baselines:**
+
 - Alle drei Naive Baselines werden ebenfalls mit Bootstrap CI evaluiert
 - Performance Ladder Visualisierung zeigt CI als Fehlerbalken
 - Ermöglicht statistischen Vergleich: Ist ML-Champion signifikant besser als Spatial-Only RF?
@@ -256,11 +267,11 @@ in 03c (Transfer) und 03d (Fine-Tuning) für Leipzig wiederverwendet werden.
 
 ### Metadaten-Dateien
 
-| Datei                     | Inhalt                                                                              |
-| ------------------------- | ----------------------------------------------------------------------------------- |
+| Datei                     | Inhalt                                                                             |
+| ------------------------- | ---------------------------------------------------------------------------------- |
 | algorithm_comparison.json | Ergebnisse aller Algorithmen, Champion-Auswahl, **Naive Baselines (Imp 2)**        |
-| hp_tuning_ml.json         | Optuna-Trials, beste Parameter für ML                                               |
-| hp_tuning_nn.json         | Optuna-Trials, beste Parameter für NN                                               |
+| hp_tuning_ml.json         | Optuna-Trials, beste Parameter für ML                                              |
+| hp_tuning_nn.json         | Optuna-Trials, beste Parameter für NN                                              |
 | berlin_evaluation.json    | Test-Metriken mit **Bootstrap CI (Imp 4)**, Feature Importance, Baseline-Vergleich |
 
 ### Modelle
@@ -276,13 +287,13 @@ in 03c (Transfer) und 03d (Fine-Tuning) für Leipzig wiederverwendet werden.
 
 **Algorithmenvergleich & HP-Tuning:**
 
-| Abbildung                         | Zweck                                                   |
-| --------------------------------- | ------------------------------------------------------- |
-| algorithm_comparison.png          | Alle 4 Algorithmen F1-Vergleich                         |
-| **performance_ladder.png (Imp 2)**| Baselines → ML/NN Champions mit Bootstrap CI (Imp 4)    |
-| algorithm_train_val_gap.png       | Train-Val Gap pro Algorithmus                           |
-| optuna_optimization_history.png   | HP-Tuning Konvergenz                                    |
-| feature_importance_top20.png      | Top-20 Features des Champions                           |
+| Abbildung                          | Zweck                                                |
+| ---------------------------------- | ---------------------------------------------------- |
+| algorithm_comparison.png           | Alle 4 Algorithmen F1-Vergleich                      |
+| **performance_ladder.png (Imp 2)** | Baselines → ML/NN Champions mit Bootstrap CI (Imp 4) |
+| algorithm_train_val_gap.png        | Train-Val Gap pro Algorithmus                        |
+| optuna_optimization_history.png    | HP-Tuning Konvergenz                                 |
+| feature_importance_top20.png       | Top-20 Features des Champions                        |
 
 **Post-Training Fehleranalyse (deutsche Namen):**
 
@@ -306,12 +317,12 @@ in 03c (Transfer) und 03d (Fine-Tuning) für Leipzig wiederverwendet werden.
 
 ### Naive Baselines (Improvement 2)
 
-| Baseline                | Erwarteter F1 | Begründung                               |
-| ----------------------- | ------------- | ---------------------------------------- |
-| Majority Class          | 0.01-0.03     | ~10 Klassen → 1/10 bei balanciert        |
-| Stratified Random       | 0.02-0.05     | Minimal besser als Majority              |
-| Spatial-Only RF         | 0.10-0.20     | Falls räumliche Cluster vorhanden        |
-| **Performance Gap**     | **+0.35+**    | ML/NN Champions sollten >>0.50 erreichen |
+| Baseline            | Erwarteter F1 | Begründung                               |
+| ------------------- | ------------- | ---------------------------------------- |
+| Majority Class      | 0.01-0.03     | ~10 Klassen → 1/10 bei balanciert        |
+| Stratified Random   | 0.02-0.05     | Minimal besser als Majority              |
+| Spatial-Only RF     | 0.10-0.20     | Falls räumliche Cluster vorhanden        |
+| **Performance Gap** | **+0.35+**    | ML/NN Champions sollten >>0.50 erreichen |
 
 **Interpretation:** Falls Spatial-Only RF > 0.20, existiert starke räumliche Autokorrelation.
 

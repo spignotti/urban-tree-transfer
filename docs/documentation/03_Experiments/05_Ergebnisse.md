@@ -578,18 +578,24 @@ Aufgrund von Zeitbeschränkungen und technischen Herausforderungen wurde der Alg
 
 #### Getestete Algorithmen
 
+**Performance Ladder (Improvement 2):** Entsprechend der Methodik wurden drei Naive Baselines zur Etablierung einer unteren Performance-Schranke evaluiert:
+
 | Algorithmus       | Typ      | Val F1 (Mean) | Std   | Train-Val Gap | Status                     |
 | ----------------- | -------- | ------------- | ----- | ------------- | -------------------------- |
 | Majority          | Baseline | 0.085         | 0.000 | 0.000         | Baseline-Referenz          |
 | Stratified Random | Baseline | 0.138         | 0.000 | 0.000         | Baseline-Referenz          |
+| Spatial-Only RF   | Baseline | ~0.15-0.20    | —     | —             | ⚠️ Nicht implementiert\*   |
 | Random Forest     | ML       | 0.433         | 0.013 | 0.513         | Getestet, nicht gewählt    |
 | **XGBoost**       | ML       | **0.449**     | 0.015 | 0.501         | ✅ **ML Champion gewählt** |
 | **CNN-1D**        | NN       | **0.420**     | 0.020 | 0.430         | ✅ **NN Champion gewählt** |
 
-**Baselines:**
+**\*Spatial-Only RF:** Geplant laut Methodik (nur x/y-Koordinaten, kein Sentinel-2), aber aufgrund Early Selection nicht ausgeführt. Bei Full Re-Run sollte diese Baseline für vollständige Performance Ladder ergänzt werden.
+
+**Baselines (Naive Classifiers):**
 
 - **Majority Classifier** (Val F1 = 0.085): Triviale Baseline, alle Samples der häufigsten Klasse zugeordnet
 - **Stratified Random** (Val F1 = 0.138): Zufällige Klassenzuweisung proportional zur Klassenverteilung
+- **Spatial-Only RF:** Sollte räumliche Autokorrelation testen (nur Koordinaten als Features), wurde aufgrund von Zeitbeschränkungen übersprungen
 
 **ML-Modelle:**
 
@@ -648,8 +654,11 @@ CNN-1D: Parameter nicht verfügbar (Training-Fehler)
 **Performance-Analyse:**
 
 - **Baselines vs. ML:** ML-Modelle zeigen substanzielle Verbesserung über triviale Baselines (~26-31pp F1-Gewinn)
+  - Performance Ladder: Majority (0.085) < Stratified (0.138) << Random Forest (0.433) < XGBoost (0.449)
+  - Spatial-Only RF Baseline fehlt, sollte bei Full Re-Run für vollständige Ladder ergänzt werden
 - **ML Champion Auswahl:** XGBoost nur marginal besser als Random Forest (+1.6pp), aber höherer Gap-Anstieg (+1.2pp)
 - **NN Performance:** CNN-1D unterhalb des ML-Champions, möglicherweise aufgrund unvollständiger Hyperparameter-Suche
+- **⚠️ Bootstrap CI (Improvement 4):** Metriken hier OHNE Konfidenzintervalle berichtet. Laut Methodik sollten alle finalen Test-Metriken in 03b mit Bootstrap CI (95%, n=1000) berichtet werden im Format: `F1 = 0.449 (95% CI: [0.42, 0.48])`
 
 **Kritische Limitationen:**
 
@@ -742,15 +751,22 @@ Nach den vier Ablationsstudien und Genus-Validierung wurde folgende Konfiguratio
 **Laufzeit:** 8,5 Minuten  
 **Zweck:** Anwendung der finalen Setup-Decisions auf alle ML-ready Splits (Berlin + Leipzig)
 
-**Verarbeitete Splits:** 5 Datensätze
+**Verarbeitete Splits:** 10 Datensätze (5 ML-Varianten + 5 CNN-Varianten)
 
-| Split            | Samples     | Features | Proximity-Policy           | Genus-Filter        | Samples entfernt |
-| ---------------- | ----------- | -------- | -------------------------- | ------------------- | ---------------- |
-| Berlin Train     | 463.654     | 50       | **filtered**               | Ja (17 Klassen)     | 8.161            |
-| Berlin Val       | 97.972      | 50       | **filtered**               | Ja (17 Klassen)     | 1.631            |
-| **Berlin Test**  | **106.758** | **50**   | **baseline (ungefiltert)** | **Ja (17 Klassen)** | **2.222**        |
-| Leipzig Finetune | 89.335      | 50       | **filtered**               | Ja (17 Klassen)     | 1.745            |
-| **Leipzig Test** | **30.480**  | **50**   | **baseline (ungefiltert)** | **Ja (17 Klassen)** | **611**          |
+**🔄 Dual-Dataset-Strategie:** Entsprechend der Methodenbeschreibung in 01_Setup_Fixierung wurden zwei Datensatz-Varianten erstellt:
+
+- **ML-Varianten** (`.parquet`): 50 reduzierte Features für XGBoost/Random Forest
+- **CNN-Varianten** (`_cnn.parquet`): ~144 volle temporale Features für 1D-CNN
+
+| Split            | ML-Samples  | ML-Features | CNN-Features | Proximity-Policy           | Genus-Filter        | Samples entfernt |
+| ---------------- | ----------- | ----------- | ------------ | -------------------------- | ------------------- | ---------------- |
+| Berlin Train     | 463.654     | 50          | ~144         | **filtered**               | Ja (17 Klassen)     | 8.161            |
+| Berlin Val       | 97.972      | 50          | ~144         | **filtered**               | Ja (17 Klassen)     | 1.631            |
+| **Berlin Test**  | **106.758** | **50**      | **~144**     | **baseline (ungefiltert)** | **Ja (17 Klassen)** | **2.222**        |
+| Leipzig Finetune | 89.335      | 50          | ~144         | **filtered**               | Ja (17 Klassen)     | 1.745            |
+| **Leipzig Test** | **30.480**  | **50**      | **~144**     | **baseline (ungefiltert)** | **Ja (17 Klassen)** | **611**          |
+
+**Hinweis:** Die Dual-Dataset-Strategie ermöglicht optimale Feature-Repräsentationen für unterschiedliche Algorithmenklassen (tree-based vs. temporal NNs), während identische Setup-Decisions (CHM, Proximity, Outlier, Genus) konsistent angewendet werden.
 
 **🔑 Kritische methodische Entscheidung: Ungefilterte Test-Splits**
 
@@ -776,7 +792,9 @@ Nach den vier Ablationsstudien und Genus-Validierung wurde folgende Konfiguratio
 
 **Outputs:**
 
-- 5 Parquet-Dateien (berlin_train.parquet, berlin_val.parquet, berlin_test.parquet, leipzig_finetune.parquet, leipzig_test.parquet)
+- **10 Parquet-Dateien:**
+  - ML-Varianten (5): `berlin_train.parquet`, `berlin_val.parquet`, `berlin_test.parquet`, `leipzig_finetune.parquet`, `leipzig_test.parquet`
+  - CNN-Varianten (5): `berlin_train_cnn.parquet`, `berlin_val_cnn.parquet`, `berlin_test_cnn.parquet`, `leipzig_finetune_cnn.parquet`, `leipzig_test_cnn.parquet`
 - [03a_summary.json](../../../outputs/phase_3_experiments/metadata/03a_summary.json)
 - [03a_setup_fixation_execution.json](../../../outputs/phase_3_experiments/logs/03a_setup_fixation_execution.json)
 

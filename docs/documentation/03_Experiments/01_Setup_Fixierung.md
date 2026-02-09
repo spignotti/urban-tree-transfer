@@ -442,12 +442,40 @@ Nach Abschluss aller Ablationen (exp_08, exp_08b, exp_08c, exp_09) und Genus-Sel
 3. **⚠️ Kritische methodische Entscheidung: Asymmetrische Proximity-Policy**
    - **Train/Val/Finetune:** Proximity-Filter angewendet (falls in exp_08b gewählt)
    - **Test-Splits (Berlin + Leipzig):** **Immer ungefiltert (baseline)** → Real-World-Szenario
-4. **Erstelle feature-reduced Datasets** für Experimente:
-   - `berlin_train.parquet` (final)
-   - `berlin_val.parquet` (final)
-   - `berlin_test.parquet` (final, **ungefiltert**)
-   - `leipzig_finetune.parquet` (final)
-   - `leipzig_test.parquet` (final, **ungefiltert**)
+4. **🔄 Dual-Dataset-Strategie:** Erstelle **zwei Datensatz-Varianten** pro Split:
+   - **XGBoost-Variante** (`.parquet`): Reduzierte Features (Top-50) für tree-based Models
+   - **CNN-Variante** (`_cnn.parquet`): Volle temporale Sequenzen (~144 Features) für Neural Networks
+5. **Erstelle finale Datasets** für Experimente:
+   - `berlin_train.parquet` + `berlin_train_cnn.parquet`
+   - `berlin_val.parquet` + `berlin_val_cnn.parquet`
+   - `berlin_test.parquet` + `berlin_test_cnn.parquet` (beide **ungefiltert**)
+   - `leipzig_finetune.parquet` + `leipzig_finetune_cnn.parquet`
+   - `leipzig_test.parquet` + `leipzig_test_cnn.parquet` (beide **ungefiltert**)
+
+### Rationale für Dual-Dataset-Strategie
+
+**Methodische Begründung:**
+
+Unterschiedliche ML-Algorithmen haben fundamentale unterschiedliche Feature-Anforderungen:
+
+1. **Tree-based Models (XGBoost/Random Forest):**
+   - Benötigen **hochinformative, reduzierte Features** für beste Performance
+   - Profitieren von Feature Selection (vermeidet Dimensionality Curse)
+   - Top-50 Features aus exp_09 → 99.2% der All-Features Performance bei 58% Feature-Reduktion
+
+2. **1D-CNNs:**
+   - Benötigen **komplette temporale Sequenzen** für Faltungsoperationen
+   - Lernen zeitliche Muster (z.B. Frühjahrsanstieg) aus ~12 Monaten
+   - Feature Selection würde temporale Kontinuität brechen
+   - ~144 Features: 12 Monate × 12 Vegetationsindizes = vollständige Zeitreihen
+
+**Implementierung:**
+
+- **Gleiche Setup-Decisions:** Beide Varianten wenden identische CHM/Proximity/Outlier/Genus-Strategien an
+- **Unterschied nur bei Features:** XGBoost = reduced, CNN = full temporal
+- **Gleiche Samples:** Beide Varianten enthalten dieselben Baum-IDs und Target-Labels
+
+**Technische Umsetzung:** `prepare_ablation_dataset(skip_feature_selection=True)` für CNN-Variante
 
 ### Rationale für ungefilterte Test-Splits
 
@@ -466,8 +494,10 @@ Konsistente Filterung über alle Splits → würde optimistische Test-Performanc
 
 ### Outputs
 
-- **Finale Datasets:** `data/phase_3_experiments/` (5 Parquet-Dateien)
-- **Summary:** `outputs/phase_3_experiments/metadata/03a_summary.json`
+- **Finale Datasets:** `data/phase_3_experiments/` (10 Parquet-Dateien)
+  - **XGBoost-Varianten** (5 Dateien): `*_train.parquet`, `*_val.parquet`, `*_test.parquet` (50 Features)
+  - **CNN-Varianten** (5 Dateien): `*_train_cnn.parquet`, `*_val_cnn.parquet`, `*_test_cnn.parquet` (~144 Features)
+- **Summary:** `outputs/phase_3_experiments/metadata/03a_summary.json` (dokumentiert beide Dataset-Typen)
 - **Execution Log:** `outputs/phase_3_experiments/logs/03a_setup_fixation_execution.json`
 
 ---

@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - Complete Dual Dataset Implementation (2026-02-09)
+
+**Problem:** Section 2.5 for CNN dataset creation was missing in 03a_setup_fixation.ipynb, causing `results_cnn` NameError and no `*_cnn.parquet` files being created. Only XGBoost datasets were generated despite dual dataset architecture being planned.
+
+**Root Cause Analysis:**
+
+1. Section 2 only created XGBoost datasets with reduced features
+2. No second loop for CNN datasets with `skip_feature_selection=True`
+3. Variable `results_cnn` referenced but never defined
+4. Validation expected non-existent `*_cnn.parquet` files
+5. 03b would fail when loading non-existent CNN datasets for NN champions
+
+**Solution:** Implement complete Section 2.5 in 03a and add validation tooling.
+
+**Changes:**
+
+**03a_setup_fixation.ipynb:**
+
+- ✅ Add Section 2.5 "Create CNN1D Datasets (Full Features)"
+- Create separate loop for CNN datasets using `skip_feature_selection=True`
+- Initialize and populate `results_cnn` tracking list
+- Save CNN datasets as `{city}_{split}_cnn.parquet` (e.g., `berlin_train_cnn.parquet`)
+- Apply same CHM/proximity/outlier/genus strategies as XGBoost datasets
+- Validation Section 3 correctly checks both XGBoost and CNN datasets
+- Summary includes both `results` and `results_cnn` statistics
+
+**scripts/validate_pipeline_logic.py (NEW):**
+
+- Comprehensive validation script checking all pipeline logic
+- Verifies Section 2 uses reduced features (default behavior)
+- Verifies Section 2.5 uses `skip_feature_selection=True`
+- Validates correct file naming patterns
+- Checks 03b loads appropriate datasets based on model type
+- Confirms function parameters match module signatures
+- 19 validation checks covering both notebooks
+
+**Impact:**
+
+- 03a now produces 10 files: 5 XGBoost (50 features) + 5 CNN (144 features)
+- Same samples/classes, only feature count differs per model type
+- All setup decisions (CHM/proximity/outlier/genus) applied consistently
+- Pipeline validation can be run via `uv run python scripts/validate_pipeline_logic.py`
+
 ### Added - Dual Dataset Pipeline for XGBoost and CNN1D (✅ 2026-02-09)
 
 **Problem:** CNN1D requires complete temporal sequences (all monthly features) for proper training, but the current pipeline creates a reduced feature set (top-50) that breaks temporal continuity. This prevents CNN1D from learning from the full time series.
@@ -16,16 +59,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Changes:**
 
 **Core Infrastructure (ablation.py):**
+
 - Add `skip_feature_selection` parameter to `prepare_ablation_dataset()`
 - When True, preserves all Sentinel-2 features while still applying CHM/proximity/outlier strategies
 - Adds `feature_set_type` to metadata ("reduced" vs "full")
 
 **Data Loading (data_loading.py):**
+
 - Add `load_berlin_splits_cnn()` for loading full-feature CNN datasets
 - Add `load_leipzig_splits_cnn()` for loading full-feature CNN datasets
 - Use `*_cnn.parquet` file suffix for CNN variants
 
 **03a Setup Fixation:**
+
 - Create TWO dataset variants per split:
   - Base (`.parquet`): Reduced 50 features for XGBoost/RandomForest
   - CNN (`_cnn.parquet`): Full ~144 temporal features for CNN1D
@@ -34,6 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated summary to document dual dataset strategy
 
 **03b Berlin Optimization:**
+
 - Automatic dataset selection based on champion type:
   - ML champion (tree-based) → loads base datasets (reduced features)
   - NN champion (CNN1D) → loads CNN datasets (full features)
@@ -43,12 +90,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Evaluation uses correct datasets per model type
 
 **Benefits:**
+
 - CNN1D now trains on complete temporal sequences (~12 months × 12 features = 144 temporal features)
 - XGBoost efficiency maintained with reduced feature set (top-50)
 - No breaking changes - backward compatible with existing code
 - Clear separation of concerns between model types
 
 **File Naming Convention:**
+
 - XGBoost: `berlin_train.parquet`, `leipzig_test.parquet`
 - CNN1D: `berlin_train_cnn.parquet`, `leipzig_test_cnn.parquet`
 
