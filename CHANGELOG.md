@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Purely descriptive (no JSON outputs, no training) for hypothesis generation
 - 12 cells with comprehensive documentation and interpretation guidance
 
+### Fixed
+- Fix NDVI column detection in exp_07 phenological profiles (handle NDVI_XX without "mean" and align month labels)
+
 **Code Enhancements**
 - Add `compute_cohens_d()` function to evaluation.py for effect size computation
 - Implements pooled standard deviation formula for Cohen's d

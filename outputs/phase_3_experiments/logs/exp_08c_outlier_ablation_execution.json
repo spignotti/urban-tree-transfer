@@ -1,0 +1,52 @@
+{
+  "notebook": "exp_08c_outlier_ablation",
+  "execution_start": "2026-02-08T23:32:29.997702",
+  "execution_end": "2026-02-09T00:20:13.803776",
+  "steps": [
+    {
+      "name": "Load Prior Decisions",
+      "status": "success",
+      "start_time": "2026-02-08T23:32:30.033821",
+      "end_time": "2026-02-08T23:32:30.362546",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Outlier Ablation Experiment",
+      "status": "success",
+      "start_time": "2026-02-08T23:32:30.373911",
+      "end_time": "2026-02-09T00:20:13.432321",
+      "records": 3,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Decision Logic",
+      "status": "success",
+      "start_time": "2026-02-09T00:20:13.440837",
+      "end_time": "2026-02-09T00:20:13.444244",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Visualizations",
+      "status": "success",
+      "start_time": "2026-02-09T00:20:13.450084",
+      "end_time": "2026-02-09T00:20:13.777260",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Update Setup Decisions",
+      "status": "success",
+      "start_time": "2026-02-09T00:20:13.783428",
+      "end_time": "2026-02-09T00:20:13.797333",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "notebook": "exp_07_cross_city_baseline",
+  "execution_start": "2026-02-09T13:41:37.697358",
+  "execution_end": "2026-02-09T13:54:15.764888",
+  "steps": [
+    {
+      "name": "Data Loading",
+      "status": "success",
+      "start_time": "2026-02-09T13:41:39.209505",
+      "end_time": "2026-02-09T13:42:04.549767",
+      "records": 722837,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Class Distribution Analysis",
+      "status": "success",
+      "start_time": "2026-02-09T13:42:04.560610",
+      "end_time": "2026-02-09T13:42:05.483502",
+      "records": 30,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Phenological Profile Analysis",
+      "status": "success",
+      "start_time": "2026-02-09T13:42:05.496084",
+      "end_time": "2026-02-09T13:42:05.503447",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "CHM Distribution Analysis",
+      "status": "success",
+      "start_time": "2026-02-09T13:42:05.512933",
+      "end_time": "2026-02-09T13:42:09.190909",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Feature Distribution Overlap",
+      "status": "success",
+      "start_time": "2026-02-09T13:42:09.202041",
+      "end_time": "2026-02-09T13:44:09.643890",
+      "records": 9,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Cohen's d Effect Size Analysis",
+      "status": "success",
+      "start_time": "2026-02-09T13:44:09.656933",
+      "end_time": "2026-02-09T13:44:11.146996",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Correlation Structure Analysis",
+      "status": "success",
+      "start_time": "2026-02-09T13:44:11.158999",
+      "end_time": "2026-02-09T13:44:12.500317",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Phenological Profile Analysis",
+      "status": "success",
+      "start_time": "2026-02-09T13:51:59.019207",
+      "end_time": "2026-02-09T13:52:02.108618",
+      "records": 5,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Feature Distribution Overlap",
+      "status": "success",
+      "start_time": "2026-02-09T13:52:07.903269",
+      "end_time": "2026-02-09T13:54:12.900104",
+      "records": 9,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Cohen's d Effect Size Analysis",
+      "status": "success",
+      "start_time": "2026-02-09T13:54:12.915189",
+      "end_time": "2026-02-09T13:54:14.368125",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Correlation Structure Analysis",
+      "status": "success",
+      "start_time": "2026-02-09T13:54:14.378231",
+      "end_time": "2026-02-09T13:54:15.756358",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    }
+  ]
+}

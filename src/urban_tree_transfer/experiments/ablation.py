@@ -156,14 +156,96 @@ def get_metadata_columns(df: pd.DataFrame) -> list[str]:
     return sorted(set(metadata))
 
 
+def optimize_dtypes(df: pd.DataFrame) -> pd.DataFrame:
+    """Optimize DataFrame memory usage by converting dtypes.
+
+    Converts float64 → float32 and optimizes integer types where possible.
+    Reduces memory usage by ~50% for typical feature matrices.
+
+    Args:
+        df: Input DataFrame
+
+    Returns:
+        DataFrame with optimized dtypes
+    """
+    result = df.copy()
+
+    # Float: 64 → 32
+    float_cols = result.select_dtypes(include=["float64"]).columns
+    if len(float_cols) > 0:
+        result[float_cols] = result[float_cols].astype("float32")
+
+    # Int: 64 → smallest fitting type
+    int_cols = result.select_dtypes(include=["int64"]).columns
+    for col in int_cols:
+        col_min, col_max = result[col].min(), result[col].max()
+        if col_min >= 0:  # Unsigned
+            if col_max < 255:
+                result[col] = result[col].astype("uint8")
+            elif col_max < 65535:
+                result[col] = result[col].astype("uint16")
+            else:
+                result[col] = result[col].astype("uint32")
+        else:  # Signed
+            if col_min > -128 and col_max < 127:
+                result[col] = result[col].astype("int8")
+            elif col_min > -32768 and col_max < 32767:
+                result[col] = result[col].astype("int16")
+            else:
+                result[col] = result[col].astype("int32")
+
+    return result
+
+
 def prepare_ablation_dataset(
     base_path: Path,
     city: str,
     split: str,
     setup_decisions: dict[str, Any],
     return_metadata: bool = True,
+    optimize_memory: bool = True,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
-    """Apply all setup decisions to prepare dataset for experiments."""
+    """Apply all setup decisions to prepare dataset for experiments.
+
+    IMPORTANT: Test splits always use baseline proximity filtering (no filtering)
+    to represent real-world distribution for unbiased evaluation. This policy is
+    enforced automatically when split name is "test".
+
+    Args:
+        base_path: Path to phase_2_splits directory
+        city: City name ("berlin" or "leipzig")
+        split: Split name ("train", "val", "test", "finetune")
+        setup_decisions: Dictionary from setup_decisions.json with keys:
+            - proximity_strategy: {"decision": "baseline" or "filtered"}
+            - outlier_strategy: {"decision": "no_removal", "remove_high", etc.}
+            - chm_strategy: {"decision": "no_chm", "zscore_only", etc.}
+            - selected_features: List of feature names
+        return_metadata: Whether to keep metadata columns (default: True)
+        optimize_memory: Whether to optimize dtypes for memory (default: True)
+
+    Returns:
+        Tuple of (filtered_dataframe, metadata_dict)
+
+    Raises:
+        ValueError: If setup_decisions missing required keys
+        FileNotFoundError: If input parquet file not found
+
+    Examples:
+        >>> from pathlib import Path
+        >>> setup = {
+        ...     "proximity_strategy": {"decision": "filtered"},
+        ...     "outlier_strategy": {"decision": "remove_high"},
+        ...     "chm_strategy": {"decision": "both_engineered"},
+        ...     "selected_features": ["NDVI_06", "NDVI_07", "CHM_1m_zscore"],
+        ... }
+        >>> df, meta = prepare_ablation_dataset(
+        ...     Path("data/phase_2_splits"),
+        ...     "berlin",
+        ...     "train",
+        ...     setup,
+        ... )
+        >>> print(f"Prepared {len(df)} samples with {meta['n_features']} features")
+    """
     try:
         proximity_strategy = setup_decisions["proximity_strategy"]["decision"]
         outlier_strategy = setup_decisions["outlier_strategy"]["decision"]
@@ -171,6 +253,16 @@ def prepare_ablation_dataset(
         selected_features = setup_decisions["selected_features"]
     except KeyError as exc:
         raise ValueError(f"setup_decisions missing required key: {exc}") from exc
+
+    # TEST SPLIT POLICY: Always use baseline proximity for unbiased evaluation
+    is_test_split = split == "test"
+    if is_test_split and proximity_strategy != "baseline":
+        original_strategy = proximity_strategy
+        proximity_strategy = "baseline"
+        test_policy_applied = True
+    else:
+        original_strategy = proximity_strategy
+        test_policy_applied = False
 
     df = apply_proximity_filter(base_path, city, split, proximity_strategy)
     original_n_samples = len(df)
@@ -183,12 +275,19 @@ def prepare_ablation_dataset(
 
     df = apply_feature_selection(df, selected_features, keep_metadata=return_metadata)
 
+    # Memory optimization
+    if optimize_memory:
+        df = optimize_dtypes(df)
+
     metadata = {
         "original_n_samples": original_n_samples,
         "filtered_n_samples": len(df),
         "n_features": len(selected_features),
         "chm_features_included": chm_features_included,
         "outliers_removed": outliers_removed,
+        "test_split_policy_applied": test_policy_applied,
+        "proximity_strategy_requested": original_strategy,
+        "proximity_strategy_used": proximity_strategy,
     }
 
     return df, metadata

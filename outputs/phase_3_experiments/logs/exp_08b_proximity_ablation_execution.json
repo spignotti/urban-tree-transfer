@@ -1,0 +1,79 @@
+{
+  "notebook": "exp_08b_proximity_ablation",
+  "execution_start": "2026-02-08T22:23:24.140713",
+  "execution_end": "2026-02-08T23:30:10.133414",
+  "steps": [
+    {
+      "name": "Load CHM Decision",
+      "status": "success",
+      "start_time": "2026-02-08T22:23:24.194623",
+      "end_time": "2026-02-08T22:23:24.199016",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Proximity Ablation Experiment",
+      "status": "success",
+      "start_time": "2026-02-08T22:23:24.214348",
+      "end_time": "2026-02-08T23:26:15.259788",
+      "records": 2,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Decision Logic",
+      "status": "success",
+      "start_time": "2026-02-08T23:26:15.274030",
+      "end_time": "2026-02-08T23:26:15.277251",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Visualizations",
+      "status": "success",
+      "start_time": "2026-02-08T23:26:15.283433",
+      "end_time": "2026-02-08T23:26:15.622283",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Update Setup Decisions",
+      "status": "success",
+      "start_time": "2026-02-08T23:26:15.631135",
+      "end_time": "2026-02-08T23:26:15.643809",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Decision Logic",
+      "status": "success",
+      "start_time": "2026-02-08T23:29:54.437813",
+      "end_time": "2026-02-08T23:29:54.441280",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Visualizations",
+      "status": "success",
+      "start_time": "2026-02-08T23:30:06.232652",
+      "end_time": "2026-02-08T23:30:06.561888",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Update Setup Decisions",
+      "status": "success",
+      "start_time": "2026-02-08T23:30:08.397428",
+      "end_time": "2026-02-08T23:30:08.408586",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    }
+  ]
+}

@@ -1,0 +1,818 @@
+{
+  "chm_strategy": {
+    "decision": "no_chm",
+    "included_features": [],
+    "reasoning": "Per-feature evaluation: 0 features passed all thresholds",
+    "per_feature_results": [
+      {
+        "feature": "CHM_1m",
+        "variant": "raw_chm",
+        "importance": 0.048404722115523935,
+        "gap_increase": 0.09290811877231248,
+        "f1_improvement": 0.007837868968008088,
+        "included": false,
+        "reason": "Destabilizes generalization (gap increase=0.093 > 0.05)"
+      },
+      {
+        "feature": "CHM_1m_zscore",
+        "variant": "zscore_only",
+        "importance": 0.033984906712490964,
+        "gap_increase": 0.13454102492359882,
+        "f1_improvement": -0.0006683326924838418,
+        "included": false,
+        "reason": "Destabilizes generalization (gap increase=0.135 > 0.05)"
+      },
+      {
+        "feature": "CHM_1m_percentile",
+        "variant": "percentile_only",
+        "importance": 0.029924771483599504,
+        "gap_increase": 0.13621709682903,
+        "f1_improvement": -0.0023444045979150174,
+        "included": false,
+        "reason": "Destabilizes generalization (gap increase=0.136 > 0.05)"
+      }
+    ],
+    "ablation_results": [
+      {
+        "variant": "no_chm",
+        "val_f1_mean": 0.3774900321441181,
+        "val_f1_std": 0.010334725369552024,
+        "train_f1_mean": 0.866127307768885,
+        "train_val_gap": 0.48863727562476694
+      },
+      {
+        "variant": "zscore_only",
+        "val_f1_mean": 0.37682169945163424,
+        "val_f1_std": 0.011110259820411491,
+        "train_f1_mean": 1.0,
+        "train_val_gap": 0.6231783005483658
+      },
+      {
+        "variant": "percentile_only",
+        "val_f1_mean": 0.37514562754620306,
+        "val_f1_std": 0.01007796026896966,
+        "train_f1_mean": 1.0,
+        "train_val_gap": 0.6248543724537969
+      },
+      {
+        "variant": "both_engineered",
+        "val_f1_mean": 0.378184963173489,
+        "val_f1_std": 0.010717794978003667,
+        "train_f1_mean": 1.0,
+        "train_val_gap": 0.621815036826511
+      },
+      {
+        "variant": "raw_chm",
+        "val_f1_mean": 0.38532790111212617,
+        "val_f1_std": 0.009276124073026122,
+        "train_f1_mean": 0.9668732955092055,
+        "train_val_gap": 0.5815453943970794
+      }
+    ],
+    "val_f1_mean": 0.3774900321441181,
+    "train_val_gap": 0.48863727562476694,
+    "rationale": "Selected no_chm based on threshold evaluation: importance_threshold=0.25, max_gap_increase=0.05, min_improvement=0.03"
+  },
+  "proximity_strategy": {
+    "decision": "filtered",
+    "reasoning": "Filtered improves F1 by 0.026 with acceptable 21.4% sample loss",
+    "sample_counts": {
+      "baseline_n": 600299,
+      "filtered_n": 471815,
+      "sample_loss_pct": 0.2140333400522073
+    },
+    "ablation_results": [
+      {
+        "variant": "baseline",
+        "val_f1_mean": 0.3774900321441181,
+        "val_f1_std": 0.010334725369552024,
+        "train_f1_mean": 0.866127307768885,
+        "train_val_gap": 0.48863727562476694,
+        "samples_retained": 600299
+      },
+      {
+        "variant": "filtered",
+        "val_f1_mean": 0.4037334852359222,
+        "val_f1_std": 0.012702463781043961,
+        "train_f1_mean": 0.958597985951462,
+        "train_val_gap": 0.5548645007155397,
+        "samples_retained": 471815
+      }
+    ],
+    "val_f1_mean": 0.4037334852359222,
+    "train_val_gap": 0.5548645007155397,
+    "samples_retained": 471815.0,
+    "rationale": "Selected filtered based on threshold evaluation: max_sample_loss=25.0%, min_improvement=0.020"
+  },
+  "outlier_strategy": {
+    "decision": "no_removal",
+    "reasoning": "Baseline (no removal) retained by default",
+    "sample_counts": {
+      "baseline_n": 471815,
+      "filtered_n": 471815,
+      "sample_loss_pct": 0.0
+    },
+    "ablation_results": [
+      {
+        "variant": "no_removal",
+        "val_f1_mean": 0.4037334852359222,
+        "val_f1_std": 0.012702463781043961,
+        "train_f1_mean": 0.958597985951462,
+        "train_val_gap": 0.5548645007155397,
+        "samples_retained": 471815
+      },
+      {
+        "variant": "remove_high",
+        "val_f1_mean": 0.4026722658184389,
+        "val_f1_std": 0.011707116650143085,
+        "train_f1_mean": 0.9585518139577371,
+        "train_val_gap": 0.5558795481392982,
+        "samples_retained": 471621
+      },
+      {
+        "variant": "remove_high_medium",
+        "val_f1_mean": 0.4039399518657163,
+        "val_f1_std": 0.011148398583916341,
+        "train_f1_mean": 0.958346931593351,
+        "train_val_gap": 0.5544069797276348,
+        "samples_retained": 461411
+      }
+    ],
+    "val_f1_mean": 0.4037334852359222,
+    "train_val_gap": 0.5548645007155397,
+    "samples_retained": 471815.0,
+    "rationale": "Selected no_removal based on threshold evaluation: max_sample_loss=15.0%, min_improvement=0.020"
+  },
+  "feature_set": {
+    "n_features": 50,
+    "reasoning": "Pareto selection: smallest k with F1 >= 0.3988",
+    "importance_ranking": [
+      {
+        "feature": "VARI_04",
+        "importance": 0.010043797827978242
+      },
+      {
+        "feature": "VARI_10",
+        "importance": 0.00997316911845473
+      },
+      {
+        "feature": "B3_06",
+        "importance": 0.009545788479097143
+      },
+      {
+        "feature": "VARI_06",
+        "importance": 0.009451104424018161
+      },
+      {
+        "feature": "B3_04",
+        "importance": 0.008814172995402209
+      },
+      {
+        "feature": "NDVI_04",
+        "importance": 0.008733258013914773
+      },
+      {
+        "feature": "NDVI_05",
+        "importance": 0.008697093992637206
+      },
+      {
+        "feature": "NDVI_10",
+        "importance": 0.008643311667374753
+      },
+      {
+        "feature": "IRECI_10",
+        "importance": 0.00841293089820204
+      },
+      {
+        "feature": "IRECI_04",
+        "importance": 0.008309588458645784
+      },
+      {
+        "feature": "B4_04",
+        "importance": 0.008292707167810292
+      },
+      {
+        "feature": "VARI_09",
+        "importance": 0.008290167707729456
+      },
+      {
+        "feature": "EVI_04",
+        "importance": 0.008154374792790221
+      },
+      {
+        "feature": "B12_06",
+        "importance": 0.008110858685524379
+      },
+      {
+        "feature": "NDVI_06",
+        "importance": 0.00810373189820011
+      },
+      {
+        "feature": "B4_06",
+        "importance": 0.008033940248983774
+      },
+      {
+        "feature": "B4_05",
+        "importance": 0.008001300120607001
+      },
+      {
+        "feature": "VARI_05",
+        "importance": 0.007929520690635261
+      },
+      {
+        "feature": "B5_04",
+        "importance": 0.007764085079833575
+      },
+      {
+        "feature": "B2_10",
+        "importance": 0.007754053883367773
+      },
+      {
+        "feature": "B2_06",
+        "importance": 0.007752990372862271
+      },
+      {
+        "feature": "NDWI_07",
+        "importance": 0.007628675364180029
+      },
+      {
+        "feature": "EVI_06",
+        "importance": 0.007628433153240368
+      },
+      {
+        "feature": "VARI_07",
+        "importance": 0.007626882656262014
+      },
+      {
+        "feature": "VARI_11",
+        "importance": 0.007595874101030262
+      },
+      {
+        "feature": "B2_04",
+        "importance": 0.007586198625832752
+      },
+      {
+        "feature": "NDre1_05",
+        "importance": 0.007561026993967209
+      },
+      {
+        "feature": "B2_05",
+        "importance": 0.007504075886521656
+      },
+      {
+        "feature": "B11_06",
+        "importance": 0.007488855599446506
+      },
+      {
+        "feature": "MSI_07",
+        "importance": 0.0074626568415259945
+      },
+      {
+        "feature": "B8_06",
+        "importance": 0.00744119651526788
+      },
+      {
+        "feature": "EVI_09",
+        "importance": 0.00741091979644217
+      },
+      {
+        "feature": "NDVI_09",
+        "importance": 0.007385287689718205
+      },
+      {
+        "feature": "CIre_05",
+        "importance": 0.007348936377626485
+      },
+      {
+        "feature": "B5_06",
+        "importance": 0.007289127771632037
+      },
+      {
+        "feature": "EVI_10",
+        "importance": 0.0072437938369242305
+      },
+      {
+        "feature": "B8A_04",
+        "importance": 0.00724179986626131
+      },
+      {
+        "feature": "B12_04",
+        "importance": 0.007234208929693474
+      },
+      {
+        "feature": "B12_05",
+        "importance": 0.00722823706236556
+      },
+      {
+        "feature": "RTVIcore_06",
+        "importance": 0.007218263017817631
+      },
+      {
+        "feature": "MSI_09",
+        "importance": 0.007168815033373875
+      },
+      {
+        "feature": "NDWI_09",
+        "importance": 0.007145290257968007
+      },
+      {
+        "feature": "B3_05",
+        "importance": 0.007138074550790524
+      },
+      {
+        "feature": "RTVIcore_04",
+        "importance": 0.007126564350258425
+      },
+      {
+        "feature": "CIre_04",
+        "importance": 0.007124365474476427
+      },
+      {
+        "feature": "B11_04",
+        "importance": 0.0070921749665375814
+      },
+      {
+        "feature": "IRECI_05",
+        "importance": 0.007086498089488571
+      },
+      {
+        "feature": "VARI_08",
+        "importance": 0.007073154645688321
+      },
+      {
+        "feature": "B3_11",
+        "importance": 0.007042903617649941
+      },
+      {
+        "feature": "NDVI_11",
+        "importance": 0.007038120353816278
+      },
+      {
+        "feature": "EVI_05",
+        "importance": 0.00702207158848701
+      },
+      {
+        "feature": "MSI_04",
+        "importance": 0.0070144048572429426
+      },
+      {
+        "feature": "NDVI_07",
+        "importance": 0.007005845172161249
+      },
+      {
+        "feature": "MSI_06",
+        "importance": 0.006987891144090923
+      },
+      {
+        "feature": "B8_09",
+        "importance": 0.006975429305046274
+      },
+      {
+        "feature": "NDWI_04",
+        "importance": 0.0069671096079472646
+      },
+      {
+        "feature": "NDre1_04",
+        "importance": 0.006947193515365217
+      },
+      {
+        "feature": "MSI_05",
+        "importance": 0.0069408648014724315
+      },
+      {
+        "feature": "B5_09",
+        "importance": 0.006938613826344348
+      },
+      {
+        "feature": "NDWI_06",
+        "importance": 0.006933174965788811
+      },
+      {
+        "feature": "NDWI_08",
+        "importance": 0.0069095257042375395
+      },
+      {
+        "feature": "B8_04",
+        "importance": 0.0069067958949554755
+      },
+      {
+        "feature": "IRECI_11",
+        "importance": 0.006898682016302707
+      },
+      {
+        "feature": "B11_07",
+        "importance": 0.006890825711383119
+      },
+      {
+        "feature": "MSI_08",
+        "importance": 0.006884962637215527
+      },
+      {
+        "feature": "B8A_09",
+        "importance": 0.00688265331483423
+      },
+      {
+        "feature": "B2_07",
+        "importance": 0.006861421301805428
+      },
+      {
+        "feature": "CIre_06",
+        "importance": 0.006859310605302916
+      },
+      {
+        "feature": "MSI_10",
+        "importance": 0.006847982957625625
+      },
+      {
+        "feature": "IRECI_09",
+        "importance": 0.006824143496136144
+      },
+      {
+        "feature": "NDWI_05",
+        "importance": 0.006805885567421491
+      },
+      {
+        "feature": "NDre1_06",
+        "importance": 0.006787725144675979
+      },
+      {
+        "feature": "B5_10",
+        "importance": 0.00677434092163283
+      },
+      {
+        "feature": "IRECI_06",
+        "importance": 0.006773100685265281
+      },
+      {
+        "feature": "NDWI_10",
+        "importance": 0.006750487917045551
+      },
+      {
+        "feature": "B3_09",
+        "importance": 0.006740294115052826
+      },
+      {
+        "feature": "B8A_05",
+        "importance": 0.006716085422770087
+      },
+      {
+        "feature": "EVI_07",
+        "importance": 0.006692095387656048
+      },
+      {
+        "feature": "RTVIcore_05",
+        "importance": 0.0066778396004623965
+      },
+      {
+        "feature": "B2_08",
+        "importance": 0.00663335365320492
+      },
+      {
+        "feature": "B4_09",
+        "importance": 0.006632411584089318
+      },
+      {
+        "feature": "NDVIre_05",
+        "importance": 0.006621138889866936
+      },
+      {
+        "feature": "NDVIre_07",
+        "importance": 0.0065865669216545655
+      },
+      {
+        "feature": "B8_05",
+        "importance": 0.006581905279795456
+      },
+      {
+        "feature": "B12_07",
+        "importance": 0.006578125224003265
+      },
+      {
+        "feature": "B8A_06",
+        "importance": 0.00657745055632336
+      },
+      {
+        "feature": "B2_09",
+        "importance": 0.006572495852377281
+      },
+      {
+        "feature": "B11_11",
+        "importance": 0.006568357595015405
+      },
+      {
+        "feature": "B12_10",
+        "importance": 0.006563674467902597
+      },
+      {
+        "feature": "B8A_07",
+        "importance": 0.006556556686060911
+      },
+      {
+        "feature": "B5_05",
+        "importance": 0.006556240615145731
+      },
+      {
+        "feature": "B5_11",
+        "importance": 0.0065540489524738696
+      },
+      {
+        "feature": "B11_05",
+        "importance": 0.00654712871140305
+      },
+      {
+        "feature": "B8_07",
+        "importance": 0.006534029398358709
+      },
+      {
+        "feature": "B2_11",
+        "importance": 0.006501454411300745
+      },
+      {
+        "feature": "B3_10",
+        "importance": 0.006496284683584922
+      },
+      {
+        "feature": "B8A_10",
+        "importance": 0.006479611720829564
+      },
+      {
+        "feature": "B8A_08",
+        "importance": 0.006471256722431761
+      },
+      {
+        "feature": "B11_09",
+        "importance": 0.006469265641694243
+      },
+      {
+        "feature": "MSI_11",
+        "importance": 0.006466228718888926
+      },
+      {
+        "feature": "EVI_08",
+        "importance": 0.006453659180525707
+      },
+      {
+        "feature": "B3_07",
+        "importance": 0.006452867354736148
+      },
+      {
+        "feature": "NDVIre_06",
+        "importance": 0.0064502569177437175
+      },
+      {
+        "feature": "B8_08",
+        "importance": 0.0064186265722751155
+      },
+      {
+        "feature": "NDVIre_04",
+        "importance": 0.0064033046323595695
+      },
+      {
+        "feature": "B12_11",
+        "importance": 0.006396033866554256
+      },
+      {
+        "feature": "B5_07",
+        "importance": 0.006389551113907615
+      },
+      {
+        "feature": "NDre1_10",
+        "importance": 0.006386175787104646
+      },
+      {
+        "feature": "B4_10",
+        "importance": 0.006385273258479884
+      },
+      {
+        "feature": "CIre_09",
+        "importance": 0.006377171003855347
+      },
+      {
+        "feature": "B12_08",
+        "importance": 0.006371942685563594
+      },
+      {
+        "feature": "B4_07",
+        "importance": 0.006364373360356218
+      },
+      {
+        "feature": "IRECI_07",
+        "importance": 0.006336089302608544
+      },
+      {
+        "feature": "B12_09",
+        "importance": 0.006333663171449983
+      },
+      {
+        "feature": "B8A_11",
+        "importance": 0.006316534769423149
+      },
+      {
+        "feature": "RTVIcore_09",
+        "importance": 0.006315049189775538
+      },
+      {
+        "feature": "NDVI_08",
+        "importance": 0.006310236830784438
+      },
+      {
+        "feature": "IRECI_08",
+        "importance": 0.006286927914843091
+      },
+      {
+        "feature": "B4_11",
+        "importance": 0.006270130443403227
+      },
+      {
+        "feature": "CIre_10",
+        "importance": 0.0062676841167975395
+      },
+      {
+        "feature": "B11_10",
+        "importance": 0.006261485707949429
+      },
+      {
+        "feature": "B3_08",
+        "importance": 0.0062608403256753644
+      },
+      {
+        "feature": "B5_08",
+        "importance": 0.006245532548548169
+      },
+      {
+        "feature": "NDWI_11",
+        "importance": 0.006243032007019429
+      },
+      {
+        "feature": "NDre1_09",
+        "importance": 0.0062286018993080484
+      },
+      {
+        "feature": "RTVIcore_07",
+        "importance": 0.006225673532565345
+      },
+      {
+        "feature": "EVI_11",
+        "importance": 0.0061960409721777895
+      },
+      {
+        "feature": "NDVIre_08",
+        "importance": 0.006188827901493118
+      },
+      {
+        "feature": "B11_08",
+        "importance": 0.006174708348016127
+      },
+      {
+        "feature": "NDVIre_11",
+        "importance": 0.006164181897699244
+      },
+      {
+        "feature": "B4_08",
+        "importance": 0.006035263990161362
+      },
+      {
+        "feature": "RTVIcore_08",
+        "importance": 0.006023988140436504
+      },
+      {
+        "feature": "B8_10",
+        "importance": 0.006017712330649484
+      },
+      {
+        "feature": "CIre_07",
+        "importance": 0.006013256614163382
+      },
+      {
+        "feature": "NDre1_07",
+        "importance": 0.005996414864469239
+      },
+      {
+        "feature": "NDVIre_09",
+        "importance": 0.005990995800141037
+      },
+      {
+        "feature": "RTVIcore_10",
+        "importance": 0.005988441520159814
+      },
+      {
+        "feature": "CIre_11",
+        "importance": 0.005986124668144895
+      },
+      {
+        "feature": "NDre1_11",
+        "importance": 0.005956976117931748
+      },
+      {
+        "feature": "NDre1_08",
+        "importance": 0.005899205199025533
+      },
+      {
+        "feature": "CIre_08",
+        "importance": 0.005800498120237664
+      },
+      {
+        "feature": "RTVIcore_11",
+        "importance": 0.005718295001655672
+      },
+      {
+        "feature": "B8_11",
+        "importance": 0.00570766611689043
+      },
+      {
+        "feature": "NDVIre_10",
+        "importance": 0.00565398348092778
+      }
+    ],
+    "ablation_results": [
+      {
+        "n_features": 30,
+        "val_f1_mean": 0.38036128032908173,
+        "val_f1_std": 0.011575031963575892,
+        "train_f1_mean": 0.958588706958329,
+        "train_val_gap": 0.5782274266292473
+      },
+      {
+        "n_features": 50,
+        "val_f1_mean": 0.40650453605376075,
+        "val_f1_std": 0.012141568542306596,
+        "train_f1_mean": 0.958593361975982,
+        "train_val_gap": 0.5520888259222212
+      },
+      {
+        "n_features": 80,
+        "val_f1_mean": 0.40875264481887025,
+        "val_f1_std": 0.013340122020373019,
+        "train_f1_mean": 0.9585761760417745,
+        "train_val_gap": 0.5498235312229043
+      },
+      {
+        "n_features": 144,
+        "val_f1_mean": 0.4027083740557928,
+        "val_f1_std": 0.012930394977863996,
+        "train_f1_mean": 0.9585958921285448,
+        "train_val_gap": 0.555887518072752
+      }
+    ],
+    "val_f1_mean": 0.40650453605376075,
+    "train_val_gap": 0.5520888259222212,
+    "rationale": "Selected 50 features using Pareto optimization: smallest feature set with F1 >= 0.3988"
+  },
+  "selected_features": [
+    "VARI_04",
+    "VARI_10",
+    "B3_06",
+    "VARI_06",
+    "B3_04",
+    "NDVI_04",
+    "NDVI_05",
+    "NDVI_10",
+    "IRECI_10",
+    "IRECI_04",
+    "B4_04",
+    "VARI_09",
+    "EVI_04",
+    "B12_06",
+    "NDVI_06",
+    "B4_06",
+    "B4_05",
+    "VARI_05",
+    "B5_04",
+    "B2_10",
+    "B2_06",
+    "NDWI_07",
+    "EVI_06",
+    "VARI_07",
+    "VARI_11",
+    "B2_04",
+    "NDre1_05",
+    "B2_05",
+    "B11_06",
+    "MSI_07",
+    "B8_06",
+    "EVI_09",
+    "NDVI_09",
+    "CIre_05",
+    "B5_06",
+    "EVI_10",
+    "B8A_04",
+    "B12_04",
+    "B12_05",
+    "RTVIcore_06",
+    "MSI_09",
+    "NDWI_09",
+    "B3_05",
+    "RTVIcore_04",
+    "CIre_04",
+    "B11_04",
+    "IRECI_05",
+    "VARI_08",
+    "B3_11",
+    "NDVI_11"
+  ],
+  "metadata": {
+    "completed_at": "2026-02-09T01:20:50.185003+00:00",
+    "random_seed": 42,
+    "cv_folds": 3
+  }
+}

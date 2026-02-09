@@ -412,6 +412,151 @@ PUBLICATION_STYLE = {
 
 ---
 
+---
+
+## 7. Genus-Auswahl-Validierung (Post-Phase 2c Filter-Kaskade)
+
+### Beschreibung
+
+**Problem:**
+MIN_SAMPLES_PER_GENUS = 500 wird in Phase 1 (Data Processing) angewendet, resultiert in 30 viable genera. Phase 2c wendet jedoch weitere Filter an:
+- **Proximity-Filter (5m):** Entfernt ~20% der Samples (mixed-genus proximity)
+- **Outlier-Removal:** Entfernt weitere ~1-2% der Samples (high/medium outliers)
+
+**Folge:** Genus-Sample-Counts können unter 500-Threshold fallen, ohne dass dies validiert wird.
+
+### Empfohlene Implementierung
+
+**Ort:** Am Ende von `02c_final_preparation.ipynb`, nach Proximity-Filter und vor Export der finalen Splits
+
+**Workflow:**
+
+```
+Phase 1: filter_viable_genera()
+  ↓ 30 genera mit ≥500 Samples (beide Städte)
+Phase 2a: Feature Extraction
+  ↓ (keine Genus-Änderung)
+Phase 2b: Data Quality (Outlier Detection)
+  ↓ (Outlier markiert, nicht entfernt)
+Phase 2c: Final Preparation
+  ├─ Proximity Filter (5m) → ~20% Sample-Reduktion
+  ├─ Outlier Removal → ~1-2% Sample-Reduktion
+  └─ Re-apply MIN_SAMPLES_PER_GENUS Filter ← **NEU**
+      ↓ Finale Genus-Liste (12-30 Genera)
+      ↓ Export gefilterte Datensätze
+Phase 3: Training/Evaluation
+  ↓ Nutzt nur validierte Genera
+```
+
+### Code-Implementierung
+
+**Hinzufügen am Ende von Notebook 02c (vor Split-Export):**
+
+```python
+# Cell: Re-apply Genus Sample Threshold (Post-Filter Validation)
+from urban_tree_transfer.config import MIN_SAMPLES_PER_GENUS
+
+print(f"\n{'='*60}")
+print("GENUS SAMPLE VALIDATION (Post-Proximity & Outlier Filter)")
+print(f"{'='*60}\n")
+
+# Count samples per genus after all filters
+berlin_genus_counts = berlin_filtered["genus_latin"].value_counts()
+leipzig_genus_counts = leipzig_filtered["genus_latin"].value_counts()
+
+# Identify viable genera (≥MIN_SAMPLES in BOTH cities)
+viable_berlin = set(berlin_genus_counts[berlin_genus_counts >= MIN_SAMPLES_PER_GENUS].index)
+viable_leipzig = set(leipzig_genus_counts[leipzig_genus_counts >= MIN_SAMPLES_PER_GENUS].index)
+final_viable_genera = sorted(list(viable_berlin & viable_leipzig))
+
+# Identify excluded genera (had ≥500 in Phase 1, now <500)
+phase1_genera = set(berlin_filtered["genus_latin"].unique())  # All genera that passed Phase 1
+excluded_genera = sorted(list(phase1_genera - set(final_viable_genera)))
+
+print(f"Phase 1 viable genera: {len(phase1_genera)}")
+print(f"Phase 2c viable genera: {len(final_viable_genera)}")
+print(f"Excluded due to sample reduction: {len(excluded_genera)}")
+
+if excluded_genera:
+    print(f"\nExcluded genera: {excluded_genera}")
+    for genus in excluded_genera:
+        berlin_count = berlin_genus_counts.get(genus, 0)
+        leipzig_count = leipzig_genus_counts.get(genus, 0)
+        print(f"  {genus}: Berlin={berlin_count}, Leipzig={leipzig_count}")
+
+# Filter datasets to final viable genera
+berlin_filtered = berlin_filtered[berlin_filtered["genus_latin"].isin(final_viable_genera)].copy()
+leipzig_filtered = leipzig_filtered[leipzig_filtered["genus_latin"].isin(final_viable_genera)].copy()
+
+print(f"\nFinal dataset sizes:")
+print(f"  Berlin: {len(berlin_filtered):,} samples")
+print(f"  Leipzig: {len(leipzig_filtered):,} samples")
+print(f"  Final genera: {len(final_viable_genera)}")
+
+# Export genus filter metadata
+genus_filter_summary = {
+    "phase1_genera_count": len(phase1_genera),
+    "phase2c_genera_count": len(final_viable_genera),
+    "excluded_genera": excluded_genera,
+    "final_viable_genera": final_viable_genera,
+    "min_samples_threshold": MIN_SAMPLES_PER_GENUS,
+    "sample_counts": {
+        "berlin": {g: int(berlin_genus_counts.get(g, 0)) for g in final_viable_genera},
+        "leipzig": {g: int(leipzig_genus_counts.get(g, 0)) for g in final_viable_genera}
+    }
+}
+
+genus_filter_path = METADATA_DIR / "genus_filter_phase2c.json"
+with open(genus_filter_path, "w") as f:
+    json.dump(genus_filter_summary, f, indent=2)
+print(f"\nExported: {genus_filter_path}")
+```
+
+### Output Metadata
+
+**Neue Datei:** `outputs/phase_2_splits/metadata/genus_filter_phase2c.json`
+
+```json
+{
+  "phase1_genera_count": 30,
+  "phase2c_genera_count": 16,
+  "excluded_genera": ["CORYLUS", "MALUS", ...],
+  "final_viable_genera": ["ACER", "BETULA", ...],
+  "min_samples_threshold": 500,
+  "sample_counts": {
+    "berlin": {"ACER": 95234, "TILIA": 78123, ...},
+    "leipzig": {"ACER": 18234, "TILIA": 15432, ...}
+  }
+}
+```
+
+### Integration mit Phase 3
+
+**exp_10 (Genus Selection Validation)** startet dann mit bereits gefilterten Datensätzen:
+- **KEINE Sample-Count-Validierung mehr nötig** (wurde in Phase 2c gemacht)
+- **Fokus:** Separabilitäts-Analyse, Genus-Gruppierung, finale Empfehlung
+- **Input:** `genus_filter_phase2c.json` (Review der Phase 2c Entscheidung)
+
+### Vorteile dieser Implementierung
+
+✅ **Saubere Pipeline:** Filter ist Teil der Datenverarbeitung, nicht der Experimente  
+✅ **Reproduzierbarkeit:** Alle Phase 3 Notebooks starten mit validierten Genera  
+✅ **Effizienz:** exp_10 muss nicht erneut Sample-Counts berechnen  
+✅ **Transparenz:** Metadata dokumentiert welche Genera warum ausgeschlossen wurden  
+✅ **Konsistenz:** Alle Experimente nutzen identische Genus-Liste
+
+### Warum nicht bereits implementiert?
+
+**Zeitpunkt der Entdeckung:** Das Problem wurde erst während der Phase 3 Planung erkannt, als die Diskrepanz zwischen 30 (Phase 1) und 16 (aktuell beobachtet) Genera auffiel.
+
+**Scope Phase 2:** Der ursprüngliche PRD 002 fokussierte auf Feature-Extraktion und Datensatz-Splits, nicht auf Re-Validierung der Genus-Auswahl nach Filterung.
+
+### Priorität
+
+**Hoch:** Sollte implementiert werden bevor Phase 3 Runner-Notebooks (03b-03d) ausgeführt werden. Die aktuelle Phase 3 exploratory phase kann mit unvalidierten Genera arbeiten, aber finale Ergebnisse sollten auf sauberer Genus-Liste basieren.
+
+---
+
 ## Zusammenfassung
 
 | Erweiterung                                 | Status              | Priorität für Folgearbeit                      |
@@ -422,6 +567,7 @@ PUBLICATION_STYLE = {
 | Nadel-/Laubbaum-Spalte im Datensatz         | Nicht implementiert | Hoch (benötigt in Phase-3-Analysen)            |
 | Performance-Optimierung der Notebooks       | Nicht implementiert | Mittel-Hoch (wichtig für Phase 3)              |
 | Konsolidierung der Notebook-Konfigurationen | Nicht implementiert | Mittel (wichtig für systematische Experimente) |
+| **Genus-Filter nach Phase 2c**              | **Empfohlen**       | **Hoch (vor Phase 3 Runner-Notebooks)**        |
 
 ---
 

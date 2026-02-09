@@ -1,0 +1,63 @@
+{
+  "notebook": "exp_08_chm_ablation",
+  "execution_start": "2026-02-08T17:24:20.645289",
+  "execution_end": "2026-02-08T20:13:57.528305",
+  "steps": [
+    {
+      "name": "Data Loading",
+      "status": "success",
+      "start_time": "2026-02-08T17:24:23.170662",
+      "end_time": "2026-02-08T17:24:53.179534",
+      "records": 830153,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "CHM Ablation Experiment",
+      "status": "success",
+      "start_time": "2026-02-08T17:24:53.188535",
+      "end_time": "2026-02-08T19:34:05.294667",
+      "records": 5,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Feature Importance Analysis",
+      "status": "success",
+      "start_time": "2026-02-08T19:34:05.300916",
+      "end_time": "2026-02-08T19:48:09.022723",
+      "records": 147,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Per-Feature Decision Logic",
+      "status": "success",
+      "start_time": "2026-02-08T19:48:09.033615",
+      "end_time": "2026-02-08T19:48:09.037322",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Visualizations",
+      "status": "success",
+      "start_time": "2026-02-08T19:48:09.041689",
+      "end_time": "2026-02-08T19:48:09.387097",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Save CHM Decision",
+      "status": "error",
+      "start_time": "2026-02-08T19:48:09.393878",
+      "end_time": "2026-02-08T19:48:09.406133",
+      "records": null,
+      "warnings": [],
+      "errors": [
+        "$: missing required key 'proximity_strategy'"
+      ]
+    }
+  ]
+}

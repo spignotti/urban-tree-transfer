@@ -178,3 +178,120 @@ def test_select_optimal_features() -> None:
 
     assert selected_variant == "top_20"
     assert n_features == 20
+
+
+def test_optimize_dtypes() -> None:
+    """Test dtype optimization for memory efficiency."""
+    import pandas as pd
+
+    from urban_tree_transfer.experiments.ablation import optimize_dtypes
+
+    # Create DataFrame with non-optimal dtypes
+    df = pd.DataFrame(
+        {
+            "feature_1": np.array([1.0, 2.0, 3.0], dtype="float64"),
+            "feature_2": np.array([0.5, 1.5, 2.5], dtype="float64"),
+            "id": np.array([1, 2, 3], dtype="int64"),
+            "small_int": np.array([10, 20, 30], dtype="int64"),
+        }
+    )
+
+    optimized = optimize_dtypes(df)
+
+    # Float64 should become float32
+    assert optimized["feature_1"].dtype == np.float32
+    assert optimized["feature_2"].dtype == np.float32
+
+    # Large int64 should become smaller type
+    assert optimized["small_int"].dtype in [np.int8, np.int16, np.int32, np.uint8, np.uint16]
+
+    # Values should be preserved
+    assert np.allclose(optimized["feature_1"].values, df["feature_1"].values, rtol=1e-5)
+
+
+def test_prepare_ablation_dataset_test_split_policy(tmp_path: Path, sample_dataset) -> None:
+    """Test that test splits always use baseline proximity regardless of setup."""
+    # Create mock parquet files
+    baseline_path = tmp_path / "berlin_test.parquet"
+    filtered_path = tmp_path / "berlin_test_filtered.parquet"
+    sample_dataset.to_parquet(baseline_path)
+    sample_dataset.to_parquet(filtered_path)
+
+    # Setup decisions with filtered proximity
+    setup_decisions = {
+        "proximity_strategy": {"decision": "filtered"},
+        "outlier_strategy": {"decision": "no_removal"},
+        "chm_strategy": {"decision": "both_engineered"},
+        "selected_features": ["NDVI_06", "CHM_1m_zscore"],
+    }
+
+    # Process test split (should override to baseline)
+    _, meta = prepare_ablation_dataset(
+        base_path=tmp_path,
+        city="berlin",
+        split="test",
+        setup_decisions=setup_decisions,
+        return_metadata=True,
+    )
+
+    # Verify test split policy was applied
+    assert meta["test_split_policy_applied"] is True
+    assert meta["proximity_strategy_requested"] == "filtered"
+    assert meta["proximity_strategy_used"] == "baseline"
+
+    # Process non-test split (should use requested strategy)
+    baseline_train = tmp_path / "berlin_train.parquet"
+    filtered_train = tmp_path / "berlin_train_filtered.parquet"
+    sample_dataset.to_parquet(baseline_train)
+    sample_dataset.to_parquet(filtered_train)
+
+    _, meta2 = prepare_ablation_dataset(
+        base_path=tmp_path,
+        city="berlin",
+        split="train",
+        setup_decisions=setup_decisions,
+        return_metadata=True,
+    )
+
+    # Verify non-test split uses requested strategy
+    assert meta2["test_split_policy_applied"] is False
+    assert meta2["proximity_strategy_requested"] == "filtered"
+    assert meta2["proximity_strategy_used"] == "filtered"
+
+
+def test_prepare_ablation_dataset_memory_optimization(tmp_path: Path, sample_dataset) -> None:
+    """Test memory optimization in prepare_ablation_dataset."""
+    baseline_path = tmp_path / "berlin_train.parquet"
+    sample_dataset.to_parquet(baseline_path)
+
+    setup_decisions = {
+        "proximity_strategy": {"decision": "baseline"},
+        "outlier_strategy": {"decision": "no_removal"},
+        "chm_strategy": {"decision": "both_engineered"},
+        "selected_features": ["NDVI_06", "CHM_1m_zscore"],
+    }
+
+    # Test with optimization enabled
+    df_optimized, _ = prepare_ablation_dataset(
+        base_path=tmp_path,
+        city="berlin",
+        split="train",
+        setup_decisions=setup_decisions,
+        optimize_memory=True,
+    )
+
+    # Test with optimization disabled
+    df_not_optimized, _ = prepare_ablation_dataset(
+        base_path=tmp_path,
+        city="berlin",
+        split="train",
+        setup_decisions=setup_decisions,
+        optimize_memory=False,
+    )
+
+    # Optimized should have float32, not-optimized should have original dtypes
+    float_cols_opt = df_optimized.select_dtypes(include=["float32"]).columns
+    float_cols_not = df_not_optimized.select_dtypes(include=["float64"]).columns
+
+    assert len(float_cols_opt) > 0, "Optimized should have float32 columns"
+    assert len(float_cols_not) > 0, "Non-optimized should preserve float64 columns"
