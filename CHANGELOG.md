@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validate 03b feature columns against setup_decisions config instead of hardcoded Sentinel count
 - Allow `hp_tuning.create_study()` to accept sampler/pruner aliases used in notebooks
 - Speed up 03b HP tuning with configurable subset sampling, 1-fold tuning CV, and narrower XGBoost search
+- Fix HP tuning schema validation by including model_name and best_value in Optuna results
+- Align 03b evaluation output with evaluation_metrics schema to avoid validation errors
 
 ### Changed - 03b Methodology Docs (✅ 2026-02-09)
 

@@ -95,6 +95,7 @@ def run_optuna_search(
     objective: Any,
     n_trials: int = 50,
     timeout_seconds: int | None = None,
+    model_name: str | None = None,
 ) -> dict[str, Any]:
     """Run Optuna study and return summary dict."""
     if optuna is None:
@@ -114,9 +115,14 @@ def run_optuna_search(
             }
         )
 
+    best_value = float(study.best_value)
+
     return {
-        "best_score": float(study.best_value),
+        "model_name": model_name,
+        "best_score": best_value,
+        "best_value": best_value,
         "best_params": study.best_params,
+        "n_trials": len(trials),
         "trials": trials,
     }
 
