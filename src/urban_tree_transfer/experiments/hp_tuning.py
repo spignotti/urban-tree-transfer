@@ -71,10 +71,24 @@ def build_objective(
     base_params = dict(base_params or {})
     fit_params = dict(fit_params or {})
 
+    # Define training parameters that should go to fit_params, not model_params
+    training_params = {"learning_rate", "batch_size", "epochs", "early_stopping_patience"}
+
     def objective(trial: Any) -> float:
         params = suggest_params_from_space(trial, search_space)
-        model_params = {**base_params, **params}
+
+        # Split params into model params and training params
+        model_params = {k: v for k, v in params.items() if k not in training_params}
+        train_params = {k: v for k, v in params.items() if k in training_params}
+
+        # Merge base_params into model_params
+        model_params = {**base_params, **model_params}
+
+        # Create model with model params only
         model = create_model(model_name, model_params, random_seed=random_seed)
+
+        # Merge provided fit_params with tuned training params
+        final_fit_params = {**fit_params, **train_params}
 
         results = train_with_cv(
             model,
@@ -82,7 +96,7 @@ def build_objective(
             y,
             groups,
             cv,
-            fit_params=fit_params,
+            fit_params=final_fit_params,
         )
         trial.set_user_attr("train_val_gap", results["train_val_gap"])
         return float(results["val_f1_mean"])

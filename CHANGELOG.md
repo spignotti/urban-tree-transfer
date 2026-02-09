@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - Dual Dataset Pipeline for XGBoost and CNN1D (✅ 2026-02-09)
+
+**Problem:** CNN1D requires complete temporal sequences (all monthly features) for proper training, but the current pipeline creates a reduced feature set (top-50) that breaks temporal continuity. This prevents CNN1D from learning from the full time series.
+
+**Solution:** Implement dual dataset creation strategy - separate datasets for XGBoost (reduced features) and CNN1D (full temporal features).
+
+**Changes:**
+
+**Core Infrastructure (ablation.py):**
+- Add `skip_feature_selection` parameter to `prepare_ablation_dataset()`
+- When True, preserves all Sentinel-2 features while still applying CHM/proximity/outlier strategies
+- Adds `feature_set_type` to metadata ("reduced" vs "full")
+
+**Data Loading (data_loading.py):**
+- Add `load_berlin_splits_cnn()` for loading full-feature CNN datasets
+- Add `load_leipzig_splits_cnn()` for loading full-feature CNN datasets
+- Use `*_cnn.parquet` file suffix for CNN variants
+
+**03a Setup Fixation:**
+- Create TWO dataset variants per split:
+  - Base (`.parquet`): Reduced 50 features for XGBoost/RandomForest
+  - CNN (`_cnn.parquet`): Full ~144 temporal features for CNN1D
+- Total outputs: 10 parquet files (5 XGBoost + 5 CNN1D)
+- Validation checks both dataset types
+- Updated summary to document dual dataset strategy
+
+**03b Berlin Optimization:**
+- Automatic dataset selection based on champion type:
+  - ML champion (tree-based) → loads base datasets (reduced features)
+  - NN champion (CNN1D) → loads CNN datasets (full features)
+- Separate preprocessing for ML and NN datasets
+- CNN1D structural parameter detection from FULL feature set (not reduced)
+- Dual scaler saving: `berlin_scaler_ml.pkl` and `berlin_scaler_nn.pkl`
+- Evaluation uses correct datasets per model type
+
+**Benefits:**
+- CNN1D now trains on complete temporal sequences (~12 months × 12 features = 144 temporal features)
+- XGBoost efficiency maintained with reduced feature set (top-50)
+- No breaking changes - backward compatible with existing code
+- Clear separation of concerns between model types
+
+**File Naming Convention:**
+- XGBoost: `berlin_train.parquet`, `leipzig_test.parquet`
+- CNN1D: `berlin_train_cnn.parquet`, `leipzig_test_cnn.parquet`
+
 ### Fixed - 03b Resume & Optional CHM Columns (✅ 2026-02-09)
 
 - Allow Phase 3 data loading without CHM feature columns when excluded by setup decisions

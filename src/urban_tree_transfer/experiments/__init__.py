@@ -22,7 +22,9 @@ from urban_tree_transfer.experiments.data_loading import (
     fix_missing_genus_german,
     get_feature_columns,
     load_berlin_splits,
+    load_berlin_splits_cnn,
     load_leipzig_splits,
+    load_leipzig_splits_cnn,
     load_parquet_dataset,
 )
 from urban_tree_transfer.experiments.evaluation import (
@@ -159,7 +161,9 @@ __all__ = [
     "get_metadata_columns",
     "get_outlier_mask",
     "load_berlin_splits",
+    "load_berlin_splits_cnn",
     "load_leipzig_splits",
+    "load_leipzig_splits_cnn",
     "load_model",
     "load_parquet_dataset",
     "map_to_german_names",

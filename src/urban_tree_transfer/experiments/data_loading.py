@@ -227,3 +227,69 @@ def load_leipzig_splits(
     test_df = fix_missing_genus_german(load_parquet_dataset(test_path))
 
     return finetune_df, test_df
+
+
+def load_berlin_splits_cnn(
+    data_dir: Path,
+    variant: str = "baseline",
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Load Berlin train/val/test splits with full features for CNN1D.
+
+    Loads *_cnn.parquet files containing complete temporal sequences
+    (all Sentinel-2 features + CHM if included).
+
+    Args:
+        data_dir: Directory containing parquet files.
+        variant: "baseline" or "filtered".
+
+    Returns:
+        (train_df, val_df, test_df).
+
+    Raises:
+        ValueError: If variant is invalid.
+    """
+    if variant not in _ALLOWED_VARIANTS:
+        raise ValueError(f"variant must be one of {sorted(_ALLOWED_VARIANTS)}")
+
+    suffix = "_cnn" if variant == "baseline" else "_filtered_cnn"
+    train_path = data_dir / f"berlin_train{suffix}.parquet"
+    val_path = data_dir / f"berlin_val{suffix}.parquet"
+    test_path = data_dir / f"berlin_test{suffix}.parquet"
+
+    train_df = fix_missing_genus_german(load_parquet_dataset(train_path))
+    val_df = fix_missing_genus_german(load_parquet_dataset(val_path))
+    test_df = fix_missing_genus_german(load_parquet_dataset(test_path))
+
+    return train_df, val_df, test_df
+
+
+def load_leipzig_splits_cnn(
+    data_dir: Path,
+    variant: str = "baseline",
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Load Leipzig finetune/test splits with full features for CNN1D.
+
+    Loads *_cnn.parquet files containing complete temporal sequences
+    (all Sentinel-2 features + CHM if included).
+
+    Args:
+        data_dir: Directory containing parquet files.
+        variant: "baseline" or "filtered".
+
+    Returns:
+        (finetune_df, test_df).
+
+    Raises:
+        ValueError: If variant is invalid.
+    """
+    if variant not in _ALLOWED_VARIANTS:
+        raise ValueError(f"variant must be one of {sorted(_ALLOWED_VARIANTS)}")
+
+    suffix = "_cnn" if variant == "baseline" else "_filtered_cnn"
+    finetune_path = data_dir / f"leipzig_finetune{suffix}.parquet"
+    test_path = data_dir / f"leipzig_test{suffix}.parquet"
+
+    finetune_df = fix_missing_genus_german(load_parquet_dataset(finetune_path))
+    test_df = fix_missing_genus_german(load_parquet_dataset(test_path))
+
+    return finetune_df, test_df

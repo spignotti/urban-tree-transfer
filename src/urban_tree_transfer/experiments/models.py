@@ -276,10 +276,9 @@ else:
                 "kernel_size": kernel_size,
                 "dropout": dropout,
                 "dense_units": list(dense_units),
-                "learning_rate": DEFAULT_CNN_PARAMS["learning_rate"],
             }
 
-            # Store learning_rate as instance attribute for fine-tuning
+            # Store learning_rate as instance attribute for fine-tuning (not an __init__ param)
             self.learning_rate = DEFAULT_CNN_PARAMS["learning_rate"]
 
             if n_temporal_bases <= 0 or n_months <= 0 or n_classes <= 1:

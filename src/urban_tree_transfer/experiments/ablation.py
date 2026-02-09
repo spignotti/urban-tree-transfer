@@ -204,6 +204,7 @@ def prepare_ablation_dataset(
     setup_decisions: dict[str, Any],
     return_metadata: bool = True,
     optimize_memory: bool = True,
+    skip_feature_selection: bool = False,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Apply all setup decisions to prepare dataset for experiments.
 
@@ -222,6 +223,9 @@ def prepare_ablation_dataset(
             - selected_features: List of feature names
         return_metadata: Whether to keep metadata columns (default: True)
         optimize_memory: Whether to optimize dtypes for memory (default: True)
+        skip_feature_selection: If True, preserve all Sentinel-2 features instead of
+            applying selected_features. CHM/proximity/outlier strategies still apply.
+            Use for CNN1D datasets that require complete temporal sequences.
 
     Returns:
         Tuple of (filtered_dataframe, metadata_dict)
@@ -238,13 +242,23 @@ def prepare_ablation_dataset(
         ...     "chm_strategy": {"decision": "both_engineered"},
         ...     "selected_features": ["NDVI_06", "NDVI_07", "CHM_1m_zscore"],
         ... }
-        >>> df, meta = prepare_ablation_dataset(
+        >>> # XGBoost dataset (reduced features)
+        >>> df_xgb, meta_xgb = prepare_ablation_dataset(
         ...     Path("data/phase_2_splits"),
         ...     "berlin",
         ...     "train",
         ...     setup,
         ... )
-        >>> print(f"Prepared {len(df)} samples with {meta['n_features']} features")
+        >>> print(f"XGBoost: {len(df_xgb)} samples, {meta_xgb['n_features']} features")
+        >>> # CNN1D dataset (full features)
+        >>> df_cnn, meta_cnn = prepare_ablation_dataset(
+        ...     Path("data/phase_2_splits"),
+        ...     "berlin",
+        ...     "train",
+        ...     setup,
+        ...     skip_feature_selection=True,
+        ... )
+        >>> print(f"CNN1D: {len(df_cnn)} samples, {meta_cnn['n_features']} features")
     """
     try:
         proximity_strategy = setup_decisions["proximity_strategy"]["decision"]
@@ -273,7 +287,19 @@ def prepare_ablation_dataset(
     df = apply_chm_strategy(df, chm_strategy)
     chm_features_included = get_chm_features(chm_strategy)
 
-    df = apply_feature_selection(df, selected_features, keep_metadata=return_metadata)
+    # Feature selection: skip for CNN1D (needs full temporal sequences)
+    if skip_feature_selection:
+        # Keep all feature columns (Sentinel-2 + CHM if included)
+        metadata_cols = get_metadata_columns(df) if return_metadata else []
+        feature_cols = [col for col in df.columns if col not in metadata_cols]
+        columns = list(dict.fromkeys(feature_cols + metadata_cols))
+        df = df.loc[:, columns].copy()
+        n_features = len(feature_cols)
+        feature_set_type = "full"
+    else:
+        df = apply_feature_selection(df, selected_features, keep_metadata=return_metadata)
+        n_features = len(selected_features)
+        feature_set_type = "reduced"
 
     # Memory optimization
     if optimize_memory:
@@ -282,7 +308,8 @@ def prepare_ablation_dataset(
     metadata = {
         "original_n_samples": original_n_samples,
         "filtered_n_samples": len(df),
-        "n_features": len(selected_features),
+        "n_features": n_features,
+        "feature_set_type": feature_set_type,
         "chm_features_included": chm_features_included,
         "outliers_removed": outliers_removed,
         "test_split_policy_applied": test_policy_applied,
