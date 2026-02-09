@@ -111,21 +111,25 @@ Szenario: Bestes pro Kategorie (gewählt)
 | ------------ | ------------ | -------------------------------------------------------------------------- |
 | **Sampler**  | TPE          | Effizienter als Random bei kontinuierlichen Räumen, nutzt bisherige Trials |
 | **Pruner**   | MedianPruner | Bricht Trials ab, die unter Median der bisherigen liegen                   |
-| **n_trials** | 50+          | Ausreichend für Konvergenz bei ~5-8 Hyperparametern                        |
-| **timeout**  | 2h           | Colab-Runtime-Limit                                                        |
-| **CV**       | 3-Fold       | Kompromiss Genauigkeit/Zeit                                                |
+| **n_trials** | 10–15        | Schneller Suchlauf, Ziel: < 1–2h Runtime                                   |
+| **timeout**  | 1h           | Zeitfenster für pragmatischen Speed-Run                                    |
+| **Tuning-Subset** | 100k    | Repräsentative Teilmenge für schnellere Trials                             |
+| **CV (Tuning)** | 1-Fold Group Holdout (20%) | Schnelle Schätzung, kein Voll-CV                       |
+
+**Hinweis:** Finales Training erfolgt weiterhin auf Train+Val (voller Datensatz).
 
 ### Optuna Search Space (Beispiel XGBoost)
 
 ```python
 {
-    "n_estimators": {"type": "int", "low": 100, "high": 500},
-    "max_depth": {"type": "int", "low": 3, "high": 12},
-    "learning_rate": {"type": "float", "low": 0.01, "high": 0.3, "log": True},
-    "subsample": {"type": "float", "low": 0.6, "high": 1.0},
-    "colsample_bytree": {"type": "float", "low": 0.6, "high": 1.0},
-    "min_child_weight": {"type": "int", "low": 1, "high": 10},
-    "gamma": {"type": "float", "low": 0, "high": 5}
+    "n_estimators": {"type": "int", "low": 200, "high": 400},
+    "max_depth": {"type": "int", "low": 4, "high": 8},
+    "learning_rate": {"type": "float", "low": 0.05, "high": 0.2},
+    "subsample": {"type": "float", "low": 0.8, "high": 1.0},
+    "colsample_bytree": {"type": "float", "low": 0.8, "high": 1.0},
+    "reg_lambda": {"type": "float", "low": 1.0, "high": 2.0},
+    "reg_alpha": {"type": "float", "low": 0.0, "high": 0.5},
+    "min_child_weight": {"type": "int", "low": 1, "high": 5}
 }
 ```
 

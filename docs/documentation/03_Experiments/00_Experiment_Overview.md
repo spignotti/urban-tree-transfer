@@ -150,10 +150,14 @@ Da Bäume räumlich autokorreliert sind (benachbarte Bäume ähneln sich), verwe
 
 ### Fold-Konfiguration
 
-- **Alle CV-Durchläufe (exp_08, exp_09, exp_10, exp_11, 03b):** 3-Fold Spatial Block CV
+- **CV-Durchläufe (exp_08, exp_09, exp_10, exp_11):** 3-Fold Spatial Block CV
+- **03b HP-Tuning:** 1-Fold Group Holdout (20%) auf einem 100k-Subset (Speed-Run)
 - **Finale Evaluation (03b Test, 03c, 03d):** Hold-out Test Set (kein CV)
 
-**Begründung:** 3-Fold ist für Setup-Entscheidungen und Tuning ausreichend und deutlich schneller. Die finale Leistung wird ohnehin auf dem unabhängigen Hold-out Test Set gemessen.
+**Begründung:** 3-Fold bleibt Standard für methodisch robuste Entscheidungen. Für 03b
+verwenden wir ein beschleunigtes Tuning (Subset + 1-Fold Holdout), um innerhalb
+des Zeitfensters zu bleiben. Finale Modelle werden weiterhin auf Train+Val trainiert
+und auf dem unabhängigen Test-Set bewertet.
 
 ---
 

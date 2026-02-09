@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow Phase 3 data loading without CHM feature columns when excluded by setup decisions
 - Add resume logic in 03b to reuse existing HP tuning results and trained models instead of re-running
 - Validate 03b feature columns against setup_decisions config instead of hardcoded Sentinel count
+- Allow `hp_tuning.create_study()` to accept sampler/pruner aliases used in notebooks
+- Speed up 03b HP tuning with configurable subset sampling, 1-fold tuning CV, and narrower XGBoost search
+
+### Changed - 03b Methodology Docs (✅ 2026-02-09)
+
+- Update Berlin optimization methodology to reflect fast HP tuning (subset + 1-fold holdout)
+- Add optional full-tuning note in methodical extensions
 
 ### Changed - exp_10: JM-Based Genus Grouping (✅ 2026-02-09)
 

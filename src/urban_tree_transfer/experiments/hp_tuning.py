@@ -21,20 +21,36 @@ def create_study(
     random_seed: int = RANDOM_SEED,
     sampler_name: str = "tpe",
     pruner_name: str = "median",
+    sampler: str | None = None,
+    pruner: str | None = None,
 ) -> Any:
-    """Create an Optuna study with standard settings."""
+    """Create an Optuna study with standard settings.
+
+    Args:
+        direction: Optimization direction (maximize/minimize).
+        random_seed: Random seed for reproducibility.
+        sampler_name: Sampler identifier (default: "tpe").
+        pruner_name: Pruner identifier (default: "median").
+        sampler: Backward-compatible alias for sampler_name.
+        pruner: Backward-compatible alias for pruner_name.
+    """
     if optuna is None:
         raise ImportError("optuna is required for hyperparameter tuning.")
 
-    sampler = None
+    if sampler is not None:
+        sampler_name = sampler
+    if pruner is not None:
+        pruner_name = pruner
+
+    sampler_obj = None
     if sampler_name == "tpe":
-        sampler = optuna.samplers.TPESampler(seed=random_seed)
+        sampler_obj = optuna.samplers.TPESampler(seed=random_seed)
 
-    pruner = None
+    pruner_obj = None
     if pruner_name == "median":
-        pruner = optuna.pruners.MedianPruner()
+        pruner_obj = optuna.pruners.MedianPruner()
 
-    return optuna.create_study(direction=direction, sampler=sampler, pruner=pruner)
+    return optuna.create_study(direction=direction, sampler=sampler_obj, pruner=pruner_obj)
 
 
 def build_objective(

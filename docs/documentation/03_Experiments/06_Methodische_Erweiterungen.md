@@ -395,6 +395,19 @@ scores = cross_val_score(model, X, y, cv=cv, n_jobs=-1)
 
 **Vorteil:** Reduziert Zeit um 50-70% bei Multi-Core Runtime
 
+#### 5. Vollständiges HP-Tuning (03b, optional)
+
+Für eine methodisch möglichst präzise Hyperparameter-Suche könnte man den Speed-Run
+in 03b durch ein Volltuning ersetzen:
+
+- **CV wieder auf 3-Fold** setzen (statt 1-Fold Holdout)
+- **Mehr Trials** (z. B. 50–100) und voller Datensatz (kein Subset)
+- Optional Multi-Seed-Run für robustere Parameterstabilität
+
+**Hinweis:** Aktuell nutzen wir bewusst eine akzeptabel schnelle Lösung
+(Subset + 1-Fold Holdout), um im Zeitfenster zu bleiben. Für Publikation oder
+Finalruns sollte das Volltuning nachgeholt werden.
+
 ### Begründung für manuelle Entscheidung
 
 **Methodisch akzeptabel, weil:**
