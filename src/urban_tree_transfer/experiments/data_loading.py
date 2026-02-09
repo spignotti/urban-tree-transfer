@@ -46,7 +46,8 @@ def load_parquet_dataset(file_path: Path) -> pd.DataFrame:
         file_path: Path to parquet file (e.g., berlin_train.parquet).
 
     Returns:
-        DataFrame with all columns (features + metadata).
+        DataFrame with all columns (features + metadata). CHM features are optional
+        and may be absent if excluded by setup decisions.
 
     Raises:
         FileNotFoundError: If file doesn't exist.
@@ -58,7 +59,6 @@ def load_parquet_dataset(file_path: Path) -> pd.DataFrame:
     df = pd.read_parquet(file_path)
 
     required_columns = _ID_COLUMNS | {_TARGET_COLUMN} | _METADATA_COLUMNS | _OUTLIER_COLUMNS
-    required_columns |= set(_CHM_FEATURES)
     missing = sorted(col for col in required_columns if col not in df.columns)
     if missing:
         raise ValueError(f"Missing required columns: {missing}")

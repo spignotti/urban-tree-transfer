@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed - 03b Resume & Optional CHM Columns (✅ 2026-02-09)
+
+- Allow Phase 3 data loading without CHM feature columns when excluded by setup decisions
+- Add resume logic in 03b to reuse existing HP tuning results and trained models instead of re-running
+
 ### Changed - exp_10: JM-Based Genus Grouping (✅ 2026-02-09)
 
 - Replace centroid-distance separability with JM-based separability on Berlin train only (no leakage)
