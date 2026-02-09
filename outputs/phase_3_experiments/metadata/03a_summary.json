@@ -1,0 +1,55 @@
+{
+  "notebook": "03a_setup_fixation",
+  "completed_at": "2026-02-09T17:34:09.365651+00:00",
+  "setup_decisions": {
+    "chm": "no_chm",
+    "proximity": "filtered",
+    "outlier": "no_removal",
+    "n_features": 50
+  },
+  "test_split_policy": "Test splits always use baseline proximity (no filtering)",
+  "splits_processed": 5,
+  "total_samples": 802569,
+  "splits": [
+    {
+      "split": "berlin_train",
+      "n_samples": 471815,
+      "n_features": 50,
+      "outliers_removed": 0,
+      "test_policy_applied": false,
+      "proximity_used": "filtered"
+    },
+    {
+      "split": "berlin_val",
+      "n_samples": 99603,
+      "n_features": 50,
+      "outliers_removed": 0,
+      "test_policy_applied": false,
+      "proximity_used": "filtered"
+    },
+    {
+      "split": "berlin_test",
+      "n_samples": 108980,
+      "n_features": 50,
+      "outliers_removed": 0,
+      "test_policy_applied": true,
+      "proximity_used": "baseline"
+    },
+    {
+      "split": "leipzig_finetune",
+      "n_samples": 91080,
+      "n_features": 50,
+      "outliers_removed": 0,
+      "test_policy_applied": false,
+      "proximity_used": "filtered"
+    },
+    {
+      "split": "leipzig_test",
+      "n_samples": 31091,
+      "n_features": 50,
+      "outliers_removed": 0,
+      "test_policy_applied": true,
+      "proximity_used": "baseline"
+    }
+  ]
+}

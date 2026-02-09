@@ -814,5 +814,214 @@
     "completed_at": "2026-02-09T01:20:50.185003+00:00",
     "random_seed": 42,
     "cv_folds": 3
+  },
+  "genus_selection": {
+    "version": "2.0",
+    "created": "2026-02-09T18:55:24.613833Z",
+    "notebook": "exp_10_genus_selection_validation.ipynb",
+    "method": "jm_distance_based_separability",
+    "config": {
+      "min_samples_per_genus": 500,
+      "sample_count_validation": "all_splits",
+      "separability_analysis": "berlin_train_only",
+      "clustering_method": "ward",
+      "distance_metric": "jeffries_matusita",
+      "threshold_strategy": "percentile_20",
+      "threshold_value": 1.5622232116031487,
+      "kl_threshold": 0.15
+    },
+    "jm_statistics": {
+      "min": 0.7285614474256452,
+      "q10": 1.3726981254431787,
+      "q25": 1.6222144771586788,
+      "median": 1.8117594185876433,
+      "q75": 1.9154054123640492,
+      "max": 1.997999213065116
+    },
+    "validation_results": {
+      "viable_genera": [
+        "ACER",
+        "AESCULUS",
+        "AILANTHUS",
+        "ALNUS",
+        "BETULA",
+        "CARPINUS",
+        "CORYLUS",
+        "CRATAEGUS",
+        "FAGUS",
+        "FRAXINUS",
+        "MALUS",
+        "PICEA",
+        "PINUS",
+        "PLATANUS",
+        "POPULUS",
+        "PRUNUS",
+        "PYRUS",
+        "QUERCUS",
+        "ROBINIA",
+        "SALIX",
+        "SORBUS",
+        "TILIA",
+        "ULMUS"
+      ],
+      "excluded_genera": [
+        "CORNUS",
+        "GLEDITSIA",
+        "JUGLANS",
+        "LIQUIDAMBAR",
+        "SOPHORA",
+        "TAXUS",
+        "THUJA"
+      ],
+      "n_viable": 23,
+      "n_excluded": 7,
+      "exclusion_reasons": {
+        "CORNUS": "Berlin: 265, Leipzig: 224",
+        "GLEDITSIA": "Berlin: 2602, Leipzig: 360",
+        "JUGLANS": "Berlin: 1959, Leipzig: 491",
+        "LIQUIDAMBAR": "Berlin: 1352, Leipzig: 198",
+        "SOPHORA": "Berlin: 2279, Leipzig: 433",
+        "TAXUS": "Berlin: 2933, Leipzig: 258",
+        "THUJA": "Berlin: 624, Leipzig: 392"
+      }
+    },
+    "grouping_analysis": {
+      "n_clusters": 14,
+      "n_groups": 4,
+      "genus_groups": {
+        "Group 12": [
+          "ACER",
+          "AESCULUS",
+          "BETULA",
+          "FRAXINUS",
+          "PRUNUS"
+        ],
+        "Group 9": [
+          "CRATAEGUS",
+          "PYRUS",
+          "SORBUS"
+        ],
+        "Group 1": [
+          "PICEA",
+          "PINUS"
+        ],
+        "Group 10": [
+          "POPULUS",
+          "ROBINIA",
+          "SALIX"
+        ]
+      },
+      "genus_to_final_mapping": {
+        "AILANTHUS": "AILANTHUS",
+        "ALNUS": "ALNUS",
+        "CARPINUS": "CARPINUS",
+        "CORYLUS": "CORYLUS",
+        "FAGUS": "FAGUS",
+        "MALUS": "MALUS",
+        "PLATANUS": "PLATANUS",
+        "QUERCUS": "QUERCUS",
+        "TILIA": "TILIA",
+        "ULMUS": "ULMUS",
+        "ACER": "Group 12",
+        "AESCULUS": "Group 12",
+        "BETULA": "Group 12",
+        "FRAXINUS": "Group 12",
+        "PRUNUS": "Group 12",
+        "CRATAEGUS": "Group 9",
+        "PYRUS": "Group 9",
+        "SORBUS": "Group 9",
+        "PICEA": "Group 1",
+        "PINUS": "Group 1",
+        "POPULUS": "Group 10",
+        "ROBINIA": "Group 10",
+        "SALIX": "Group 10"
+      },
+      "genus_german_mapping": {
+        "AILANTHUS": "G\u00d6TTERBAUM",
+        "ALNUS": "ERLE",
+        "CARPINUS": "HAINBUCHE",
+        "CORYLUS": "HASEL",
+        "FAGUS": "BUCHE",
+        "MALUS": "APFEL",
+        "PLATANUS": "PLATANE",
+        "QUERCUS": "EICHE",
+        "TILIA": "LINDE",
+        "ULMUS": "ULME",
+        "Group 12": "AHORN / ROSSKASTANIE / BIRKE / ESCHE / Prunus",
+        "Group 9": "WEI\u00dfDORN / BIRNE / MEHLBEERE",
+        "Group 1": "FICHTE / KIEFER",
+        "Group 10": "PAPPEL / ROBINIE / WEIDE"
+      }
+    },
+    "decision": {
+      "strategy_applied": "jm_based_grouping_relative_threshold",
+      "final_genera_count": 14,
+      "final_genera_list": [
+        "AILANTHUS",
+        "ALNUS",
+        "CARPINUS",
+        "CORYLUS",
+        "FAGUS",
+        "Group 1",
+        "Group 10",
+        "Group 12",
+        "Group 9",
+        "MALUS",
+        "PLATANUS",
+        "QUERCUS",
+        "TILIA",
+        "ULMUS"
+      ],
+      "grouping_applied": true,
+      "reasoning": "23 genera have \u2265500 samples in both cities. JM-based separability (threshold=1.56) identified 4 groups. Final dataset has 14 classes."
+    },
+    "impact_assessment": {
+      "samples_retained": 788199,
+      "retention_rate": 0.9820949974394725,
+      "final_class_counts": {
+        "berlin_train": {
+          "AILANTHUS": 1438,
+          "ALNUS": 4539,
+          "CARPINUS": 15604,
+          "CORYLUS": 5847,
+          "FAGUS": 8680,
+          "Group 1": 14089,
+          "Group 10": 34284,
+          "Group 12": 175068,
+          "Group 9": 10043,
+          "MALUS": 3647,
+          "PLATANUS": 19939,
+          "QUERCUS": 58300,
+          "TILIA": 104215,
+          "ULMUS": 7961
+        },
+        "leipzig_finetune": {
+          "AILANTHUS": 412,
+          "ALNUS": 1047,
+          "CARPINUS": 3290,
+          "CORYLUS": 1012,
+          "FAGUS": 637,
+          "Group 1": 1116,
+          "Group 10": 6434,
+          "Group 12": 35811,
+          "Group 9": 3251,
+          "MALUS": 1015,
+          "PLATANUS": 4396,
+          "QUERCUS": 8349,
+          "TILIA": 21904,
+          "ULMUS": 661
+        }
+      }
+    },
+    "kl_divergence_validation": {
+      "berlin": {
+        "train_vs_val": 0.01869912280088485,
+        "train_vs_test": 0.03337215538458124,
+        "val_vs_test": 0.025268251604623124
+      },
+      "leipzig": {
+        "finetune_vs_test": 0.017351315014761372
+      }
+    }
   }
 }

@@ -1,0 +1,34 @@
+{
+  "notebook": "03a_setup_fixation",
+  "execution_start": "2026-02-09T17:33:21.587004",
+  "execution_end": "2026-02-09T17:34:09.365733",
+  "steps": [
+    {
+      "name": "Load Setup Decisions",
+      "status": "success",
+      "start_time": "2026-02-09T17:33:22.641803",
+      "end_time": "2026-02-09T17:33:23.172930",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Apply Setup Decisions",
+      "status": "success",
+      "start_time": "2026-02-09T17:33:23.185503",
+      "end_time": "2026-02-09T17:34:08.410002",
+      "records": 5,
+      "warnings": [],
+      "errors": []
+    },
+    {
+      "name": "Validation",
+      "status": "success",
+      "start_time": "2026-02-09T17:34:08.421428",
+      "end_time": "2026-02-09T17:34:09.354712",
+      "records": null,
+      "warnings": [],
+      "errors": []
+    }
+  ]
+}
