@@ -480,6 +480,99 @@ berlin_train = berlin_train[berlin_train['genus_latin'].isin(viable_genera)].cop
 
 ---
 
+## 13. Hypothesis Testing in 03c Transfer Evaluation (⚠️ TODO)
+
+### Beschreibung
+
+Die A-priori Hypothesentests in 03c_transfer_evaluation.ipynb (Section 8) schlagen derzeit fehl mit der Fehlermeldung **"Missing required columns: , "**.
+
+### Problem
+
+```python
+H1: Genera with more Berlin training samples transfer better
+  Result:    Missing required columns: ,
+
+H2: Nadelbäume have lower transfer gap than Laubbäume
+  Result:    Missing required columns: ,
+
+H3: Genera with early leaf-out (BETULA, SALIX) have higher transfer gap
+  Result:    Missing required columns: ,
+
+H4: Genera with high Red-Edge feature importance transfer better
+  Result:    Missing required columns: ,
+```
+
+### Root Cause
+
+Die `transfer.test_hypothesis()` Funktion erwartet spezifische Spalten in den Input-DataFrames (`genus_data`, `feature_importance`), aber die Datenstrukturen aus den vorherigen Zellen stimmen nicht überein:
+
+1. **`genus_data` DataFrame:** Wird in Cell 13 aus `berlin_per_genus` + `leipzig_per_genus` zusammengebaut, aber die Spalten-Namen oder Struktur passen nicht zur Erwartung in `test_hypothesis()`
+2. **`feature_importance` DataFrame:** Wird nur übergeben, wenn `stability` existiert, aber die Spalten-Struktur könnte falsch sein
+
+### Erforderliche Korrekturen
+
+#### 1. Datenstruktur-Validierung
+
+```python
+# Vor test_hypothesis() - Debug-Output hinzufügen
+print(f"genus_data columns: {genus_data.columns.tolist()}")
+print(f"feature_importance columns: {feature_importance.columns.tolist() if feature_importance is not None else 'None'}")
+```
+
+#### 2. Function Signature Check
+
+Die `transfer.test_hypothesis()` Funktion muss überprüft werden:
+- Welche Spalten werden in `genus_data` erwartet?
+- Welche Spalten werden in `feature_importance` erwartet?
+- Gibt es ein Schema-Validierung?
+
+#### 3. Hypothesen-spezifische Anforderungen
+
+Jede Hypothese hat unterschiedliche Anforderungen:
+- **H1 (Sample Size):** Benötigt `berlin_n` Spalte
+- **H2 (Conifer/Deciduous):** Benötigt `tree_type` oder Mapping zu `genus_groups`
+- **H3 (Early Leaf-Out):** Benötigt Genus-Kategorisierung (BETULA, SALIX)
+- **H4 (Red-Edge Importance):** Benötigt Feature Importance mit Red-Edge Features
+
+### Temporärer Workaround
+
+Die Hypothesentests sind aktuell **nicht-kritisch** für die Kernfunktionalität:
+- Zero-Shot Evaluation funktioniert ✅
+- Transfer Gap Analysis funktioniert ✅
+- Robustness Classification funktioniert ✅
+- Visualizations funktionieren ✅
+
+Die Hypothesentests sind **"Nice-to-Have"** für tiefere Einblicke, aber nicht essentiell für die Hauptergebnisse.
+
+### Action Items
+
+1. **Kurzfristig (für aktuellen Run):**
+   - [ ] Hypothesentests als "Known Issue" dokumentieren
+   - [ ] Notebook läuft trotzdem durch (Tests schlagen fehl, aber stoppt nicht)
+   - [ ] Ergebnisse sind ohne Hypothesentests interpretierbar
+
+2. **Mittelfristig (für Finalversion):**
+   - [ ] `transfer.test_hypothesis()` Funktion debuggen
+   - [ ] Erwartete Datenstruktur dokumentieren
+   - [ ] Input-Validierung mit aussagekräftigen Fehlermeldungen
+   - [ ] Unit Tests für alle 4 Hypothesen schreiben
+
+3. **Langfristig (für Publikation):**
+   - [ ] Alle 4 Hypothesen implementieren und validieren
+   - [ ] Statistische Tests korrekt durchführen
+   - [ ] Ergebnisse in Dokumentation aufnehmen
+
+### Potenzial für Folgearbeit
+
+Die Hypothesentests sind wertvoll für die **wissenschaftliche Diskussion**:
+- Quantifizieren Transferierbarkeits-Faktoren
+- Geben Einblicke in biologische vs. methodische Faktoren
+- Ermöglichen Vergleich mit Literatur (Fassnacht 2016, Hemmerling 2021, Immitzer 2019)
+
+**Priorität:** Mittel (wichtig für Paper, aber nicht für initiale Experimente)
+
+---
+
 ## Zusammenfassung
 
 | Erweiterung                              | Status                       | Priorität für Folgearbeit       |
@@ -495,8 +588,9 @@ berlin_train = berlin_train[berlin_train['genus_latin'].isin(viable_genera)].cop
 | From-Scratch alle Fraktionen             | Nur 100% Baseline            | Mittel                          |
 | Explainability                           | Basis implementiert          | Mittel                          |
 | Grid Search Optimierung                  | Manuelle Entscheidung (2026) | Mittel (Progressive/Optuna)     |
-| exp_11 Daten-Loading                     | 🔴 TODO                      | Mittel (nach exp_10+03a)        |
+| exp_11 Daten-Loading                     | Phase 2c + exp_10 (✅ 2026)  | N/A                             |
+| Hypothesis Testing (03c)                 | 🔴 TODO                      | Mittel (für Paper wichtig)      |
 
 ---
 
-_Letzte Aktualisierung: 2026-02-09_
+_Letzte Aktualisierung: 2026-02-10_
