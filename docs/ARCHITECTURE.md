@@ -123,4 +123,4 @@ Never commit: `.gpkg`, `.parquet`, `.tif`, `.pkl`, `.pt` — these stay on Drive
 ## Related
 
 - `docs/PROJECT.md` — research design and phase descriptions
-- `AGENTS.md` — workflow, deploy cycle, outputs/ sync procedure
+- `AGENTS.md` — workflow, deploy cycle, `outputs/` sync procedure
