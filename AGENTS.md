@@ -94,6 +94,124 @@ Python 3.10+, GeoPandas, rasterio, scikit-learn, XGBoost, PyTorch, Optuna, scipy
 
 ---
 
+## Development & Execution Workflow
+
+This project has a split execution model: code is written and versioned locally,
+but all pipeline execution happens remotely in Google Colab against data on Drive.
+
+### The Two Environments
+
+| | Local (this repo) | Google Colab |
+|---|---|---|
+| **Code** | Edited here | Installed from GitHub |
+| **Notebooks** | Stored here | Opened and run here |
+| **Data** | Not here (~24 GB) | Mounted from Drive |
+| **Outputs** | Synced back here | Written to Drive |
+
+### The Deploy Cycle
+
+```
+1. Edit src/ locally
+2. uv run nox -s pre_commit   # lint + typecheck
+3. git push origin main        # Colab installs from main
+4. Open notebook in Colab
+5. Run notebook -> outputs written to Drive
+6. Download outputs from Drive -> outputs/ in this repo
+7. git add outputs/ && git commit
+```
+
+**Critical:** Colab installs the package directly from the `main` branch via pip.
+There is no practical way to install from a feature branch in Colab.
+This means: **all code changes must be pushed to main before running any notebook.**
+Finish and verify locally first, then push, then execute in Colab.
+
+### Google Drive Structure
+
+All pipeline data lives under a single Drive root (mounted at `/content/drive`):
+
+```
+MyDrive/urban-tree-transfer/
+├── data/
+│   ├── phase_1/                  # Boundaries, trees GeoPackages, CHM rasters
+│   ├── phase_2/                  # Processed GeoPackages per split
+│   └── phase_3_experiments/      # ML-ready Parquet splits, models, scalers
+└── (other large files — never committed to repo)
+```
+
+Drive paths are configured via the config module — no hardcoded paths in notebooks.
+
+### The outputs/ Directory
+
+`outputs/` in this repo is a curated local mirror of Drive outputs.
+It is committed to the repo for two reasons:
+
+1. **Dependency tracking** — downstream notebooks read from Drive, but the outputs
+   committed here document exactly what was produced and when. JSON configs like
+   `setup_decisions.json` are the ground truth for what decisions were made.
+2. **Audit trail** — execution logs and metadata provide a permanent record of
+   each pipeline run.
+
+**After running notebooks in Colab:**
+- Download the relevant phase output folder from Drive
+- Copy into the matching `outputs/<phase>/` directory here
+- Commit — these outputs may be required for the next phase to run
+
+### Output Structure
+
+```
+outputs/
+├── phase_1_processing/
+│   ├── logs/                     # Execution JSON logs
+│   └── metadata/                 # Validation reports, task summaries
+├── phase_2_features/
+│   ├── figures/                  # exp_01 through exp_06 analysis figures
+│   ├── logs/
+│   └── metadata/                 # Exploratory JSON configs (temporal_selection.json, etc.)
+├── phase_2_splits/
+│   ├── figures/
+│   ├── logs/
+│   └── metadata/                 # phase_2_final_summary.json
+└── phase_3_experiments/
+    ├── figures/                  # All experiment and runner figures
+    ├── logs/                     # Per-notebook execution JSONs
+    ├── metadata/                 # setup_decisions.json, evaluation JSONs
+    └── models/                   # Model metadata JSONs only (binaries gitignored)
+```
+
+### Inter-Phase Dependencies
+
+Some outputs are hard dependencies for downstream phases — notebooks validate
+their presence on startup and fail fast if missing. Key dependency chain:
+
+```
+exp_08 -> exp_08b -> exp_08c -> exp_09 -> setup_decisions.json (partial)
+exp_10 -> extends setup_decisions.json with genus_selection
+            |
+            v
+        03a -> berlin/leipzig *.parquet splits (on Drive)
+            |
+            v
+        03b -> berlin_ml_champion, berlin_nn_champion, scalers, hp_tuning JSONs
+            |
+            v
+        03c -> transfer_evaluation.json
+            |
+            v
+        03d -> finetuning_curve.json
+```
+
+If a phase fails unexpectedly, check that its required Drive files exist and that
+the corresponding output JSONs in `outputs/` are up to date with the actual run.
+
+### What Stays Gitignored
+
+Large binary files are never committed:
+- Raw data: `*.gpkg`, `*.parquet`, `*.tif` (live on Drive only)
+- Model weights: `*.pkl`, `*.pt`, `*.pth` (too large, Drive only)
+- Model metadata JSONs (`*.metadata.json`) are committed — they document what was trained
+
+---
+
 ## Code Quality
 
 - **Line length:** 100 characters
