@@ -92,6 +92,12 @@ def _select_best_peak(
     valid_distances = distances_m[within_mask]
     valid_heights = chm_data[valid_rows, valid_cols]
 
+    # Position correction score: lower = better candidate peak.
+    # Height as denominator: higher CHM peaks are more likely true canopy centers,
+    # so closer+taller peaks score best.
+    # Known limitation: in dense stands, a nearby lower peak could be the correct
+    # tree if the tallest peak belongs to a neighbor's canopy.
+    # The +1 term prevents division by zero for ground-level CHM values.
     scores = valid_distances / (valid_heights + 1.0)
     best_idx = int(np.argmin(scores))
 

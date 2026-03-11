@@ -10,6 +10,7 @@ from shapely.geometry import Point
 from urban_tree_transfer.config import PROJECT_CRS
 from urban_tree_transfer.config.loader import get_all_s2_features, load_feature_config
 from urban_tree_transfer.feature_engineering.quality import (
+    add_is_conifer_column,
     analyze_nan_distribution,
     apply_temporal_selection,
     compute_chm_engineered_features,
@@ -50,6 +51,33 @@ def test_filter_deciduous_genera():
     filtered = filter_deciduous_genera(gdf, deciduous_genera=["TILIA", "ACER"])
     assert len(filtered) == 2
     assert set(filtered["genus_latin"]) == {"TILIA"}
+
+
+def test_add_is_conifer_column_basic_classification():
+    gdf = create_test_trees(4)
+    gdf["genus_latin"] = ["TILIA", "PINUS", "PICEA", "ACER"]
+
+    result = add_is_conifer_column(gdf, ["PINUS", "PICEA"])
+
+    assert result["is_conifer"].tolist() == [False, True, True, False]
+
+
+def test_add_is_conifer_column_empty_list_marks_all_false():
+    gdf = create_test_trees(3)
+    gdf["genus_latin"] = ["TILIA", "PINUS", "PICEA"]
+
+    result = add_is_conifer_column(gdf, [])
+
+    assert result["is_conifer"].tolist() == [False, False, False]
+
+
+def test_add_is_conifer_column_is_case_insensitive():
+    gdf = create_test_trees(3)
+    gdf["genus_latin"] = ["pinus", "Picea", "Tilia"]
+
+    result = add_is_conifer_column(gdf, ["PINUS", "PICEA"])
+
+    assert result["is_conifer"].tolist() == [True, True, False]
 
 
 def test_filter_by_plant_year():

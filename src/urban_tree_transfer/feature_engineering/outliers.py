@@ -17,6 +17,7 @@ import geopandas as gpd
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2, zscore
+from sklearn.covariance import LedoitWolf
 
 from urban_tree_transfer.config import PROJECT_CRS
 
@@ -131,16 +132,15 @@ def detect_mahalanobis_outliers(
         valid_data = data[valid_mask]
         mean = np.mean(valid_data, axis=0)
         cov = np.cov(valid_data, rowvar=False)
-        try:
-            cond = float(np.linalg.cond(cov))
-            if cond > 1e18:
-                logger.warning(
-                    "Genus %s: covariance matrix near-singular (cond=%.2e).",
-                    _genus,
-                    cond,
-                )
-        except np.linalg.LinAlgError:
-            logger.warning("Genus %s: covariance matrix condition check failed.", _genus)
+        cond = float(np.linalg.cond(cov))
+        if cond > 1e10:
+            logger.info(
+                "Genus %s: high condition number (%.2e > 1e10), applying Ledoit-Wolf shrinkage.",
+                _genus,
+                cond,
+            )
+            lw = LedoitWolf().fit(valid_data)
+            cov = lw.covariance_
         inv_cov = np.linalg.pinv(cov)
 
         diff = valid_data - mean

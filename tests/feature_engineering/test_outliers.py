@@ -49,6 +49,20 @@ def test_detect_mahalanobis_outliers_flags_multivariate():
     assert bool(flags.iloc[-1]) is True
 
 
+def test_detect_mahalanobis_outliers_handles_ill_conditioned_covariance():
+    gdf = _base_gdf(8)
+    gdf["genus_latin"] = ["TILIA"] * 8
+    gdf["F1"] = [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 5.0]
+    gdf["F2"] = [2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 10.0]
+    gdf["F3"] = [3.0, 3.3, 3.6, 3.9, 4.2, 4.5, 4.8, 15.0]
+
+    flags = detect_mahalanobis_outliers(gdf, ["F1", "F2", "F3"], alpha=0.2)
+
+    assert flags.dtype == bool
+    assert len(flags) == len(gdf)
+    assert flags.index.equals(gdf.index)
+
+
 def test_detect_iqr_outliers_flags_height_extremes():
     gdf = _base_gdf(4)
     gdf["genus_latin"] = ["TILIA"] * 4

@@ -81,6 +81,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import chi2, zscore, mannwhitneyu
 from pointpats import k as ripley_k
+from sklearn.covariance import LedoitWolf
 
 # Suppress font glyph warnings for unicode characters in Colab
 warnings.filterwarnings("ignore", message=".*Glyph.*missing from font.*")
@@ -258,14 +259,15 @@ try:
             # Compute Mahalanobis distance
             mean_vec = valid_features.mean(axis=0).values
             cov = np.cov(valid_features.values, rowvar=False)
-            
-            # Use pseudo-inverse for numerical stability
-            try:
-                inv_cov = np.linalg.pinv(cov)
-            except np.linalg.LinAlgError:
-                print(f"  ⚠️ {city}/{genus}: Covariance matrix error - skipping")
-                skipped_genera.append((genus, city, len(valid_features)))
-                continue
+            cond_number = float(np.linalg.cond(cov))
+            if cond_number > 1e10:
+                print(
+                    f"  ⚠️ {city}/{genus}: high condition number "
+                    f"({cond_number:.2e}), applying Ledoit-Wolf"
+                )
+                lw = LedoitWolf().fit(valid_features.values)
+                cov = lw.covariance_
+            inv_cov = np.linalg.pinv(cov)
 
             diff = valid_features.values - mean_vec
             d2 = np.einsum("ij,jk,ik->i", diff, inv_cov, diff)

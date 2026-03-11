@@ -72,7 +72,7 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 
-from scipy.stats import pearsonr
+from scipy.stats import pearsonr, spearmanr
 from scipy.cluster.hierarchy import linkage, leaves_list
 from scipy.spatial.distance import squareform
 from sklearn.preprocessing import StandardScaler
@@ -275,6 +275,38 @@ def compute_base_correlations(
             corr[base_i][base_j] = float(r)
             corr[base_j][base_i] = float(r)
     return corr
+
+
+def compute_spearman_base_correlations(
+    df: pd.DataFrame,
+    bases: list[str],
+    months: list[int],
+    alias_map: dict[str, str] | None = None,
+) -> dict[str, dict[str, float]]:
+    """Compute Spearman rank correlations between feature bases."""
+    base_cols = {
+        base: build_base_columns(base, months, set(df.columns), alias_map)
+        for base in bases
+    }
+    base_cols = {k: v for k, v in base_cols.items() if v}
+    all_cols = [c for cols in base_cols.values() for c in cols]
+    if not all_cols:
+        return {}
+    df_std = standardize_columns(df, all_cols)
+    base_vectors = {
+        base: stacked_vector(df_std, cols) for base, cols in base_cols.items()
+    }
+    bases_list = list(base_vectors.keys())
+    corr = {base: {} for base in bases_list}
+    for i, base_i in enumerate(bases_list):
+        corr[base_i][base_i] = 1.0
+        for j in range(i + 1, len(bases_list)):
+            base_j = bases_list[j]
+            r, _ = spearmanr(base_vectors[base_i], base_vectors[base_j])
+            corr[base_i][base_j] = float(r)
+            corr[base_j][base_i] = float(r)
+    return corr
+
 
 def compute_chm_correlations(df: pd.DataFrame, features: list[str]) -> dict[str, dict[str, float]]:
     cols = [c for c in features if c in df.columns]
@@ -573,8 +605,6 @@ log.end_step(status="success", records=len(retained_temporal_cols))
 # SECTION 8: Save JSON config
 # ============================================================
 
-log.start_step("JSON Output")
-
 def build_rationale(removed_bases: set[str], corr_b: pd.DataFrame, corr_l: pd.DataFrame) -> dict[str, str]:
     rationale = {}
     for base in sorted(removed_bases):
@@ -704,6 +734,80 @@ output_json = {
         "vif_check_passed": max_vif < 10.0,
     },
 }
+
+
+# %%
+# ============================================================
+# SECTION 9: Spearman Supplementary Check
+# ============================================================
+
+log.start_step("Spearman Supplementary Check")
+
+spearman_divergent = []
+combined_sample = pd.concat(city_data.values(), ignore_index=True)
+
+bands_spearman = compute_spearman_base_correlations(
+    combined_sample, spectral_bands, common_months, base_aliases
+)
+indices_spearman = compute_spearman_base_correlations(
+    combined_sample, vegetation_indices, common_months, base_aliases
+)
+
+combined_pearson_bands = compute_base_correlations(
+    combined_sample, spectral_bands, common_months, base_aliases
+)
+combined_pearson_indices = compute_base_correlations(
+    combined_sample, vegetation_indices, common_months, base_aliases
+)
+
+for group_name, pearson_corr, spearman_corr in [
+    ("spectral_bands", combined_pearson_bands, bands_spearman),
+    ("vegetation_indices", combined_pearson_indices, indices_spearman),
+]:
+    bases_list = sorted(set(pearson_corr.keys()) & set(spearman_corr.keys()))
+    for i, base_i in enumerate(bases_list):
+        for base_j in bases_list[i + 1:]:
+            r_p = pearson_corr.get(base_i, {}).get(base_j, 0.0)
+            r_s = spearman_corr.get(base_i, {}).get(base_j, 0.0)
+            divergence = abs(r_p - r_s)
+            if divergence > 0.1:
+                spearman_divergent.append({
+                    "group": group_name,
+                    "feature_a": base_i,
+                    "feature_b": base_j,
+                    "pearson_r": round(r_p, 4),
+                    "spearman_r": round(r_s, 4),
+                    "divergence": round(divergence, 4),
+                })
+
+if spearman_divergent:
+    print(f"Found {len(spearman_divergent)} divergent pairs (|r_p - r_s| > 0.1):")
+    for pair in spearman_divergent:
+        print(
+            f"  {pair['feature_a']} vs {pair['feature_b']}: "
+            f"Pearson={pair['pearson_r']}, Spearman={pair['spearman_r']}"
+        )
+else:
+    print("No divergent pairs found. Pearson and Spearman agree within 0.1.")
+
+output_json["spearman_supplement"] = {
+    "divergent_pairs": spearman_divergent,
+    "max_divergence": (
+        max(p["divergence"] for p in spearman_divergent)
+        if spearman_divergent else 0.0
+    ),
+    "note": "Pearson remains primary metric; Spearman as supplementary check",
+}
+
+log.end_step(status="success", records=len(spearman_divergent))
+
+
+# %%
+# ============================================================
+# SECTION 10: JSON Output
+# ============================================================
+
+log.start_step("JSON Output")
 
 json_path = METADATA_DIR / "correlation_removal.json"
 json_path.write_text(json.dumps(output_json, indent=2), encoding="utf-8")
