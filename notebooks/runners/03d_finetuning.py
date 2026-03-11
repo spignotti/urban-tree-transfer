@@ -410,6 +410,16 @@ try:
         # Evaluate on Leipzig test set (using ML test data)
         preds = finetuned_model.predict(x_test_scaled_ml)
         metrics = evaluation.compute_metrics(y_test, preds)
+        ci_f1 = evaluation.bootstrap_confidence_interval(
+            y_test,
+            preds,
+            lambda y_true_sample, y_pred_sample: evaluation.compute_metrics(
+                y_true_sample,
+                y_pred_sample,
+            )["f1_score"],
+            n_bootstrap=config["metrics"]["n_bootstrap"],
+            confidence_level=config["metrics"]["confidence_level"],
+        )
         
         ml_results.append({
             "fraction": frac,
@@ -418,6 +428,7 @@ try:
             "accuracy": metrics["accuracy"],
             "precision": metrics["precision"],
             "recall": metrics["recall"],
+            "ci_f1": ci_f1,
             "predictions": preds.tolist(),
         })
         
@@ -515,6 +526,16 @@ try:
         # Evaluate on Leipzig test set (using NN test data)
         preds = finetuned_model.predict(x_test_scaled_nn, device=nn_device)
         metrics = evaluation.compute_metrics(y_test, preds)
+        ci_f1 = evaluation.bootstrap_confidence_interval(
+            y_test,
+            preds,
+            lambda y_true_sample, y_pred_sample: evaluation.compute_metrics(
+                y_true_sample,
+                y_pred_sample,
+            )["f1_score"],
+            n_bootstrap=config["metrics"]["n_bootstrap"],
+            confidence_level=config["metrics"]["confidence_level"],
+        )
         
         nn_results.append({
             "fraction": frac,
@@ -523,6 +544,7 @@ try:
             "accuracy": metrics["accuracy"],
             "precision": metrics["precision"],
             "recall": metrics["recall"],
+            "ci_f1": ci_f1,
             "predictions": preds.tolist(),
         })
         
