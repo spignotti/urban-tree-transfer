@@ -11,6 +11,8 @@ Format: `- [YYYY-MM-DD] <what was tricky / what went wrong> → <what worked / c
 
 ## Setup & Environment
 
+- [2026-03-11] Running the full nox suite including tests is excessive for routine verification in this repo because tests take a long time → default to nox sessions without tests (lint/typecheck/format or pre_commit-equivalent checks), and only run tests when they are actually necessary.
+
 ## Data Pipeline
 
 ## Notebooks & Colab
