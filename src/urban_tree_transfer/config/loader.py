@@ -136,6 +136,13 @@ def get_metadata_columns(config: dict[str, Any] | None = None) -> list[str]:
     return config["metadata_columns"]
 
 
+def get_coniferous_genera(config: dict[str, Any] | None = None) -> list[str]:
+    """Return list of coniferous genera from feature config."""
+    if config is None:
+        config = load_feature_config()
+    return list(config.get("genus_classification", {}).get("coniferous", []))
+
+
 def get_spectral_bands(config: dict[str, Any] | None = None) -> list[str]:
     """Get list of Sentinel-2 spectral band names.
 

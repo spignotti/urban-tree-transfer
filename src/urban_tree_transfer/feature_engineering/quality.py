@@ -54,6 +54,29 @@ def filter_deciduous_genera(
     return cast(gpd.GeoDataFrame, trees_gdf.loc[mask].copy())
 
 
+def add_is_conifer_column(
+    trees_gdf: gpd.GeoDataFrame,
+    coniferous_genera: list[str],
+    genus_column: str = "genus_latin",
+) -> gpd.GeoDataFrame:
+    """Add boolean is_conifer column based on genus lookup.
+
+    Args:
+        trees_gdf: Input GeoDataFrame with genus column.
+        coniferous_genera: List of coniferous genus names (uppercase).
+        genus_column: Column containing genus labels.
+
+    Returns:
+        GeoDataFrame with is_conifer boolean column added.
+    """
+    if genus_column not in trees_gdf.columns:
+        raise ValueError(f"Missing required column: {genus_column}")
+    result = trees_gdf.copy()
+    conifer_set = {g.upper() for g in coniferous_genera}
+    result["is_conifer"] = result[genus_column].str.upper().isin(conifer_set)
+    return cast(gpd.GeoDataFrame, result)
+
+
 def filter_by_plant_year(
     trees_gdf: gpd.GeoDataFrame,
     max_year: int,

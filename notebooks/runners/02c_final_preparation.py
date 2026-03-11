@@ -67,6 +67,8 @@ if RUN_NOTEBOOK:
 # %%
 if RUN_NOTEBOOK:
     from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
+    from urban_tree_transfer.config.loader import get_coniferous_genera
+    from urban_tree_transfer.feature_engineering import add_is_conifer_column
     from urban_tree_transfer.feature_engineering.selection import remove_redundant_features
     from urban_tree_transfer.feature_engineering.outliers import (
         detect_zscore_outliers,
@@ -136,6 +138,18 @@ if RUN_NOTEBOOK:
         print(f"  {city.title()}: {len(gdf):,} trees")
         city_data[city] = gdf
     
+    log.end_step(status="success", records=sum(len(gdf) for gdf in city_data.values()))
+
+# %%
+if RUN_NOTEBOOK:
+    log.start_step("Add is_conifer Column")
+
+    coniferous_genera = get_coniferous_genera()
+    for city, gdf in city_data.items():
+        city_data[city] = add_is_conifer_column(gdf, coniferous_genera)
+        n_conifer = city_data[city]["is_conifer"].sum()
+        print(f"{city.title()}: {n_conifer:,} conifers / {len(city_data[city]):,} total")
+
     log.end_step(status="success", records=sum(len(gdf) for gdf in city_data.values()))
 
 # %%

@@ -18,6 +18,7 @@ from .proximity import (
     compute_nearest_different_genus_distance,
 )
 from .quality import (
+    add_is_conifer_column,
     analyze_nan_distribution,
     apply_temporal_selection,
     compute_chm_engineered_features,
@@ -43,6 +44,7 @@ from .splits import (
 )
 
 __all__ = [
+    "add_is_conifer_column",
     "analyze_genus_specific_impact",
     "analyze_nan_distribution",
     "apply_consensus_outlier_filter",
