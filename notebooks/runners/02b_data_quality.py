@@ -466,7 +466,10 @@ if RUN_NOTEBOOK:
             # --------------------------------------------------------
             step_start = time.perf_counter()
             print("Step 9: CHM feature engineering")
-    
+
+            # CHM normalization: genus×city z-score and percentile.
+            # Each genus in each city is normalized against its own distribution.
+            # Genera with <10 samples fall back to city-level normalization.
             trees_gdf = compute_chm_engineered_features(trees_gdf)
             chm_nan = int(trees_gdf[["CHM_1m_zscore", "CHM_1m_percentile"]].isna().sum().sum())
             if chm_nan != 0:
