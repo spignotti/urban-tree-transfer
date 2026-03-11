@@ -58,7 +58,7 @@ urban-tree-transfer/
 ├── notebooks/
 │   ├── runners/                  # Colab runner notebooks (01_, 02a-c_, 03a-d_)
 │   ├── exploratory/              # Experiment notebooks (exp_01 to exp_11)
-│   └── templates/                # Notebook template
+│   └── templates/                # Runner + exploratory notebook templates (.md, .py, .ipynb)
 ├── tests/                        # Unit + integration tests (mirrors src/ structure)
 ├── docs/                         # PROJECT.md, methodology docs, PRDs
 ├── scripts/                      # Standalone utility scripts
