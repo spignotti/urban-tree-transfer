@@ -700,38 +700,55 @@ try:
         print(f"NN Champion Evaluation: {nn_name.upper()}")
         print("=" * 70)
         
-        # Predict with NN model (using NN-specific scaled data with full temporal features)
-        nn_preds = nn_model.predict(x_test_scaled_nn, device=nn_device)
-        
-        # Compute metrics
-        nn_transfer_metrics = transfer.compute_transfer_metrics(
-            y_test,
-            nn_preds,
-            class_labels=class_labels,
-            include_ci=True,
-            n_bootstrap=config["metrics"]["n_bootstrap"],
-        )
-        
-        nn_leipzig_f1 = nn_transfer_metrics["metrics"]["f1_score"]
-        
-        print(f"\nNN Zero-Shot Transfer:")
-        print(f"  F1:       {nn_leipzig_f1:.4f}")
-        print(f"  Accuracy: {nn_transfer_metrics['metrics']['accuracy']:.4f}")
-        
-        print(f"\nML vs NN Comparison:")
-        print(f"  ML F1: {leipzig_f1:.4f}")
-        print(f"  NN F1: {nn_leipzig_f1:.4f}")
-        print(f"  Difference: {nn_leipzig_f1 - leipzig_f1:+.4f}")
-        
-        # Select best transfer model
-        if nn_leipzig_f1 > leipzig_f1:
-            best_transfer_model = "nn"
-            best_transfer_f1 = nn_leipzig_f1
-            print(f"\n  ✅ Best transfer model: NN ({nn_name})")
-        else:
+        try:
+            nn_preds = nn_model.predict(x_test_scaled_nn, device=nn_device)
+            nn_transfer_metrics = transfer.compute_transfer_metrics(
+                y_test,
+                nn_preds,
+                class_labels=class_labels,
+                include_ci=True,
+                n_bootstrap=config["metrics"]["n_bootstrap"],
+            )
+            nn_leipzig_f1 = nn_transfer_metrics["metrics"]["f1_score"]
+
+            print(f"\nNN Zero-Shot Transfer:")
+            print(f"  F1:       {nn_leipzig_f1:.4f}")
+            print(f"  Accuracy: {nn_transfer_metrics['metrics']['accuracy']:.4f}")
+
+            print(f"\nML vs NN Comparison:")
+            print(f"  ML F1: {leipzig_f1:.4f}")
+            print(f"  NN F1: {nn_leipzig_f1:.4f}")
+            print(f"  Difference: {nn_leipzig_f1 - leipzig_f1:+.4f}")
+
+            if nn_leipzig_f1 > leipzig_f1:
+                best_transfer_model = "nn"
+                best_transfer_f1 = nn_leipzig_f1
+                print(f"\n  ✅ Best transfer model: NN ({nn_name})")
+            else:
+                best_transfer_model = "ml"
+                best_transfer_f1 = leipzig_f1
+                print(f"\n  ✅ Best transfer model: ML ({ml_name})")
+        except Exception as exc:
+            error_message = f"{type(exc).__name__}: {exc}"
+            print("\n⚠️  NN evaluation failed")
+            print(f"  Error type:    {type(exc).__name__}")
+            print(f"  Error message: {exc}")
+            print(f"  Test shape:    {x_test_scaled_nn.shape}")
+
+            nn_transfer_metrics = {
+                "metrics": {
+                    "f1_score": None,
+                    "accuracy": None,
+                    "precision": None,
+                    "recall": None,
+                },
+                "confidence_intervals": None,
+                "per_class": None,
+                "confusion_matrix": None,
+                "error": error_message,
+            }
             best_transfer_model = "ml"
             best_transfer_f1 = leipzig_f1
-            print(f"\n  ✅ Best transfer model: ML ({ml_name})")
         
         log.end_step(status="success")
 
@@ -890,10 +907,15 @@ print(f"  Transfer (zero-shot): {leipzig_f1:.4f}")
 print(f"  From-Scratch:         {from_scratch_f1:.4f}")
 print(f"  Difference:           {leipzig_f1 - from_scratch_f1:+.4f}")
 
-if nn_model:
+if nn_model and nn_transfer_metrics["metrics"]["f1_score"] is not None:
     print(f"\nML vs NN:")
     print(f"  ML F1: {leipzig_f1:.4f}")
     print(f"  NN F1: {nn_transfer_metrics['metrics']['f1_score']:.4f}")
+    print(f"  Best: {best_transfer_model.upper()}")
+elif nn_model:
+    print(f"\nML vs NN:")
+    print(f"  ML F1: {leipzig_f1:.4f}")
+    print(f"  NN evaluation failed: {nn_transfer_metrics.get('error')}")
     print(f"  Best: {best_transfer_model.upper()}")
 
 print(f"\nRobustness Summary:")

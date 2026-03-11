@@ -452,6 +452,7 @@ try:
     finetune_cfg = config.get("finetuning", {})
     epochs = finetune_cfg.get("nn_epochs", 50)
     batch_size = finetune_cfg.get("nn_batch_size", 64)
+    lr_factor = finetune_cfg.get("nn_lr_factor", 0.1)
     if "nn_epochs" not in finetune_cfg or "nn_batch_size" not in finetune_cfg:
         print("⚠️  Missing nn_epochs/nn_batch_size in config; using defaults (epochs=50, batch_size=64)")
     
@@ -468,6 +469,11 @@ try:
         random_state=RANDOM_SEED,
     )
     x_val_scaled_nn = berlin_scaler_nn.transform(x_val_nn)
+
+    print("\nNN Fine-Tuning Diagnostics")
+    print(f"  berlin_scaler_nn.mean_[:3]: {berlin_scaler_nn.mean_[:3]}")
+    print(f"  Epochs from config:         {epochs}")
+    print(f"  Learning rate factor:       {lr_factor}")
     
     for frac in fractions:
         print(f"\n[{frac:.1%}] Fine-tuning with {int(frac * len(leipzig_finetune_nn))} samples...")
@@ -492,9 +498,19 @@ try:
             x_val=x_val_scaled_nn,
             y_val=y_val_nn,
             epochs=epochs,
+            lr_factor=lr_factor,
             batch_size=batch_size,
             device=nn_device,
         )
+        ft_history = getattr(finetuned_model, "finetune_history_", {})
+        if ft_history:
+            train_loss = ft_history.get("train_loss", [])
+            final_train_loss = train_loss[-1] if train_loss else None
+            print(f"  Final train_loss: {final_train_loss}")
+            print(f"  Stopped early:    {ft_history.get('stopped_early')}")
+            print(f"  Best epoch:       {ft_history.get('best_epoch')}")
+        else:
+            print("  No fine-tuning history returned")
         
         # Evaluate on Leipzig test set (using NN test data)
         preds = finetuned_model.predict(x_test_scaled_nn, device=nn_device)

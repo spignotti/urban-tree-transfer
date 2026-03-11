@@ -404,7 +404,7 @@ def finetune_neural_network(
         )
         new_lr = original_lr * lr_factor
 
-        train_cnn(
+        history = train_cnn(
             pretrained_model,
             x_finetune,
             y_finetune,
@@ -412,6 +412,7 @@ def finetune_neural_network(
             epochs=epochs,
             **train_kwargs,
         )
+        pretrained_model.finetune_history_ = history
 
         return pretrained_model
 
@@ -431,6 +432,7 @@ def finetune_neural_network(
             patience=train_kwargs.get("patience", 15),
             **{k: v for k, v in train_kwargs.items() if k != "patience"},
         )
+        pretrained_model.finetune_history_ = {}
 
         return pretrained_model
 
