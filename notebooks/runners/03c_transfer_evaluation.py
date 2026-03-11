@@ -124,8 +124,9 @@ OUTPUT_DIR = DATA_DIR / "phase_3_experiments"
 METADATA_DIR = OUTPUT_DIR / "metadata"
 MODELS_DIR = OUTPUT_DIR / "models"
 LOGS_DIR = OUTPUT_DIR / "logs"
+REPORT_DIR = DRIVE_DIR / "outputs" / "report"
 
-for path in [METADATA_DIR, MODELS_DIR, LOGS_DIR]:
+for path in [METADATA_DIR, MODELS_DIR, LOGS_DIR, REPORT_DIR]:
     path.mkdir(parents=True, exist_ok=True)
 
 config = load_experiment_config()  # ✅ FIXED: removed "phase3" argument
@@ -828,6 +829,27 @@ try:
 except Exception as e:
     log.end_step(status="error", errors=[str(e)])
     raise
+
+
+# %%
+report_path = REPORT_DIR / "transfer_metrics.json"
+report_records = []
+for row in genus_summary.itertuples(index=False):
+    relative_drop = None
+    if row.berlin_f1 > 0:
+        relative_drop = row.transfer_gap / row.berlin_f1
+    report_records.append(
+        {
+            "genus": row.genus,
+            "berlin_f1": row.berlin_f1,
+            "leipzig_f1": row.leipzig_f1,
+            "is_conifer": bool(row.is_conifer),
+            "absolute_drop": row.transfer_gap,
+            "relative_drop": relative_drop,
+        }
+    )
+report_path.write_text(json.dumps(report_records, indent=2), encoding="utf-8")
+print(f"Saved report JSON: {report_path}")
 
 
 # %%

@@ -124,8 +124,9 @@ OUTPUT_DIR = DATA_DIR / "phase_3_experiments"
 METADATA_DIR = OUTPUT_DIR / "metadata"
 MODEL_DIR = OUTPUT_DIR / "models"
 LOGS_DIR = OUTPUT_DIR / "logs"
+REPORT_DIR = DRIVE_DIR / "outputs" / "report"
 
-for path in [METADATA_DIR, MODEL_DIR, LOGS_DIR]:
+for path in [METADATA_DIR, MODEL_DIR, LOGS_DIR, REPORT_DIR]:
     path.mkdir(parents=True, exist_ok=True)
 
 config = load_experiment_config()  # ✅ FIXED: removed "phase3" argument
@@ -984,6 +985,52 @@ try:
 except Exception as e:
     log.end_step(status="error", errors=[str(e)])
     raise
+
+
+# %%
+def build_curve_report(
+    results: list[dict[str, object]],
+    model_type: str,
+) -> list[dict[str, float | int | str]]:
+    curve_records = []
+    for row in results:
+        _, ci_low, ci_high = evaluation.bootstrap_confidence_interval(
+            y_test,
+            np.array(row["predictions"]),
+            lambda y_true_sample, y_pred_sample: evaluation.compute_metrics(
+                y_true_sample,
+                y_pred_sample,
+            )["f1_score"],
+            n_bootstrap=config["metrics"]["n_bootstrap"],
+            confidence_level=config["metrics"]["confidence_level"],
+        )
+        curve_records.append(
+            {
+                "fraction": row["fraction"],
+                "model_type": model_type,
+                "f1_score": row["f1_score"],
+                "n_samples": row["n_samples"],
+                "ci_low": ci_low,
+                "ci_high": ci_high,
+            }
+        )
+    return curve_records
+
+curve_report = build_curve_report(ml_results, "ml") + build_curve_report(nn_results, "nn")
+curve_report_path = REPORT_DIR / "finetuning_curves.json"
+curve_report_path.write_text(json.dumps(curve_report, indent=2), encoding="utf-8")
+print(f"Saved report JSON: {curve_report_path}")
+
+per_genus_report_path = REPORT_DIR / "finetuning_per_genus.json"
+per_genus_report = per_genus_df[["fraction", "genus", "f1_score", "support"]].to_dict(
+    orient="records"
+)
+per_genus_report_path.write_text(json.dumps(per_genus_report, indent=2), encoding="utf-8")
+print(f"Saved report JSON: {per_genus_report_path}")
+
+report_hypothesis_path = REPORT_DIR / "hypothesis_tests.json"
+report_hypothesis_path.write_text(hypothesis_path.read_text(encoding="utf-8"), encoding="utf-8")
+print(f"Saved report JSON: {report_hypothesis_path}")
 
 
 # %%
