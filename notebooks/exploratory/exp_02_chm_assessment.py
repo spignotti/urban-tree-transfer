@@ -74,7 +74,7 @@ import json
 import geopandas as gpd
 import pandas as pd
 import numpy as np
-from scipy.stats import f_oneway, pearsonr, bootstrap
+from scipy.stats import alexandergovern, pearsonr, bootstrap
 
 # Genus classification (deciduous/coniferous)
 DECIDUOUS_GENERA = [
@@ -105,6 +105,8 @@ LOGS_DIR = OUTPUT_DIR / "logs"
 
 CITIES = ["berlin", "leipzig"]
 MIN_SAMPLES_PER_GENUS = 500
+# Empirically based on Sentinel-2 spatial resolution: at 10m pixel size,
+# trees below ~2m CHM are indistinguishable from ground-level vegetation
 DETECTION_THRESHOLD_M = 2.0
 
 for d in [METADATA_DIR, LOGS_DIR]:
@@ -187,7 +189,8 @@ try:
         if len(groups) < 2:
             raise ValueError(f"Not enough viable genera for ANOVA in {city}.")
 
-        f_stat, p_value = f_oneway(*groups)
+        result = alexandergovern(*groups)
+        p_value = result.pvalue
         grand_mean = df_valid["CHM_1m"].mean()
         ss_between = sum(
             len(df_valid[df_valid["genus_latin"] == g])
@@ -199,7 +202,8 @@ try:
 
         eta2_by_city[city] = {
             "eta_squared": eta_squared,
-            "f_stat": float(f_stat),
+            "a_stat": float(result.statistic),
+            "test": "alexander_govern_welch_anova",
             "p_value": float(p_value),
             "n_genera": len(viable_genera),
             "n_samples": int(len(df_valid)),
