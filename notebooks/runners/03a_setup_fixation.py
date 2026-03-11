@@ -12,38 +12,36 @@
 #     name: python3
 # ---
 
-# %% [markdown] id="3s_lpKqw2SFH"
-# # 03a Setup Fixation
+# %% [markdown]
+# # Urban Tree Transfer - Runner Notebook
 #
-# **Phase 3.1 - Apply Setup Decisions to Create ML-Ready Datasets**
+# **Title:** Setup Fixation
 #
-# This notebook applies the finalized setup decisions from exploratory notebooks (exp_08-exp_10) to create filtered datasets for Phase 3 experiments.
+# **Phase:** 3 - Experiments
 #
-# **Dependencies:** Requires `setup_decisions.json` from exp_09 (including `genus_selection` from exp_10).
+# **Step:** 03a - Setup Fixation
 #
-# **Output:**
-# - **XGBoost datasets** (5 files): Reduced feature set (top-50) for tree-based models
-# - **CNN1D datasets** (5 files): Full temporal sequences (~144 features) for neural networks
+# **Purpose:** Apply finalized setup decisions and export ML-ready Phase 3 experiment datasets.
 #
-# Total: 10 parquet files (berlin_train, berlin_train_cnn, berlin_val, berlin_val_cnn, etc.)
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_splits`
 #
-# ---
+# **Output:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_3_experiments`
 #
-# **RUNTIME REQUIREMENTS:**
-# - CPU: Standard (12GB RAM sufficient)
-# - GPU: Not required
-# - High-RAM: Optional (recommended for comfort)
+# **Author:** Silas Pignotti
 #
-# **IMPORTANT:** Test splits always use baseline proximity (no filtering) to represent real-world distribution for unbiased evaluation.
+# **Created:** 2025-01-15
 #
-# **NEW:** Dual dataset creation - reduced features for XGBoost, full features for CNN1D.
+# **Updated:** 2026-03-11
+#
+# Runner notebooks execute data processing only: input -> processing -> output.
+# No analysis, no interpretation. They should be deterministic and repeatable.
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="uBBufMOO2SFK" outputId="d13f9cb5-1ab4-4592-902b-5c800d9dce2e"
-# ============================================================
-# INSTALLATION
-# ============================================================
+# %%
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -59,27 +57,27 @@ if not token:
     )
 
 # Install package from GitHub
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
-print("✅ Package installed successfully")
+print("OK: Package installed")
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="6Wz0vIrb2SFL" outputId="c5f2abf4-3014-48ca-e98b-9afcbc5012c1"
-# ============================================================
-# GOOGLE DRIVE MOUNT
-# ============================================================
+# %%
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("✅ Google Drive mounted")
+print("OK: Google Drive mounted")
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="iJnD46-X2SFM" outputId="a9c3f3c1-1ffa-45e2-906f-811e1c3fd229"
-# ============================================================
-# IMPORTS & INITIALIZATION
-# ============================================================
+# %%
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 
 from pathlib import Path
 from datetime import datetime, timezone
@@ -99,13 +97,13 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 log = ExecutionLog("03a_setup_fixation")
 
-print("✅ Imports complete")
+print("OK: Imports complete")
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="Pp4lImwE2SFN" outputId="24879c04-b991-4643-8ef5-af1d493b297d"
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# %%
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 DATA_DIR = DRIVE_DIR / "data"
@@ -125,12 +123,12 @@ print(f"Output (Phase 3):        {OUTPUT_DIR}")
 print(f"Metadata:                {METADATA_DIR}")
 print(f"Logs:                    {LOGS_DIR}")
 print(f"Random seed:             {RANDOM_SEED}")
-print("✅ Configuration complete")
+print("OK: Configuration complete")
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="KB2PCQd_2SFN" outputId="bf07dcbc-aecb-4b46-c841-188c42ff7df8"
-# ============================================================
-# SECTION 1: Load Setup Decisions
-# ============================================================
+# %%
+# ============================================================================
+# 5. LOAD SETUP DECISIONS
+# ============================================================================
 
 log.start_step("Load Setup Decisions")
 
@@ -175,10 +173,10 @@ except Exception as e:
     log.end_step(status="error", errors=[str(e)])
     raise
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="s5YaIby32SFO" outputId="d9e98a9e-7f2d-465c-9107-9fc4949e7387"
-# ============================================================
-# SECTION 2: Apply Decisions to Create Filtered Datasets
-# ============================================================
+# %%
+# ============================================================================
+# 6. APPLY DECISIONS TO CREATE FILTERED DATASETS
+# ============================================================================
 
 log.start_step("Apply Setup Decisions")
 
@@ -292,9 +290,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 2.5: Create CNN1D Datasets (Full Features)
-# ============================================================
+# ============================================================================
+# 7. CREATE CNN1D DATASETS (FULL FEATURES)
+# ============================================================================
 
 log.start_step("Create CNN1D Datasets")
 
@@ -400,9 +398,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 3: Validation
-# ============================================================
+# ============================================================================
+# 8. VALIDATION
+# ============================================================================
 
 log.start_step("Validation")
 
@@ -510,10 +508,10 @@ except Exception as e:
     log.end_step(status="error", errors=[str(e)])
     raise
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="6MuMi6IX2SFO" outputId="70045cd3-d6b3-47ef-987a-ef1e182fc0e9"
-# ============================================================
-# SECTION 4: Save Execution Log
-# ============================================================
+# %%
+# ============================================================================
+# 9. SAVE EXECUTION LOG
+# ============================================================================
 
 log.start_step("Save Execution Log")
 
@@ -560,13 +558,13 @@ except Exception as e:
     log.end_step(status="error", errors=[str(e)])
     raise
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="6koYm8tb2SFP" outputId="3c6cc982-c67e-410b-a2d6-627675344cb6"
-# ============================================================
+# %%
+# ============================================================================
 # SUMMARY
-# ============================================================
+# ============================================================================
 
 print("\n" + "=" * 70)
-print("NOTEBOOK COMPLETE: 03a Setup Fixation")
+print("OK: NOTEBOOK COMPLETE")
 print("=" * 70)
 print("\nSetup Decisions Applied:")
 print(f"  CHM:       {setup['chm_strategy']['decision']}")

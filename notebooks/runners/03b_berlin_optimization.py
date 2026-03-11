@@ -14,41 +14,35 @@
 # ---
 
 # %% [markdown]
-# # 03b Berlin Optimization
+# # Urban Tree Transfer - Runner Notebook
 #
-# **Phase 3.3 - Hyperparameter Tuning & Final Model Training**
+# **Title:** Berlin Optimization
 #
-# This notebook performs Optuna hyperparameter optimization for the ML and NN champions identified in exp_10, trains final models, and conducts comprehensive error analysis.
+# **Phase:** 3 - Experiments
 #
-# **Dependencies:**
-# - `algorithm_comparison.json` from exp_10 (identifies ML/NN champions)
-# - Berlin train/val/test splits from 03a
+# **Step:** 03b - Berlin Optimization
 #
-# **Outputs:**
-# - `hp_tuning_ml.json` - Optuna results for ML champion
-# - `hp_tuning_nn.json` - Optuna results for NN champion
-# - `berlin_ml_champion.pkl` - Trained ML model
-# - `berlin_nn_champion.pt` - Trained NN model
-# - `berlin_scaler.pkl` - Feature scaler
-# - `label_encoder.pkl` - Label encoder
-# - `berlin_evaluation.json` - Test metrics
-# - Error analysis figures (confusion matrix, feature importance, etc.)
+# **Purpose:** Tune Berlin champion models, train final models, and export Phase 3 evaluation artifacts.
 #
-# ---
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_3_experiments`
 #
-# **RUNTIME REQUIREMENTS:**
-# - CPU: High-RAM recommended (Optuna trials memory-intensive)
-# - GPU: Highly recommended for NN champion training
-# - Time: ~2-4 hours for full HP tuning (50 trials × 2 models)
+# **Output:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_3_experiments`
 #
-# **NOTE:** This notebook optimizes whichever models won in exp_10 - it's model-agnostic!
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+#
+# Runner notebooks execute data processing only: input -> processing -> output.
+# No analysis, no interpretation. They should be deterministic and repeatable.
 
 # %%
-# ============================================================
-# INSTALLATION
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -64,7 +58,7 @@ if not token:
     )
 
 # Install package from GitHub
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 # Install Optuna for hyperparameter tuning (always needed)
@@ -73,25 +67,25 @@ subprocess.run(["pip", "install", "optuna", "-q"], check=True)
 # Install PyTorch for neural network models (if NN champion exists)
 subprocess.run(["pip", "install", "torch>=2.2.0", "-q"], check=True)
 
-print("✅ Package installed successfully")
+print("OK: Package installed")
 print("✅ Optuna installed (hyperparameter tuning)")
 print("✅ PyTorch installed (neural network training)")
 
 # %%
-# ============================================================
-# GOOGLE DRIVE MOUNT
-# ============================================================
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("✅ Google Drive mounted")
+print("OK: Google Drive mounted")
 
 # %%
-# ============================================================
-# IMPORTS & INITIALIZATION
-# ============================================================
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 
 from pathlib import Path
 from datetime import datetime, timezone
@@ -127,12 +121,12 @@ warnings.filterwarnings("ignore", category=UserWarning)
 log = ExecutionLog("03b_berlin_optimization")
 start_time = time.time()
 
-print("✅ Imports complete")
+print("OK: Imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 DATA_DIR = DRIVE_DIR / "data"
@@ -161,9 +155,9 @@ print(f"Optuna trials:            {config['hp_tuning']['optuna']['n_trials']}")
 print(f"\n✅ Configuration complete")
 
 # %%
-# ============================================================
-# SECTION 1: Load Algorithm Comparison & Data
-# ============================================================
+# ============================================================================
+# 5. LOAD ALGORITHM COMPARISON AND DATA
+# ============================================================================
 
 log.start_step("Load Algorithm Comparison & Data")
 
@@ -200,12 +194,12 @@ try:
     setup = validate_setup_decisions(setup_path)
     expected_features_reduced = setup["selected_features"]
     
-    # ============================================================
+    # ============================================================================
     # DATASET LOADING: Automatic selection based on champion type
-    # ============================================================
+    # ============================================================================
     # ML Champion (tree-based) → Use reduced features (top-50)
     # NN Champion (CNN1D) → Use full temporal features (~144)
-    # ============================================================
+    # ============================================================================
     
     print(f"\n" + "=" * 70)
     print("Loading Datasets")
@@ -269,9 +263,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 2: Preprocessing
-# ============================================================
+# ============================================================================
+# 6. PREPROCESSING
+# ============================================================================
 
 log.start_step("Preprocessing")
 
@@ -428,9 +422,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 3: ML Champion - Hyperparameter Tuning (C2)
-# ============================================================
+# ============================================================================
+# 7. ML CHAMPION - HYPERPARAMETER TUNING (C2)
+# ============================================================================
 
 log.start_step("ML Hyperparameter Tuning")
 
@@ -530,9 +524,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 4: ML Champion - Final Training
-# ============================================================
+# ============================================================================
+# 8. ML CHAMPION - FINAL TRAINING
+# ============================================================================
 
 log.start_step("ML Final Training")
 
@@ -587,9 +581,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 5: NN Champion - Hyperparameter Tuning (C3)
-# ============================================================
+# ============================================================================
+# 9. NN CHAMPION - HYPERPARAMETER TUNING (C3)
+# ============================================================================
 
 log.start_step("NN Hyperparameter Tuning")
 
@@ -709,9 +703,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 6: NN Champion - Final Training
-# ============================================================
+# ============================================================================
+# 10. NN CHAMPION - FINAL TRAINING
+# ============================================================================
 
 log.start_step("NN Final Training")
 
@@ -796,9 +790,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 7: Save Scalers
-# ============================================================
+# ============================================================================
+# 11. SAVE SCALERS
+# ============================================================================
 
 log.start_step("Save Scalers")
 
@@ -830,9 +824,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 8: Evaluation on Test Set
-# ============================================================
+# ============================================================================
+# 12. EVALUATION ON TEST SET
+# ============================================================================
 
 log.start_step("Evaluation")
 
@@ -952,9 +946,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 9: Error Analysis (H4)
-# ============================================================
+# ============================================================================
+# 13. ERROR ANALYSIS (H4)
+# ============================================================================
 
 log.start_step("Error Analysis")
 
@@ -1024,9 +1018,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 10: Save Execution Log
-# ============================================================
+# ============================================================================
+# 14. SAVE EXECUTION LOG
+# ============================================================================
 
 log.start_step("Save Execution Log")
 
@@ -1087,12 +1081,12 @@ except Exception as e:
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SUMMARY
-# ============================================================
+# ============================================================================
 
 print("\n" + "=" * 70)
-print("NOTEBOOK COMPLETE: 03b Berlin Optimization")
+print("OK: NOTEBOOK COMPLETE")
 print("=" * 70)
 
 print(f"\nRuntime: {elapsed/60:.1f} minutes ({elapsed/3600:.2f} hours)")

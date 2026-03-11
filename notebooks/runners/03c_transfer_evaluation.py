@@ -14,36 +14,35 @@
 # ---
 
 # %% [markdown]
-# # 03c Transfer Evaluation
+# # Urban Tree Transfer - Runner Notebook
 #
-# **Phase 3.4 - Zero-Shot Transfer Evaluation (Berlin → Leipzig)**
+# **Title:** Transfer Evaluation
 #
-# This notebook evaluates how well Berlin-trained models transfer to Leipzig without fine-tuning (zero-shot). Includes comprehensive transfer gap analysis, hypothesis testing, and robustness classification.
+# **Phase:** 3 - Experiments
 #
-# **Dependencies:**
-# - Berlin ML and NN champions from 03b
-# - Leipzig test data from 03a
-# - Berlin evaluation results from 03b
+# **Step:** 03c - Transfer Evaluation
 #
-# **Outputs:**
-# - `transfer_evaluation.json` - Complete transfer analysis
-# - Transfer figures (confusion comparison, per-genus, robustness)
+# **Purpose:** Evaluate zero-shot Berlin-to-Leipzig transfer performance and export transfer metrics.
 #
-# ---
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_3_experiments`
 #
-# **RUNTIME REQUIREMENTS:**
-# - CPU: Standard (12GB RAM sufficient)
-# - GPU: Not required (only inference, no training)
-# - Time: ~10-20 minutes
+# **Output:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_3_experiments`
 #
-# **KEY INSIGHT:** Leipzig from-scratch baseline uses Leipzig-specific scaler for fair comparison!
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+#
+# Runner notebooks execute data processing only: input -> processing -> output.
+# No analysis, no interpretation. They should be deterministic and repeatable.
 
 # %%
-# ============================================================
-# INSTALLATION
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -59,26 +58,26 @@ if not token:
     )
 
 # Install package from GitHub
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
-print("✅ Package installed successfully")
+print("OK: Package installed")
 
 # %%
-# ============================================================
-# GOOGLE DRIVE MOUNT
-# ============================================================
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("✅ Google Drive mounted")
+print("OK: Google Drive mounted")
 
 # %%
-# ============================================================
-# IMPORTS & INITIALIZATION
-# ============================================================
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 
 from pathlib import Path
 from datetime import datetime, timezone
@@ -110,12 +109,12 @@ warnings.filterwarnings("ignore", category=UserWarning)
 log = ExecutionLog("03c_transfer_evaluation")
 start_time = time.time()
 
-print("✅ Imports complete")
+print("OK: Imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 DATA_DIR = DRIVE_DIR / "data"
@@ -149,9 +148,9 @@ if existing_eval_path.exists():
 
 
 # %%
-# ============================================================
-# SECTION 1: Load Berlin Models & Metadata
-# ============================================================
+# ============================================================================
+# 5. LOAD BERLIN MODELS AND METADATA
+# ============================================================================
 
 log.start_step("Load Berlin Models")
 
@@ -271,9 +270,9 @@ except Exception as e:
 # No additional filtering needed here!
 
 # %%
-# ============================================================
-# SECTION 2: Load Leipzig Test Data
-# ============================================================
+# ============================================================================
+# 6. LOAD LEIPZIG TEST DATA
+# ============================================================================
 
 log.start_step("Load Leipzig Data")
 
@@ -349,9 +348,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 3: Zero-Shot Evaluation (ML Champion)
-# ============================================================
+# ============================================================================
+# 7. ZERO-SHOT EVALUATION (ML CHAMPION)
+# ============================================================================
 
 log.start_step("Zero-Shot ML Evaluation")
 
@@ -389,9 +388,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 4: Transfer Gap Analysis
-# ============================================================
+# ============================================================================
+# 8. TRANSFER GAP ANALYSIS
+# ============================================================================
 
 log.start_step("Transfer Gap Analysis")
 
@@ -419,9 +418,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 5: Leipzig From-Scratch Baseline (M5)
-# ============================================================
+# ============================================================================
+# 9. LEIPZIG FROM-SCRATCH BASELINE (M5)
+# ============================================================================
 
 log.start_step("Leipzig From-Scratch Baseline")
 
@@ -473,9 +472,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 6: Feature Stability Analysis
-# ============================================================
+# ============================================================================
+# 10. FEATURE STABILITY ANALYSIS
+# ============================================================================
 
 log.start_step("Feature Stability")
 
@@ -537,9 +536,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 7: Per-Genus Transfer Robustness (6.3)
-# ============================================================
+# ============================================================================
+# 11. PER-GENUS TRANSFER ROBUSTNESS (6.3)
+# ============================================================================
 
 log.start_step("Per-Genus Robustness")
 
@@ -596,9 +595,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 8: Hypothesis Testing (6.1)
-# ============================================================
+# ============================================================================
+# 12. HYPOTHESIS TESTING (6.1)
+# ============================================================================
 
 log.start_step("Hypothesis Testing")
 
@@ -682,9 +681,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 9: NN Champion Evaluation (if exists)
-# ============================================================
+# ============================================================================
+# 13. NN CHAMPION EVALUATION (IF EXISTS)
+# ============================================================================
 
 log.start_step("NN Champion Evaluation")
 
@@ -757,9 +756,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 11: Save Results
-# ============================================================
+# ============================================================================
+# 14. SAVE RESULTS
+# ============================================================================
 
 log.start_step("Save Results")
 
@@ -832,9 +831,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 12: Save Execution Log
-# ============================================================
+# ============================================================================
+# 15. SAVE EXECUTION LOG
+# ============================================================================
 
 log.start_step("Save Execution Log")
 
@@ -886,12 +885,12 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
+# ============================================================================
 # SUMMARY
-# ============================================================
+# ============================================================================
 
 print("\n" + "=" * 70)
-print("NOTEBOOK COMPLETE: 03c Transfer Evaluation")
+print("OK: NOTEBOOK COMPLETE")
 print("=" * 70)
 
 print(f"\nRuntime: {elapsed/60:.1f} minutes")

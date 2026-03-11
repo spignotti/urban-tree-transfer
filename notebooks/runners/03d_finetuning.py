@@ -14,37 +14,35 @@
 # ---
 
 # %% [markdown]
-# # 03d Fine-tuning
+# # Urban Tree Transfer - Runner Notebook
 #
-# **Phase 3.4 - Warm-Start Fine-Tuning on Leipzig Data**
+# **Title:** Fine-Tuning
 #
-# This notebook performs warm-start fine-tuning of Berlin champions on Leipzig data with incremental sample fractions, analyzing:
-# - ML champion fine-tuning (warm-start XGBoost)
-# - NN champion fine-tuning (warm-start CNN1D)
-# - From-scratch baselines for comparison
-# - McNemar significance tests
-# - Power-law curve fitting for 95% recovery extrapolation
-# - Per-genus recovery analysis
+# **Phase:** 3 - Experiments
 #
-# **Dependencies:** Requires Berlin champions from 03b, Leipzig data from 03a, transfer evaluation from 03c.
+# **Step:** 03d - Fine-Tuning
 #
-# **Output:** Creates `finetuning_curve.json` with learning curves, significance tests, and per-genus recovery analysis.
+# **Purpose:** Fine-tune Berlin champion models on Leipzig data and export sample-efficiency results.
 #
-# ---
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_3_experiments`
 #
-# **RUNTIME REQUIREMENTS:**
-# - CPU: Standard (12GB RAM sufficient with float32)
-# - GPU: Recommended for NN fine-tuning (not required)
-# - High-RAM: Optional (for comfort)
+# **Output:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_3_experiments`
 #
-# **IMPORTANT:** Test set is scaled with Berlin scaler for transfer learning evaluation (warm-start). From-scratch baseline uses Leipzig-specific scaler for fair comparison.
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+#
+# Runner notebooks execute data processing only: input -> processing -> output.
+# No analysis, no interpretation. They should be deterministic and repeatable.
 
 # %%
-# ============================================================
-# INSTALLATION
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -60,29 +58,29 @@ if not token:
     )
 
 # Install package from GitHub
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 # Install PyTorch for neural network fine-tuning
 subprocess.run(["pip", "install", "torch>=2.2.0", "-q"], check=True)
 
-print("✅ Package installed successfully")
+print("OK: Package installed")
 
 # %%
-# ============================================================
-# GOOGLE DRIVE MOUNT
-# ============================================================
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("✅ Google Drive mounted")
+print("OK: Google Drive mounted")
 
 # %%
-# ============================================================
-# IMPORTS & INITIALIZATION
-# ============================================================
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 
 from pathlib import Path
 from datetime import datetime, timezone
@@ -111,12 +109,12 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 log = ExecutionLog("03d_finetuning")
 
-print("✅ Imports complete")
+print("OK: Imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 DATA_DIR = DRIVE_DIR / "data"
@@ -151,9 +149,9 @@ if existing_curve_path.exists():
 
 
 # %%
-# ============================================================
-# SECTION 1: Load Models & Metadata
-# ============================================================
+# ============================================================================
+# 5. LOAD MODELS AND METADATA
+# ============================================================================
 
 log.start_step("Load Models & Metadata")
 
@@ -242,9 +240,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 2: Load Leipzig Data
-# ============================================================
+# ============================================================================
+# 6. LOAD LEIPZIG DATA
+# ============================================================================
 
 log.start_step("Load Leipzig Data")
 
@@ -318,9 +316,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 3: ML Fine-Tuning (Warm-Start)
-# ============================================================
+# ============================================================================
+# 7. ML FINE-TUNING (WARM-START)
+# ============================================================================
 
 log.start_step("ML Fine-Tuning")
 
@@ -446,9 +444,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 4: NN Fine-Tuning (Warm-Start)
-# ============================================================
+# ============================================================================
+# 8. NN FINE-TUNING (WARM-START)
+# ============================================================================
 
 log.start_step("NN Fine-Tuning")
 
@@ -567,9 +565,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 5: From-Scratch Baselines
-# ============================================================
+# ============================================================================
+# 9. FROM-SCRATCH BASELINES
+# ============================================================================
 
 log.start_step("From-Scratch Baselines")
 
@@ -639,9 +637,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 6: McNemar Significance Tests
-# ============================================================
+# ============================================================================
+# 10. MCNEMAR SIGNIFICANCE TESTS
+# ============================================================================
 
 log.start_step("McNemar Tests")
 
@@ -690,9 +688,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 7: Power-Law Curve Fitting
-# ============================================================
+# ============================================================================
+# 11. POWER-LAW CURVE FITTING
+# ============================================================================
 
 log.start_step("Power-Law Curve Fitting")
 
@@ -753,9 +751,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 8: Per-Genus Recovery Analysis
-# ============================================================
+# ============================================================================
+# 12. PER-GENUS RECOVERY ANALYSIS
+# ============================================================================
 
 log.start_step("Per-Genus Recovery")
 
@@ -804,9 +802,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 9: Hypothesis H4 - Fine-Tuning Efficiency
-# ============================================================
+# ============================================================================
+# 13. HYPOTHESIS H4 - FINE-TUNING EFFICIENCY
+# ============================================================================
 
 log.start_step("Hypothesis H4")
 
@@ -912,9 +910,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION 10: Save Results
-# ============================================================
+# ============================================================================
+# 14. SAVE RESULTS
+# ============================================================================
 
 log.start_step("Save Results")
 
@@ -989,9 +987,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 11: Save Execution Log
-# ============================================================
+# ============================================================================
+# 15. SAVE EXECUTION LOG
+# ============================================================================
 
 log.start_step("Save Execution Log")
 
@@ -1037,12 +1035,12 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
+# ============================================================================
 # SUMMARY
-# ============================================================
+# ============================================================================
 
 print("\n" + "=" * 70)
-print("NOTEBOOK COMPLETE: 03d Fine-tuning")
+print("OK: NOTEBOOK COMPLETE")
 print("=" * 70)
 
 print(f"\nModels:")
