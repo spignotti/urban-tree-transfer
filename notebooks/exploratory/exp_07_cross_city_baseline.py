@@ -14,30 +14,42 @@
 # ---
 
 # %% [markdown]
-# # exp_07: Cross-City Baseline Analysis
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Phase 3 - Exploratory Analysis (Optional)**
+# **Title:** Cross-City Baseline Analysis
 #
-# Descriptive analysis of domain shift between Berlin and Leipzig datasets **before** training. Generates hypotheses for transfer evaluation (03c) by quantifying:
-# - Class distribution differences
-# - Phenological profile divergence
-# - Structural differences (CHM)
-# - Feature distribution overlap
-# - Statistical effect sizes (Cohen's d)
-# - Correlation structure similarity
+# **Phase:** 3 - Experiments
 #
-# **Note:** This notebook is **purely descriptive** — no training, no JSON outputs. Results inform interpretation of transfer experiments but are not used for decisions.
+# **Topic:** Berlin-Leipzig Baseline Shift Analysis
+#
+# **Research Question:**
+# What descriptive differences between Berlin and Leipzig datasets help explain downstream transfer behavior before any model training?
+#
+# **Key Findings:**
+# - The notebook provides descriptive, pre-training domain-shift analysis.
+# - Results are intended for interpretation, not downstream configuration.
+# - No JSON decision artifact is exported from this notebook.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_splits`
+#
+# **Output:** Descriptive console output plus notebook execution log
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended (for correlation matrix on full feature set)
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -53,21 +65,25 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import RANDOM_SEED
 from urban_tree_transfer.experiments import (
     data_loading,
@@ -90,9 +106,9 @@ warnings.filterwarnings("ignore", category=UserWarning)
 print("OK: Package imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_splits"
@@ -109,9 +125,9 @@ print(f"Logs:                   {LOGS_DIR}")
 print(f"Random seed:            {RANDOM_SEED}")
 
 # %%
-# ============================================================
-# SECTION 1: Data Loading & Memory Optimization
-# ============================================================
+# ============================================================================
+# 5. DATA LOADING AND MEMORY OPTIMIZATION
+# ============================================================================
 
 log.start_step("Data Loading")
 
@@ -137,3 +153,26 @@ print(f"  Converted {len(float_cols)} float columns to float32")
 
 log.end_step(status="success", records=len(berlin_train) + len(leipzig_finetune))
 
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log.save(LOGS_DIR / f"{log.notebook}_execution.json")
+
+analysis_files = []
+config_files = []
+
+print("\n" + "=" * 60)
+print(f"{'EXPORT MANIFEST':^60}")
+print("=" * 60)
+print("\nAnalysis data:")
+for file_path in sorted(analysis_files):
+    print(f"  {file_path.name}")
+print("\nConfig files:")
+for file_path in sorted(config_files):
+    print(f"  {file_path.name}")
+print("\n" + "=" * 60)
+print("\nOK: NOTEBOOK COMPLETE")

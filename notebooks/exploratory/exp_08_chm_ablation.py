@@ -14,22 +14,42 @@
 # ---
 
 # %% [markdown]
-# # exp_08: CHM Ablation
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Phase 3.1 - Setup Fixation**
+# **Title:** CHM Ablation
 #
-# Determines optimal CHM strategy by testing 5 variants (no_chm, zscore_only, percentile_only, both_engineered, raw_chm) with Random Forest baseline.
+# **Phase:** 3 - Experiments
+#
+# **Topic:** CHM Strategy Selection
+#
+# **Research Question:**
+# Which CHM feature strategy yields the best baseline performance for setup fixation in Phase 3?
+#
+# **Key Findings:**
+# - Multiple CHM variants are compared with a Random Forest baseline.
+# - A setup decision is exported to `setup_decisions.json`.
+# - The notebook supports downstream setup fixation in `03a_setup_fixation.ipynb`.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_splits`
+#
+# **Output:** CHM decision written into `setup_decisions.json`
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Not required
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -45,21 +65,25 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import RANDOM_SEED, load_experiment_config
 from urban_tree_transfer.experiments import (
     ablation,
@@ -86,9 +110,9 @@ warnings.filterwarnings("ignore", category=UserWarning)
 print("OK: Package imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_splits"
@@ -114,9 +138,9 @@ print(f"CV folds:               {config['global']['cv_folds']}")
 print(f"CHM variants to test:   {len(variants)}")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 1: Data Loading & Memory Optimization
-# ============================================================
+# ============================================================================
 
 log.start_step("Data Loading")
 
@@ -141,9 +165,9 @@ else:
 log.end_step(status="success", records=len(train_df) + len(val_df) + len(test_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 2: CHM Ablation Experiment
-# ============================================================
+# ============================================================================
 
 log.start_step("CHM Ablation Experiment")
 
@@ -221,9 +245,9 @@ print(results_df.to_string(index=False))
 log.end_step(status="success", records=len(results_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 3: Feature Importance Analysis
-# ============================================================
+# ============================================================================
 
 log.start_step("Feature Importance Analysis")
 
@@ -249,9 +273,9 @@ for feature in ["CHM_1m", "CHM_1m_zscore", "CHM_1m_percentile"]:
 log.end_step(status="success", records=len(importance_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 4: Per-Feature Decision Logic
-# ============================================================
+# ============================================================================
 
 log.start_step("Per-Feature Decision Logic")
 
@@ -344,9 +368,9 @@ print("=" * 80)
 log.end_step(status="success")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 6: Save Decision to JSON
-# ============================================================
+# ============================================================================
 
 log.start_step("Save CHM Decision")
 
@@ -381,3 +405,26 @@ print(f"   (when all strategies are complete: CHM, Proximity, Outlier, Features)
 
 log.end_step(status="success")
 
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log.save(LOGS_DIR / f"{log.notebook}_execution.json")
+
+analysis_files = []
+config_files = [setup_path] if setup_path.exists() else []
+
+print("\n" + "=" * 60)
+print(f"{'EXPORT MANIFEST':^60}")
+print("=" * 60)
+print("\nAnalysis data:")
+for file_path in sorted(analysis_files):
+    print(f"  {file_path.name}")
+print("\nConfig files:")
+for file_path in sorted(config_files):
+    print(f"  {file_path.name}")
+print("\n" + "=" * 60)
+print("\nOK: NOTEBOOK COMPLETE")

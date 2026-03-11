@@ -14,26 +14,42 @@
 # ---
 
 # %% [markdown]
-# # exp_11: Algorithm Comparison
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Phase 3.2 - Algorithm Selection**
+# **Title:** Algorithm Comparison
 #
-# Compares multiple algorithms (baselines + ML models + optional NN models) using the optimized setup from Phase 3.1. Performs coarse grid search for ML models to find champions.
+# **Phase:** 3 - Experiments
 #
-# **Dependencies:** Requires `setup_decisions.json` from exp_09 (complete setup with selected features) and `genus_selection_final.json` from exp_10 (final genus list).
+# **Topic:** Baseline and Model Family Selection
 #
-# **Output:** Creates `algorithm_comparison.json` with results and identified ML/NN champions for hyperparameter tuning.
+# **Research Question:**
+# Which baseline, machine-learning, and neural-network algorithms are strong enough to advance into Phase 3 tuning and transfer experiments?
+#
+# **Key Findings:**
+# - Multiple algorithm families are compared under the fixed Phase 3 setup.
+# - The notebook identifies ML and NN champions for later tuning.
+# - Results are exported to `algorithm_comparison.json`.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_splits`
+#
+# **Output:** `algorithm_comparison.json` with champion selections
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard) or High-RAM for grid search
 # GPU: Optional (speeds up NN models)
 # High-RAM: Recommended for large grid searches
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -49,7 +65,7 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 # Install PyTorch separately (required for neural network models)
@@ -59,15 +75,19 @@ print("OK: Package installed (including PyTorch for neural networks)")
 
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import RANDOM_SEED, load_experiment_config
 from urban_tree_transfer.experiments import (
     ablation,
@@ -99,9 +119,9 @@ warnings.filterwarnings("ignore", category=UserWarning)
 print("OK: Package imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_splits"
@@ -124,9 +144,9 @@ print(f"Random seed:            {RANDOM_SEED}")
 print(f"CV folds:               {config['global']['cv_folds']}")
 
 # %%
-# ============================================================
-# SECTION 2: Load Datasets
-# ============================================================
+# ============================================================================
+# 5. LOAD DATASETS
+# ============================================================================
 
 log.start_step("Load Datasets")
 
@@ -204,9 +224,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION 1b: Apply Genus Selection
-# ============================================================
+# ============================================================================
+# 6. APPLY GENUS SELECTION
+# ============================================================================
 
 log.start_step("Apply Genus Selection")
 
@@ -294,9 +314,9 @@ log.end_step(status="success", records=len(train_df))
 
 
 # %%
-# ============================================================
-# SECTION 2: Baseline Models
-# ============================================================
+# ============================================================================
+# 7. BASELINE MODELS
+# ============================================================================
 
 log.start_step("Baseline Models")
 
@@ -346,9 +366,9 @@ gc.collect()
 log.end_step(status="success", records=len(results))
 
 # %%
-# ============================================================
-# SECTION 3: ML Models (Grid Search)
-# ============================================================
+# ============================================================================
+# 8. ML MODELS (GRID SEARCH)
+# ============================================================================
 
 log.start_step("ML Models Grid Search")
 
@@ -417,9 +437,9 @@ for model_name in ["random_forest", "xgboost"]:
 log.end_step(status="success", records=len(results) - 2)  # Subtract baselines
 
 # %%
-# ============================================================
-# SECTION 4: Neural Network Models
-# ============================================================
+# ============================================================================
+# 9. NEURAL NETWORK MODELS
+# ============================================================================
 
 log.start_step("Neural Network Models")
 
@@ -510,9 +530,9 @@ log.end_step(status="success")
 
 
 # %%
-# ============================================================
-# SECTION 5: Results Analysis & Champion Selection
-# ============================================================
+# ============================================================================
+# 10. RESULTS ANALYSIS AND CHAMPION SELECTION
+# ============================================================================
 
 log.start_step("Results Analysis")
 
@@ -563,9 +583,9 @@ if nn_champion:
 log.end_step(status="success")
 
 # %%
-# ============================================================
-# SECTION 7: Save Results & Validate
-# ============================================================
+# ============================================================================
+# N. DECISION
+# ============================================================================
 
 log.start_step("Save Results")
 
@@ -599,3 +619,26 @@ except Exception as e:
 
 log.end_step(status="success")
 
+
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log_path = LOGS_DIR / f"{log.notebook}_execution.json"
+log.save(log_path)
+print(f"Execution log saved: {log_path}")
+
+config_files = [algo_path] if algo_path.exists() else []
+
+print("\n" + "=" * 70)
+print("OK: NOTEBOOK COMPLETE")
+print("=" * 70)
+print(f"\nML Champion: {ml_champion.get('algorithm', 'none')}")
+print(f"NN Champion: {nn_champion.get('algorithm', 'none')}")
+print("\nEXPORT MANIFEST:")
+for file_path in sorted(config_files):
+    print(f"  - Config: {file_path}")
+print(f"  - Logs: {log_path}")

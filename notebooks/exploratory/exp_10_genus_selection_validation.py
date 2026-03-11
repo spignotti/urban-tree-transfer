@@ -12,35 +12,43 @@
 #     name: python3
 # ---
 
-# %% [markdown] id="nVP7bQwfsIlt"
-# # exp_10: Genus Selection Validation
+# %% [markdown]
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Purpose:** Validate genus sample counts after applying setup decisions and define final genus classes for Phase 3.
+# **Title:** Genus Selection Validation
 #
-# **Approach:**
-# 1. Load setup decisions from exp_09 (CHM, proximity, outlier, feature selection)
-# 2. Apply all filtering strategies to all Phase 2 splits
-# 3. Validate sample counts across all splits (≥500 per genus in both cities)
-# 4. Compute JM-based separability on **Berlin train only** (no leakage)
-# 5. Group poorly separable genera using hierarchical clustering
-# 6. Validate split stratification after grouping (KL-divergence)
-# 7. Extend `setup_decisions.json` with `genus_selection`
+# **Phase:** 3 - Experiments
 #
-# **Output:**
-# - Updates `setup_decisions.json` (genus_selection section)
-# - Figures: `genus_sample_counts.png`, `jm_separability_heatmap.png`, `jm_dendrogram.png`, `genus_groups_overview.png`
+# **Topic:** Final Genus Class Definition
 #
+# **Research Question:**
+# Which genera remain viable after applying all setup decisions, and which grouped final classes should be carried into Phase 3 model experiments?
+#
+# **Key Findings:**
+# - The notebook validates genus counts after applying setup decisions.
+# - JM-based separability is used to group poorly separable genera.
+# - `setup_decisions.json` is extended with final `genus_selection` metadata.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_splits`
+#
+# **Output:** Extended `setup_decisions.json` plus genus-selection figures
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="Xh_DviNesIlw" outputId="42c9a06f-1977-4c56-bd11-e99b50b8c153"
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# %%
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended (for hierarchical clustering)
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -56,22 +64,26 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="1kKs9Uo2sIly" outputId="d880691a-afde-418d-99ca-e49b226f260b"
-# Mount Google Drive for data files
+# %%
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="zEWDUVpFsIly" outputId="79e950ff-e651-447e-83e6-f83f86246b66"
-# Package imports
+# %%
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import MIN_SAMPLES_PER_GENUS, RANDOM_SEED, load_experiment_config
 from urban_tree_transfer.experiments import ablation, data_loading
 from urban_tree_transfer.utils import ExecutionLog
@@ -94,10 +106,10 @@ warnings.filterwarnings("ignore", category=UserWarning)
 print("OK: Package imports complete")
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="EhUhYIJLsIlz" outputId="dda80409-1c36-4137-d39a-4b4815e03c0f"
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# %%
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_splits"
@@ -125,13 +137,13 @@ print(f"Random seed:            {RANDOM_SEED}")
 print(f"Min samples per genus:  {MIN_SAMPLES}")
 
 
-# %% [markdown] id="3w-kbWKesIl0"
-# # ============================================================
-# # SECTION 1: Load Setup Decisions & All Splits
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # 5. LOAD SETUP DECISIONS AND ALL SPLITS
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="t2eWKxdasIl0" outputId="a9b090a4-d927-4c6b-9ee9-93151e8020b6"
+# %%
 log.start_step("Load Setup & Data")
 
 # Load setup decisions from exp_09
@@ -166,13 +178,13 @@ print(f"   Selected Features: {len(setup_config['selected_features'])}")
 log.end_step(status="success")
 
 
-# %% [markdown] id="pk4T2S_MsIl0"
-# # ============================================================
-# # SECTION 2: Apply Setup Decisions to All Splits
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # 6. APPLY SETUP DECISIONS TO ALL SPLITS
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="AzAJVWYUsIl1" outputId="f44b2859-1b4b-476a-ce27-b26b026dcd5c"
+# %%
 log.start_step("Apply Setup Decisions")
 
 print("Applying setup decisions to all splits...")
@@ -217,13 +229,13 @@ print(f"   Total processed samples: {sum(len(df) for df in processed_splits.valu
 log.end_step(status="success")
 
 
-# %% [markdown] id="EF9EzVEWsIl1"
-# # ============================================================
-# # SECTION 3: Sample Count Validation (All Splits)
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # 7. SAMPLE COUNT VALIDATION (ALL SPLITS)
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="685anOpysIl2" outputId="e9790133-7665-4f8b-a3f3-990c4faa76c7"
+# %%
 log.start_step("Sample Count Validation")
 
 print("Validating sample counts across ALL splits...\n")
@@ -271,13 +283,13 @@ if excluded_genera:
 log.end_step(status="success")
 
 
-# %% [markdown] id="_0jkAfhnsIl2"
-# # ============================================================
-# # SECTION 4: Genus Separability Analysis (Berlin Train Only)
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # 8. GENUS SEPARABILITY ANALYSIS (BERLIN TRAIN ONLY)
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="7fjhuHgHsIl3" outputId="e46c7c1f-138e-4256-b8cb-6f3f7d849c73"
+# %%
 log.start_step("Separability Analysis")
 
 # Filter to viable genera only (Berlin train only for JM analysis)
@@ -294,7 +306,7 @@ print("\n✅ Using Berlin train only for JM separability analysis")
 log.end_step(status="success")
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="TxQC8zqasIl3" outputId="4e1ae093-7c37-46b9-e3e6-a141e57d9408"
+# %%
 # JM distance implementation (Bhattacharyya → Jeffries-Matusita)
 
 def bhattacharyya_distance(X_i: np.ndarray, X_j: np.ndarray) -> float:
@@ -387,13 +399,13 @@ print("\nJM Statistics:")
 for k, v in jm_stats.items():
     print(f"  {k:>6}: {v:.3f}")
 
-# %% [markdown] id="zj-rgv3ssIl4"
-# # ============================================================
-# # SECTION 5: Hierarchical Clustering & Grouping
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # 9. HIERARCHICAL CLUSTERING AND GROUPING
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="aHi3849usIl5" outputId="25fdac3e-0d45-4e27-ac60-aec46c3283ee"
+# %%
 # Use JM distances directly (Lower JM = more similar = closer in clustering)
 clustering_distances = jm_matrix.values.copy()
 np.fill_diagonal(clustering_distances, 0) # Ensure diagonal is strictly zero
@@ -511,13 +523,13 @@ else:
 # to separate spectrally. If a group is marked as mixed here, that is a warning
 # for later conifer/deciduous analysis rather than a reason to change grouping.
 
-# %% [markdown] id="QrqIAcRasIl6"
-# # ============================================================
-# # SECTION 6: Create Final Genus List
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # 10. CREATE FINAL GENUS LIST
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="ld14v_P6sIl6" outputId="e77adbc7-243f-4dbd-9382-f6deeafea2b2"
+# %%
 # Create final genus list (replace grouped genera with group names)
 final_genera_list = []
 genus_to_final = {}
@@ -575,7 +587,7 @@ print("\n✅ German name mapping created")
 print(f"   Mapped classes: {len(genus_german_mapping)}")
 
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="YqsL_eRUsIl7" outputId="88678108-f876-42c4-8299-aa28b22ecbbb"
+# %%
 # Calculate sample counts for final classes (Berlin train + Leipzig finetune)
 print("Calculating sample counts for final classes...")
 
@@ -604,13 +616,13 @@ print(final_counts_df.to_string())
 print(f"Total samples (train+finetune): {final_counts_df['Total'].sum():,}")
 
 
-# %% [markdown] id="QVhtJ-UwsIl7"
-# # ============================================================
-# # SECTION 7: Validate Split Stratification (KL-Divergence)
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # 11. VALIDATE SPLIT STRATIFICATION (KL-DIVERGENCE)
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="ENYWEnLcsIl8" outputId="a786aa90-717f-4af1-f1c3-65f9684703c0"
+# %%
 log.start_step("KL-Divergence Validation")
 
 print("Validating that genus filtering maintains split stratification...\n")
@@ -687,13 +699,13 @@ else:
 log.end_step(status="success")
 
 
-# %% [markdown] id="UZJMtJ2GsIl8"
-# # ============================================================
-# # SECTION 8: Export Final Configuration
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # N. DECISION
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="UrQ-7JvRsIl9" outputId="db27ecc3-4525-4740-9165-11cc82fd4568"
+# %%
 # Build final configuration JSON
 output_config = {
     "version": "2.0",
@@ -769,13 +781,13 @@ print(f"   Total samples retained: {sum(len(df) for df in splits_mapped.values()
 print(f"   Retention rate: {output_config['impact_assessment']['retention_rate'] * 100:.1f}%")
 
 
-# %% [markdown] id="KwPXYYb-sIl9"
-# # ============================================================
-# # SECTION 9: Summary & Next Steps
-# # ============================================================
+# %% [markdown]
+# # ============================================================================
+# # FINDINGS SUMMARY
+# # ============================================================================
 #
 
-# %% colab={"base_uri": "https://localhost:8080/"} id="4K_KnnsZsIl9" outputId="57cb9ba9-93a4-456a-896b-9d2d0fc1b212"
+# %%
 # Save execution log
 log.summary()
 log_path = LOGS_DIR / f"{log.notebook}_execution.json"
@@ -783,7 +795,7 @@ log.save(log_path)
 print(f"Execution log saved: {log_path}")
 
 print("=" * 80)
-print("GENUS SELECTION VALIDATION - COMPLETE")
+print("OK: NOTEBOOK COMPLETE")
 print("=" * 80)
 
 print("\nResults:")
@@ -792,12 +804,13 @@ print(f"   Viable after setup decisions: {len(viable_genera)}")
 print(f"   Final classes (after grouping): {len(final_genera_list)}")
 print(f"   Samples retained: {output_config['impact_assessment']['retention_rate'] * 100:.1f}%")
 
-print("\nOutputs:")
-print("   • Extended setup_decisions.json (genus_selection section)")
+print("\nEXPORT MANIFEST:")
+print(f"   • {setup_path.name}")
 print("   • genus_sample_counts.png")
 print("   • jm_separability_heatmap.png")
 print("   • jm_dendrogram.png")
 print("   • genus_groups_overview.png")
+print(f"   • {log_path}")
 
 print("\nNext Steps:")
 print("   1. Review genus groups for biological plausibility")

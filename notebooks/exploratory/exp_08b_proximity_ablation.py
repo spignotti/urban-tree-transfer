@@ -14,24 +14,42 @@
 # ---
 
 # %% [markdown]
-# # exp_08b: Proximity Filter Ablation
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Phase 3.1 - Setup Fixation**
+# **Title:** Proximity Filter Ablation
 #
-# Determines optimal proximity filter strategy (baseline vs filtered) by testing with CHM decision from exp_08.
+# **Phase:** 3 - Experiments
 #
-# **Dependencies:** Requires `setup_decisions.json` from exp_08 (CHM strategy).
+# **Topic:** Proximity Strategy Selection
+#
+# **Research Question:**
+# Should Phase 3 setup fixation use baseline or filtered proximity handling after the CHM strategy has been fixed?
+#
+# **Key Findings:**
+# - Baseline and filtered proximity variants are compared directly.
+# - The chosen strategy is written back into `setup_decisions.json`.
+# - Results feed directly into `03a_setup_fixation.ipynb`.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_splits`
+#
+# **Output:** Proximity decision written into `setup_decisions.json`
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Not required
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -47,21 +65,25 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import RANDOM_SEED, load_experiment_config
 from urban_tree_transfer.experiments import (
     ablation,
@@ -91,9 +113,9 @@ warnings.filterwarnings("ignore", category=UserWarning)
 print("OK: Package imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_splits"
@@ -119,9 +141,9 @@ print(f"CV folds:               {config['global']['cv_folds']}")
 print(f"Proximity variants:     {len(variants)}")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 1: Load CHM Decision from exp_08
-# ============================================================
+# ============================================================================
 
 log.start_step("Load CHM Decision")
 
@@ -152,9 +174,9 @@ print(f"\nThis CHM strategy will be applied to BOTH proximity variants.")
 log.end_step(status="success")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 2: Proximity Ablation Experiment
-# ============================================================
+# ============================================================================
 
 log.start_step("Proximity Ablation Experiment")
 
@@ -247,9 +269,9 @@ print(results_df.to_string(index=False))
 log.end_step(status="success", records=len(results_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 3: Decision Logic
-# ============================================================
+# ============================================================================
 
 log.start_step("Decision Logic")
 
@@ -325,9 +347,9 @@ print("=" * 70)
 log.end_step(status="success")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 5: Update setup_decisions.json
-# ============================================================
+# ============================================================================
 
 log.start_step("Update Setup Decisions")
 
@@ -361,3 +383,26 @@ print(f"   (when all strategies are complete: CHM, Proximity, Outlier, Features)
 
 log.end_step(status="success")
 
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log.save(LOGS_DIR / f"{log.notebook}_execution.json")
+
+analysis_files = []
+config_files = [setup_path] if setup_path.exists() else []
+
+print("\n" + "=" * 60)
+print(f"{'EXPORT MANIFEST':^60}")
+print("=" * 60)
+print("\nAnalysis data:")
+for file_path in sorted(analysis_files):
+    print(f"  {file_path.name}")
+print("\nConfig files:")
+for file_path in sorted(config_files):
+    print(f"  {file_path.name}")
+print("\n" + "=" * 60)
+print("\nOK: NOTEBOOK COMPLETE")

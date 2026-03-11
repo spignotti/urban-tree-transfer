@@ -14,26 +14,42 @@
 # ---
 
 # %% [markdown]
-# # exp_09: Feature Reduction
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Phase 3.1 - Setup Fixation (Final Step)**
+# **Title:** Feature Reduction
 #
-# Determines optimal feature subset by testing different k values with all prior decisions applied (CHM + Proximity + Outlier). Uses Pareto optimization to balance F1 performance vs model simplicity.
+# **Phase:** 3 - Experiments
 #
-# **Dependencies:** Requires `setup_decisions.json` from exp_08, exp_08b, and exp_08c (CHM + Proximity + Outlier strategies).
+# **Topic:** Final Feature Subset Selection
 #
-# **Output:** Completes `setup_decisions.json` with `feature_set` and `selected_features` for Phase 3.2+ experiments.
+# **Research Question:**
+# Which feature subset size best balances predictive performance and model simplicity after CHM, proximity, and outlier strategies are fixed?
+#
+# **Key Findings:**
+# - Candidate feature-set sizes are evaluated with prior setup decisions applied.
+# - The final feature subset is written into `setup_decisions.json`.
+# - This notebook completes the Phase 3 setup-decision chain.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_splits`
+#
+# **Output:** Completed `setup_decisions.json` with selected features
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended (feature importance on full dataset)
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -49,21 +65,25 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import RANDOM_SEED, load_experiment_config
 from urban_tree_transfer.experiments import (
     ablation,
@@ -93,9 +113,9 @@ warnings.filterwarnings("ignore", category=UserWarning)
 print("OK: Package imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_splits"
@@ -120,9 +140,9 @@ print(f"CV folds:               {config['global']['cv_folds']}")
 print(f"Candidate k values:     {candidate_k}")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 1: Load All Prior Decisions
-# ============================================================
+# ============================================================================
 
 log.start_step("Load Prior Decisions")
 
@@ -159,9 +179,9 @@ print(f"\nAll decisions will be applied to prepare final dataset.")
 log.end_step(status="success")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 2: Prepare Final Dataset with All Decisions
-# ============================================================
+# ============================================================================
 
 log.start_step("Prepare Final Dataset")
 
@@ -205,9 +225,9 @@ print(f"  Features: {len(feature_cols)}")
 log.end_step(status="success", records=len(train_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 3: Feature Importance Analysis
-# ============================================================
+# ============================================================================
 
 log.start_step("Feature Importance Analysis")
 
@@ -249,9 +269,9 @@ gc.collect()
 log.end_step(status="success", records=len(importance_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 4: Feature Subset Evaluation
-# ============================================================
+# ============================================================================
 
 log.start_step("Feature Subset Evaluation")
 
@@ -306,9 +326,9 @@ print(results_df.to_string(index=False))
 log.end_step(status="success", records=len(results_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 5: Pareto Optimization
-# ============================================================
+# ============================================================================
 
 log.start_step("Pareto Optimization")
 
@@ -350,9 +370,9 @@ print("=" * 70)
 log.end_step(status="success")
 
 # %%
-# ============================================================
-# SECTION 6: Complete setup_decisions.json
-# ============================================================
+# ============================================================================
+# N. DECISION
+# ============================================================================
 
 log.start_step("Complete Setup Decisions")
 
@@ -402,9 +422,9 @@ print(f"\n✅ Phase 3.1 Setup Fixation COMPLETE")
 log.end_step(status="success")
 
 # %%
-# ============================================================
-# SECTION 7: Summary & Next Steps
-# ============================================================
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
 
 # Save execution log
 log.summary()
@@ -413,7 +433,7 @@ log.save(log_path)
 print(f"Execution log saved: {log_path}")
 
 print("\n" + "=" * 70)
-print("EXPERIMENT COMPLETE: exp_09 Feature Reduction")
+print("OK: NOTEBOOK COMPLETE")
 print("=" * 70)
 print(f"\nFinal Setup:")
 print(f"  CHM: {chm_strategy} ({len(chm_features) if chm_features else 0} features)")
@@ -421,8 +441,8 @@ print(f"  Proximity: {proximity_strategy}")
 print(f"  Outlier: {outlier_strategy}")
 print(f"  Feature Set: {selected_k} features selected")
 print(f"  Val F1: {selected_f1:.4f} ± {optimal_row['val_f1_std']:.4f}")
-print(f"\nOutputs:")
-print(f"  - JSON: {setup_path} (✅ validated)")
+print(f"\nEXPORT MANIFEST:")
+print(f"  - Config: {setup_path}")
 print(f"  - Logs: {log_path}")
 print(f"\nNext Steps:")
 print(f"  1. Review Pareto curve and feature importance plots")
