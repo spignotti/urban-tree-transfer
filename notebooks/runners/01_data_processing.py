@@ -13,21 +13,46 @@
 #     name: python3
 # ---
 
-# %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
-# Required: CPU (Standard)
-# GPU: Not required
-# High-RAM: Recommended (elevation data can be large)
+# %% [markdown]
+# # Urban Tree Transfer - Runner Notebook
 #
-# SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# **Title:** Phase 1 Data Processing
+#
+# **Phase:** 1 - Data Processing
+#
+# **Step:** 01 - Data Processing
+#
+# **Purpose:** Download, harmonize, and validate Phase 1 spatial inputs for Berlin and Leipzig.
+#
+# **Input:** External city boundary/tree services, elevation sources, Google Earth Engine exports
+#
+# **Output:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_1_processing`
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+#
+# Runner notebooks execute data processing only: input -> processing -> output.
+# No analysis, no interpretation. They should be deterministic and repeatable.
+
+# %%
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
+# Runtime: CPU (Standard)
+# GPU: Not required
+# RAM: High-RAM recommended (elevation data can be large)
+#
+# Prerequisites:
+#   - GITHUB_TOKEN in Colab Secrets (key icon in sidebar)
+#   - Google Drive mounted (Cell 2)
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
 
-# Get GitHub token from Colab Secrets (for private repo access)
 token = userdata.get("GITHUB_TOKEN")
 if not token:
     raise ValueError(
@@ -37,9 +62,24 @@ if not token:
         "3. Toggle 'Notebook access' ON"
     )
 
-# Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
+print("OK: Package installed")
+
+# %%
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
+
+from google.colab import drive
+
+drive.mount("/content/drive")
+print("OK: Google Drive mounted")
+
+# %%
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 
 import json
 from pathlib import Path
@@ -47,17 +87,6 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 
-print("OK: Package installed and imports complete")
-
-# %%
-# Mount Google Drive for data files
-from google.colab import drive
-drive.mount("/content/drive")
-
-print("Google Drive mounted")
-
-# %%
-# Package imports
 from urban_tree_transfer.config import PROJECT_CRS
 from urban_tree_transfer.config.loader import load_city_config
 from urban_tree_transfer.data_processing import (
@@ -95,9 +124,9 @@ log = ExecutionLog("01_data_processing")
 print("OK: Package imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 # Large data files → Google Drive (not in repo)
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
@@ -134,9 +163,9 @@ print(f"Cities:           {CITIES}")
 print(f"GEE Project:      {GEE_PROJECT}")
 
 # %%
-# ============================================================
-# SECTION: Boundaries
-# ============================================================
+# ============================================================================
+# 5. BOUNDARIES
+# ============================================================================
 
 log.start_step("Boundaries")
 
@@ -185,9 +214,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION: Trees
-# ============================================================
+# ============================================================================
+# 6. TREES
+# ============================================================================
 
 log.start_step("Trees")
 
@@ -305,9 +334,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SECTION: Elevation (DOM/DGM)
-# ============================================================
+# ============================================================================
+# 7. ELEVATION (DOM/DGM)
+# ============================================================================
 
 log.start_step("Elevation")
 
@@ -383,9 +412,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION: CHM (Canopy Height Model)
-# ============================================================
+# ============================================================================
+# 8. CHM (CANOPY HEIGHT MODEL)
+# ============================================================================
 
 log.start_step("CHM")
 
@@ -441,9 +470,9 @@ except Exception as e:
 
 
 # %%
-# ============================================================
-# SECTION: Sentinel-2 (Google Earth Engine)
-# ============================================================
+# ============================================================================
+# 9. SENTINEL-2 (GOOGLE EARTH ENGINE)
+# ============================================================================
 
 log.start_step("Sentinel-2")
 
@@ -555,9 +584,9 @@ except Exception as e:
     raise
 
 # %%
-# ============================================================
-# SUMMARY & VALIDATION
-# ============================================================
+# ============================================================================
+# SUMMARY
+# ============================================================================
 
 import rasterio
 
@@ -593,9 +622,9 @@ log_path = LOGS_DIR / f"{log.notebook}_execution.json"
 log.save(log_path)
 print(f"Execution log saved: {log_path}")
 
-# ============================================================
-# DETAILED OUTPUT SUMMARY
-# ============================================================
+# ============================================================================
+# OUTPUT MANIFEST
+# ============================================================================
 print("\n" + "=" * 60)
 print("OUTPUT SUMMARY")
 print("=" * 60)
@@ -675,5 +704,5 @@ for city in CITIES:
     print(f"  CHM: {'exists' if chm_path.exists() else 'MISSING'}")
 
 print("\n" + "=" * 60)
-print("NOTEBOOK COMPLETE")
+print("OK: NOTEBOOK COMPLETE")
 print("=" * 60)

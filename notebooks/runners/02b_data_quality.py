@@ -13,16 +13,42 @@
 #     name: python3
 # ---
 
-# %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
-# Required: CPU (Standard)
-# GPU: Not required
-# High-RAM: Recommended
+# %% [markdown]
+# # Urban Tree Transfer - Runner Notebook
 #
-# SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# **Title:** Data Quality
+#
+# **Phase:** 2 - Feature Engineering
+#
+# **Step:** 02b - Data Quality
+#
+# **Purpose:** Clean extracted tree features and apply Phase 2 quality filters for Berlin and Leipzig.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Output:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+#
+# Runner notebooks execute data processing only: input -> processing -> output.
+# No analysis, no interpretation. They should be deterministic and repeatable.
+
+# %%
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
+# Runtime: CPU (Standard)
+# GPU: Not required
+# RAM: High-RAM recommended
+#
+# Prerequisites:
+#   - GITHUB_TOKEN in Colab Secrets (key icon in sidebar)
+#   - Google Drive mounted (Cell 2)
+# ============================================================================
 
 import os
 import subprocess
@@ -44,25 +70,31 @@ if RUN_NOTEBOOK:
             "3. Toggle 'Notebook access' ON"
         )
 
-    repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+    repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
     subprocess.run(["pip", "install", repo_url, "-q"], check=True)
-    print("OK: Package installed and imports complete")
+    print("OK: Package installed")
 else:
     print("Notebook test mode or non-Colab environment: skipping repo install.")
 
 
 # %%
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
+
 if RUN_NOTEBOOK:
-    # Mount Google Drive for data files
     from google.colab import drive
     
     drive.mount("/content/drive")
     
-    print("Google Drive mounted")
+    print("OK: Google Drive mounted")
 
 # %%
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
+
 if RUN_NOTEBOOK:
-    # Standard library imports
     from pathlib import Path
     import json
     from datetime import datetime, timezone
@@ -71,7 +103,6 @@ if RUN_NOTEBOOK:
     import geopandas as gpd
     import pandas as pd
     
-    # Package imports
     from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
     from urban_tree_transfer.config.loader import (
         get_all_feature_names,
@@ -102,9 +133,9 @@ if RUN_NOTEBOOK:
 
 # %%
 if RUN_NOTEBOOK:
-    # ============================================================
-    # CONFIGURATION
-    # ============================================================
+    # ============================================================================
+    # 4. CONFIGURATION
+    # ============================================================================
     
     # Large data files → Google Drive (not in repo)
     DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
@@ -198,9 +229,9 @@ if RUN_NOTEBOOK:
 
 # %%
 if RUN_NOTEBOOK:
-    # ============================================================
-    # SECTION: Data Quality Pipeline
-    # ============================================================
+    # ============================================================================
+    # 5. DATA QUALITY PIPELINE
+    # ============================================================================
     
     log.start_step("Data Quality Pipeline")
     
@@ -581,9 +612,9 @@ if RUN_NOTEBOOK:
 
 # %%
 if RUN_NOTEBOOK:
-    # ============================================================
-    # SUMMARY & VALIDATION
-    # ============================================================
+    # ============================================================================
+    # SUMMARY
+    # ============================================================================
     
     print("Generating validation report...")
     
@@ -621,9 +652,9 @@ if RUN_NOTEBOOK:
     log_txt_path.write_text("\n".join(execution_log_lines), encoding="utf-8")
     print(f"Execution log (.log) saved: {log_txt_path}")
     
-    # ============================================================
+    # ============================================================================
     # DETAILED OUTPUT SUMMARY
-    # ============================================================
+    # ============================================================================
     print("=" * 60)
     print("OUTPUT SUMMARY")
     print("=" * 60)
@@ -650,5 +681,5 @@ if RUN_NOTEBOOK:
             print(f"Duplicate tree_ids: {int(duplicate_ids)}")
     
     print("=" * 60)
-    print("NOTEBOOK COMPLETE")
+    print("OK: NOTEBOOK COMPLETE")
     print("=" * 60)

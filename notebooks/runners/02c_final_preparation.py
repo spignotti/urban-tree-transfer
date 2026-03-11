@@ -13,16 +13,42 @@
 #     name: python3
 # ---
 
-# %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
-# Required: CPU (Standard)
-# GPU: Not required
-# High-RAM: Recommended
+# %% [markdown]
+# # Urban Tree Transfer - Runner Notebook
 #
-# SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# **Title:** Final Preparation
+#
+# **Phase:** 2 - Feature Engineering
+#
+# **Step:** 02c - Final Preparation
+#
+# **Purpose:** Prepare final filtered spatial datasets and export train/validation/test splits.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Output:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_splits`
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+#
+# Runner notebooks execute data processing only: input -> processing -> output.
+# No analysis, no interpretation. They should be deterministic and repeatable.
+
+# %%
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
+# Runtime: CPU (Standard)
+# GPU: Not required
+# RAM: High-RAM recommended
+#
+# Prerequisites:
+#   - GITHUB_TOKEN in Colab Secrets (key icon in sidebar)
+#   - Google Drive mounted (Cell 2)
+# ============================================================================
 
 import os
 import subprocess
@@ -44,27 +70,30 @@ if RUN_NOTEBOOK:
             "3. Toggle 'Notebook access' ON"
         )
 
-    repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+    repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
     subprocess.run(["pip", "install", repo_url, "-q"], check=True)
-    print("OK: Package installed and imports complete")
+    print("OK: Package installed")
 else:
     print("Notebook test mode or non-Colab environment: skipping repo install.")
 
 
 # %%
-if RUN_NOTEBOOK:
-    pass
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 
-
-# %%
 if RUN_NOTEBOOK:
     from google.colab import drive
     
     drive.mount("/content/drive")
-    print("Google Drive mounted")
+    print("OK: Google Drive mounted")
 
 
 # %%
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
+
 if RUN_NOTEBOOK:
     from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
     from urban_tree_transfer.config.loader import get_coniferous_genera
@@ -102,6 +131,10 @@ if RUN_NOTEBOOK:
 
 
 # %%
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
+
 if RUN_NOTEBOOK:
     DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
     INPUT_DIR = DRIVE_DIR / "data" / "phase_2_features"
@@ -120,6 +153,10 @@ if RUN_NOTEBOOK:
 
 
 # %%
+# ============================================================================
+# 5. DATA LOADING
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Data Loading")
     
@@ -141,6 +178,10 @@ if RUN_NOTEBOOK:
     log.end_step(status="success", records=sum(len(gdf) for gdf in city_data.values()))
 
 # %%
+# ============================================================================
+# 6. ADD IS_CONIFER COLUMN
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Add is_conifer Column")
 
@@ -153,6 +194,10 @@ if RUN_NOTEBOOK:
     log.end_step(status="success", records=sum(len(gdf) for gdf in city_data.values()))
 
 # %%
+# ============================================================================
+# 7. LOAD CONFIGURATIONS
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Load Configurations")
     
@@ -206,6 +251,10 @@ if RUN_NOTEBOOK:
 
 
 # %%
+# ============================================================================
+# 8. REMOVE REDUNDANT FEATURES
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Remove Redundant Features")
     
@@ -220,6 +269,10 @@ if RUN_NOTEBOOK:
 
 
 # %%
+# ============================================================================
+# 9. OUTLIER DETECTION
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Outlier Detection")
     
@@ -274,6 +327,10 @@ if RUN_NOTEBOOK:
     log.end_step(status="success")
 
 # %%
+# ============================================================================
+# 10. CREATE SPATIAL BLOCKS
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Create Spatial Blocks")
     
@@ -286,6 +343,10 @@ if RUN_NOTEBOOK:
 
 
 # %%
+# ============================================================================
+# 11. CREATE BASELINE SPLITS
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Create Baseline Splits")
     
@@ -332,6 +393,10 @@ if RUN_NOTEBOOK:
     log.end_step(status="success")
 
 # %%
+# ============================================================================
+# 12. VALIDATE BASELINE SPLITS
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Validate Baseline Splits")
 
@@ -368,6 +433,10 @@ if RUN_NOTEBOOK:
 
 
 # %%
+# ============================================================================
+# 13. CREATE FILTERED SPLITS
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Create Filtered Splits")
     
@@ -424,6 +493,10 @@ if RUN_NOTEBOOK:
     log.end_step(status="success")
 
 # %%
+# ============================================================================
+# 14. VALIDATE FILTERED SPLITS
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Validate Filtered Splits")
     
@@ -459,6 +532,10 @@ if RUN_NOTEBOOK:
 
 
 # %%
+# ============================================================================
+# 15. EXPORT DATASETS
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Export Datasets")
     
@@ -500,6 +577,10 @@ if RUN_NOTEBOOK:
     log.end_step(status="success")
 
 # %%
+# ============================================================================
+# 16. EXPORT SUMMARY METADATA
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.start_step("Export Summary Metadata")
     
@@ -578,9 +659,9 @@ if RUN_NOTEBOOK:
     log.end_step(status="success")
 
 # %%
-# ==============================================================================
+# ============================================================================
 # PARQUET EXPORT (ML-optimized format for Phase 3)
-# ==============================================================================
+# ============================================================================
 if RUN_NOTEBOOK:
     from urban_tree_transfer.feature_engineering.selection import (
         export_splits_to_parquet,
@@ -648,6 +729,10 @@ if RUN_NOTEBOOK:
     log.end_step()
 
 # %%
+# ============================================================================
+# SUMMARY
+# ============================================================================
+
 if RUN_NOTEBOOK:
     log.summary()
     log_path = LOGS_DIR / f"{log.notebook}_execution.json"
@@ -655,7 +740,7 @@ if RUN_NOTEBOOK:
     print(f"Execution log saved: {log_path}")
     
     print("=" * 60)
-    print("OUTPUT SUMMARY")
+    print("OUTPUT MANIFEST")
     print("=" * 60)
     
     print("--- BASELINE GEOPACKAGES (5) ---")
@@ -684,7 +769,7 @@ if RUN_NOTEBOOK:
     print("Total: 10 Parquet + 1 geometry lookup")
     
     print("=" * 60)
-    print("⚠️  MANUAL SYNC REQUIRED")
+    print("MANUAL SYNC REQUIRED")
     print("=" * 60)
     print("Download from Google Drive and commit to Git:")
     print("1. GeoPackages: data/phase_2_splits/*.gpkg")
@@ -696,5 +781,5 @@ if RUN_NOTEBOOK:
     print("  git push")
     
     print("=" * 60)
-    print("✅ PHASE 2 COMPLETE - Ready for Phase 3")
+    print("OK: NOTEBOOK COMPLETE")
     print("=" * 60)
