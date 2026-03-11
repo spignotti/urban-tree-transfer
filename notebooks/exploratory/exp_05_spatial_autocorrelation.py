@@ -13,16 +13,43 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# # Urban Tree Transfer - Exploratory Notebook
+#
+# **Title:** Spatial Autocorrelation
+#
+# **Phase:** 2 - Feature Engineering
+#
+# **Topic:** Spatial Autocorrelation and Block Size Selection
+#
+# **Research Question:**
+# What spatial autocorrelation scale is present in the feature data, and which spatial block size is appropriate for downstream splits?
+#
+# **Key Findings:**
+# - Moran's I is evaluated across multiple distance lags.
+# - Spatial decay distances inform block-size recommendations.
+# - Results are exported as `spatial_autocorrelation.json`.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Output:** `spatial_autocorrelation.json` plus analysis outputs on Google Drive
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended for large datasets
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -38,23 +65,27 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
 from urban_tree_transfer.config.loader import load_feature_config, get_all_feature_names
 from urban_tree_transfer.utils import ExecutionLog
@@ -84,27 +115,9 @@ print("OK: Package imports complete")
 
 
 # %%
-# ============================================================
-# SPATIAL ANALYSIS DEPENDENCIES
-# ============================================================
-# Install PySAL/ESDA if not available (not in default environment)
-
-try:
-    from pysal.lib import weights
-    from esda.moran import Moran
-    print("OK: PySAL/ESDA available")
-except ImportError:
-    print("Installing spatial analysis libraries...")
-    subprocess.run(["pip", "install", "pysal", "esda", "-q"], check=True)
-    from pysal.lib import weights
-    from esda.moran import Moran
-    print("OK: PySAL/ESDA installed and imported")
-
-
-# %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_features"
@@ -147,12 +160,31 @@ print(f"Logs (Drive):      {LOGS_DIR}")
 print(f"Cities:            {CITIES}")
 print(f"Distance lags:     {DISTANCE_LAGS}")
 print(f"Random seed:       {RANDOM_SEED}")
+
+# %%
+# ============================================================================
+# 5. SPATIAL ANALYSIS DEPENDENCIES
+# ============================================================================
+# Install PySAL/ESDA if not available (not in default environment)
+
+try:
+    from pysal.lib import weights
+    from esda.moran import Moran
+    print("OK: PySAL/ESDA available")
+except ImportError:
+    print("Installing spatial analysis libraries...")
+    subprocess.run(["pip", "install", "pysal", "esda", "-q"], check=True)
+    from pysal.lib import weights
+    from esda.moran import Moran
+    print("OK: PySAL/ESDA installed and imported")
+
+
 print(f"Selected months:   {selected_months}")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION A: Moran's I Calculation
-# ============================================================
+# ============================================================================
 
 import gc
 from scipy.spatial import cKDTree
@@ -301,9 +333,9 @@ else:
     log.end_step(status="success", records=len(morans_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION B: Autocorrelation Decay Analysis
-# ============================================================
+# ============================================================================
 
 log.start_step("Autocorrelation Decay Analysis")
 
@@ -343,9 +375,9 @@ decay_df = pd.DataFrame(decay_rows)
 log.end_step(status="success", records=len(decay_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION C: Optimal Block Size Determination
-# ============================================================
+# ============================================================================
 
 log.start_step("Optimal Block Size Determination")
 
@@ -381,9 +413,9 @@ mean_plus_std = (summary_df["decay_mean"] + summary_df["decay_std"].fillna(0)).m
 log.end_step(status="success", records=len(summary_df))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION D: Cross-City Validation
-# ============================================================
+# ============================================================================
 
 log.start_step("Cross-City Validation")
 
@@ -401,9 +433,9 @@ else:
 log.end_step(status="success", records=len(city_decay))
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION E: Block Count & Feasibility + Sensitivity Analysis
-# ============================================================
+# ============================================================================
 
 log.start_step("Block Feasibility & Sensitivity")
 
@@ -496,9 +528,9 @@ log.end_step(status="success", records=len(block_stats))
 # - **Between-split:** |I| < 0.05 (No cross-boundary leakage - **CRITICAL**)
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION F: Post-Split Spatial Independence Validation
-# ============================================================
+# ============================================================================
 
 from scipy.spatial import cKDTree
 import gc
@@ -709,9 +741,9 @@ post_split_iterations = 1
 log.end_step(status="success")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION G: Final Assessment
-# ============================================================
+# ============================================================================
 
 # Removed iterative refinement to focus on methodologically
 # derived block size from Section C.
@@ -725,9 +757,9 @@ print(f"  Status: { 'VALIDATED' if validation_passed else 'REVIEW ADVISED' }")
 print("=" * 70)
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION G: Save Configuration JSON
-# ============================================================
+# ============================================================================
 
 log.start_step("Save JSON Config")
 
@@ -819,3 +851,26 @@ print(f"Saved JSON: {output_path}")
 
 log.end_step(status="success")
 
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log.save(LOGS_DIR / f"{log.notebook}_execution.json")
+
+analysis_files = []
+config_files = [output_path] if output_path.exists() else []
+
+print("\n" + "=" * 60)
+print(f"{'EXPORT MANIFEST':^60}")
+print("=" * 60)
+print("\nAnalysis data:")
+for file_path in sorted(analysis_files):
+    print(f"  {file_path.name}")
+print("\nConfig files:")
+for file_path in sorted(config_files):
+    print(f"  {file_path.name}")
+print("\n" + "=" * 60)
+print("\nOK: NOTEBOOK COMPLETE")

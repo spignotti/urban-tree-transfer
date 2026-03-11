@@ -14,25 +14,42 @@
 # ---
 
 # %% [markdown]
-# # Exploratory Notebook: CHM Assessment (exp_02)
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Goal:** Evaluate CHM feature quality, determine plant year threshold, and perform genus classification.
+# **Title:** CHM Assessment
 #
-# **Outputs:**
-# - `outputs/phase_2/metadata/chm_assessment.json` (on Google Drive)
-# - Publication-quality plots saved to `outputs/phase_2/figures/exp_02_chm`
+# **Phase:** 2 - Feature Engineering
 #
+# **Topic:** CHM Quality Assessment and Threshold Selection
+#
+# **Research Question:**
+# How useful are CHM-derived features for genus discrimination, and which CHM-related thresholds should be carried forward?
+#
+# **Key Findings:**
+# - CHM feature quality is assessed for both cities.
+# - Threshold decisions are exported for downstream notebooks.
+# - Results are summarized as a JSON config on Google Drive.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Output:** `chm_assessment.json` plus analysis outputs on Google Drive
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended for large datasets
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -48,22 +65,26 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
 from urban_tree_transfer.utils import ExecutionLog
 
@@ -93,9 +114,9 @@ log = ExecutionLog("exp_02_chm_assessment")
 print("OK: Package imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_features"
@@ -563,6 +584,29 @@ except Exception as e:
 
 
 # %% [markdown]
-# ## Summary & Manual Sync Instructions
+# ## Findings Summary
 #
 
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log.save(LOGS_DIR / f"{log.notebook}_execution.json")
+
+analysis_files = []
+config_files = [output_path] if output_path.exists() else []
+
+print("\n" + "=" * 60)
+print(f"{'EXPORT MANIFEST':^60}")
+print("=" * 60)
+print("\nAnalysis data:")
+for file_path in sorted(analysis_files):
+    print(f"  {file_path.name}")
+print("\nConfig files:")
+for file_path in sorted(config_files):
+    print(f"  {file_path.name}")
+print("\n" + "=" * 60)
+print("\nOK: NOTEBOOK COMPLETE")

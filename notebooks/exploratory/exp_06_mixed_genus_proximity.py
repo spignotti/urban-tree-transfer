@@ -13,16 +13,43 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# # Urban Tree Transfer - Exploratory Notebook
+#
+# **Title:** Mixed-Genus Proximity Analysis
+#
+# **Phase:** 2 - Feature Engineering
+#
+# **Topic:** Proximity Filter Threshold Selection
+#
+# **Research Question:**
+# Which proximity threshold best removes likely mixed-genus edge effects while preserving enough trees for downstream modeling?
+#
+# **Key Findings:**
+# - Multiple proximity thresholds are compared across both cities.
+# - A recommended threshold is exported as `proximity_filter.json`.
+# - Threshold choice balances edge-effect reduction with sample retention.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Output:** `proximity_filter.json` plus analysis outputs on Google Drive
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended for large datasets
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -38,23 +65,27 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
 from urban_tree_transfer.utils import ExecutionLog
 from urban_tree_transfer.feature_engineering.proximity import apply_proximity_filter
@@ -67,15 +98,15 @@ import geopandas as gpd
 import pandas as pd
 import numpy as np
 
-log = ExecutionLog("exp_06_proximity")
+log = ExecutionLog("exp_06_mixed_genus_proximity")
 
 print("OK: Package imports complete")
 
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_features"
@@ -99,9 +130,9 @@ print(f"Random seed:      {RANDOM_SEED}")
 
 
 # %%
-# ============================================================
-# SECTION 1: Data Loading & Validation
-# ============================================================
+# ============================================================================
+# 5. DATA LOADING AND VALIDATION
+# ============================================================================
 
 log.start_step("Data Loading")
 
@@ -164,9 +195,9 @@ log.end_step(status="success", records=total_trees)
 #
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 3: Nearest Different-Genus Distance (OPTIMIZED)
-# ============================================================
+# ============================================================================
 from scipy.spatial import cKDTree
 
 log.start_step("Nearest Neighbor Analysis")
@@ -228,9 +259,9 @@ for city, gdf in city_data.items():
 log.end_step(status="success")
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 9: Threshold Recommendation
-# ============================================================
+# ============================================================================
 
 log.start_step("Threshold Recommendation")
 
@@ -258,9 +289,9 @@ log.end_step(status="success")
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 10: Export JSON Configuration
-# ============================================================
+# ============================================================================
 
 log.start_step("Export Configuration")
 
@@ -325,3 +356,26 @@ print(f"Saved: {json_path}")
 log.end_step(status="success")
 
 
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log.save(LOGS_DIR / f"{log.notebook}_execution.json")
+
+analysis_files = []
+config_files = [json_path] if json_path.exists() else []
+
+print("\n" + "=" * 60)
+print(f"{'EXPORT MANIFEST':^60}")
+print("=" * 60)
+print("\nAnalysis data:")
+for file_path in sorted(analysis_files):
+    print(f"  {file_path.name}")
+print("\nConfig files:")
+for file_path in sorted(config_files):
+    print(f"  {file_path.name}")
+print("\n" + "=" * 60)
+print("\nOK: NOTEBOOK COMPLETE")

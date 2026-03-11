@@ -14,25 +14,42 @@
 # ---
 
 # %% [markdown]
-# # Exploratory Notebook: Temporal Feature Selection (exp_01)
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Goal:** Analyze monthly Sentinel-2 features using Jeffries-Matusita (JM) distance to identify months with strong genus discrimination.
+# **Title:** Temporal Feature Selection
 #
-# **Outputs:**
-# - `outputs/phase_2/metadata/temporal_selection.json` (on Google Drive)
-# - Publication-quality plots saved to `outputs/phase_2/figures/exp_01_temporal`
+# **Phase:** 2 - Feature Engineering
 #
+# **Topic:** Temporal Selection via JM-Distance
+#
+# **Research Question:**
+# Which Sentinel-2 months provide the strongest and most consistent genus discrimination across Berlin and Leipzig?
+#
+# **Key Findings:**
+# - Months are selected from cross-city JM-distance rankings.
+# - Cross-city consistency is checked before final month selection.
+# - The notebook exports `temporal_selection.json` for downstream quality-control runners.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Output:** `temporal_selection.json` plus analysis outputs on Google Drive
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended for large datasets
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -48,22 +65,26 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import PROJECT_CRS
 from urban_tree_transfer.utils import ExecutionLog
 
@@ -83,9 +104,9 @@ print("OK: Package imports complete")
 
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_features"
@@ -108,7 +129,7 @@ print(f"Output: {METADATA_DIR}")
 print(f"Cities: {CITIES}")
 
 # %% [markdown]
-# ## Data Loading & Validation
+# ## 5. Data Loading
 #
 # Load Phase 2a feature data for Berlin and Leipzig and validate expected schema and temporal feature layout.
 
@@ -190,7 +211,7 @@ except Exception as e:
 
 
 # %% [markdown]
-# ## JM Distance Computation
+# ## 6. JM Distance Computation
 #
 # Compute Jeffries-Matusita distance per month, per city, and per genus pair. JM is computed per feature and averaged across all 23 Sentinel-2 features for each month.
 
@@ -295,7 +316,7 @@ except Exception as e:
 # Generate publication-quality plots for temporal JM trends and genus-pair heatmaps.
 
 # %% [markdown]
-# ## Cross-City JM Consistency Analysis
+# ## 7. Cross-City JM Consistency Analysis
 #
 # Validate that high-JM months are consistent across Berlin and Leipzig. This ensures selected months are transfer-robust, not city-specific.
 #
@@ -396,7 +417,7 @@ except Exception as e:
     raise
 
 # %% [markdown]
-# ## Month Selection Logic
+# ## 8. Month Selection Logic
 #
 # Select months using a top-N approach with seasonal balance to ensure phenological coverage.
 
@@ -471,7 +492,7 @@ print(f"Rejected months: {rejected_months}")
 
 
 # %% [markdown]
-# ## JSON Output
+# ## 9. Decision
 #
 # Save selected months and JM statistics for downstream use in Phase 2b.
 
@@ -521,7 +542,7 @@ print(f"Saved JSON: {output_path}")
 
 
 # %% [markdown]
-# ## Summary & Manual Sync Instructions
+# ## Findings Summary
 
 # %% [markdown]
 # ## ⚠️ Manual Sync Required
@@ -538,3 +559,26 @@ print(f"Saved JSON: {output_path}")
 # **File Path on Drive:**
 # `/content/drive/MyDrive/dev/urban-tree-transfer/outputs/phase_2/metadata/temporal_selection.json`
 #
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log.save(LOGS_DIR / f"{log.notebook}_execution.json")
+
+analysis_files = []
+config_files = [output_path] if output_path.exists() else []
+
+print("\n" + "=" * 60)
+print(f"{'EXPORT MANIFEST':^60}")
+print("=" * 60)
+print("\nAnalysis data:")
+for file_path in sorted(analysis_files):
+    print(f"  {file_path.name}")
+print("\nConfig files:")
+for file_path in sorted(config_files):
+    print(f"  {file_path.name}")
+print("\n" + "=" * 60)
+print("\nOK: NOTEBOOK COMPLETE")

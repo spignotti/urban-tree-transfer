@@ -13,16 +13,43 @@
 #     name: python3
 # ---
 
+# %% [markdown]
+# # Urban Tree Transfer - Exploratory Notebook
+#
+# **Title:** Correlation Analysis
+#
+# **Phase:** 2 - Feature Engineering
+#
+# **Topic:** Correlation-Based Feature Reduction
+#
+# **Research Question:**
+# Which spectral and index features are redundant across Berlin and Leipzig and should be removed before final model preparation?
+#
+# **Key Findings:**
+# - Redundant features are identified within feature families.
+# - Removal decisions are exported as `correlation_removal.json`.
+# - Cross-city consistency is used to avoid city-specific over-pruning.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Output:** `correlation_removal.json` plus analysis outputs on Google Drive
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
+
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended for large datasets
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -38,23 +65,27 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import RANDOM_SEED
 from urban_tree_transfer.config.loader import (
     load_feature_config,
@@ -78,15 +109,15 @@ from scipy.spatial.distance import squareform
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import StratifiedShuffleSplit
 
-log = ExecutionLog("exp_03_correlation")
+log = ExecutionLog("exp_03_correlation_analysis")
 
 print("OK: Package imports complete")
 
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_features"
@@ -122,9 +153,9 @@ print(f"Random seed:      {RANDOM_SEED}")
 #
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 1: Load and sample data
-# ============================================================
+# ============================================================================
 
 log.start_step("Data Loading & Sampling")
 
@@ -231,9 +262,9 @@ log.end_step(status="success", records=sum(len(df) for df in city_data.values())
 
 
 # %%
-# ============================================================
+# ============================================================================
 # Helper functions for correlation and selection
-# ============================================================
+# ============================================================================
 
 def standardize_columns(df: pd.DataFrame, cols: list[str]) -> pd.DataFrame:
     scaler = StandardScaler()
@@ -382,9 +413,9 @@ def reorder_by_clustering(corr_df: pd.DataFrame) -> list[str]:
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 2: CHM correlation analysis
-# ============================================================
+# ============================================================================
 
 log.start_step("CHM Correlation Analysis")
 
@@ -397,9 +428,9 @@ log.end_step(status="success", records=len(chm_features))
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 3: Spectral bands correlation analysis
-# ============================================================
+# ============================================================================
 
 log.start_step("Spectral Bands Correlation Analysis")
 
@@ -419,9 +450,9 @@ log.end_step(status="success", records=len(spectral_bands))
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 4: Vegetation indices correlation analysis
-# ============================================================
+# ============================================================================
 
 log.start_step("Vegetation Indices Correlation Analysis")
 
@@ -441,9 +472,9 @@ log.end_step(status="success", records=len(vegetation_indices))
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 5: Cross-city consistency & redundancy selection
-# ============================================================
+# ============================================================================
 
 log.start_step("Cross-city Consistency")
 
@@ -579,9 +610,9 @@ log.end_step(status="success", records=len(bands_removed) + len(indices_removed)
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 6: VIF validation (retained features only)
-# ============================================================
+# ============================================================================
 
 log.start_step("VIF Validation")
 
@@ -601,9 +632,9 @@ log.end_step(status="success", records=len(retained_temporal_cols))
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 8: Save JSON config
-# ============================================================
+# ============================================================================
 
 def build_rationale(removed_bases: set[str], corr_b: pd.DataFrame, corr_l: pd.DataFrame) -> dict[str, str]:
     rationale = {}
@@ -737,9 +768,9 @@ output_json = {
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 9: Spearman Supplementary Check
-# ============================================================
+# ============================================================================
 
 log.start_step("Spearman Supplementary Check")
 
@@ -803,9 +834,9 @@ log.end_step(status="success", records=len(spearman_divergent))
 
 
 # %%
-# ============================================================
+# ============================================================================
 # SECTION 10: JSON Output
-# ============================================================
+# ============================================================================
 
 log.start_step("JSON Output")
 
@@ -816,3 +847,26 @@ print(f"Saved JSON: {json_path}")
 log.end_step(status="success", records=len(removed_temporal_features))
 
 
+
+# %%
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
+
+log.summary()
+log.save(LOGS_DIR / f"{log.notebook}_execution.json")
+
+analysis_files = []
+config_files = [json_path] if json_path.exists() else []
+
+print("\n" + "=" * 60)
+print(f"{'EXPORT MANIFEST':^60}")
+print("=" * 60)
+print("\nAnalysis data:")
+for file_path in sorted(analysis_files):
+    print(f"  {file_path.name}")
+print("\nConfig files:")
+for file_path in sorted(config_files):
+    print(f"  {file_path.name}")
+print("\n" + "=" * 60)
+print("\nOK: NOTEBOOK COMPLETE")

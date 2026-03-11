@@ -14,25 +14,42 @@
 # ---
 
 # %% [markdown]
-# # Exploratory Notebook: Outlier Thresholds (exp_04)
+# # Urban Tree Transfer - Exploratory Notebook
 #
-# **Goal:** Validate outlier detection thresholds through sensitivity analysis and define a severity-based flagging system for ablation studies.
+# **Title:** Outlier Thresholds
 #
-# **Outputs:**
-# - `outputs/phase_2/metadata/outlier_thresholds.json` (on Google Drive)
-# - Publication-quality plots saved to `outputs/phase_2/figures/exp_04_outlier_thresholds`
+# **Phase:** 2 - Feature Engineering
 #
+# **Topic:** Outlier Threshold Selection
+#
+# **Research Question:**
+# Which outlier-detection thresholds are robust enough for ablation studies without removing biologically plausible trees?
+#
+# **Key Findings:**
+# - Sensitivity analyses compare z-score, Mahalanobis, and IQR thresholds.
+# - Threshold decisions are exported as `outlier_thresholds.json`.
+# - Outlier flags are retained for ablation studies rather than hard deletion.
+#
+# **Input:** `/content/drive/MyDrive/dev/urban-tree-transfer/data/phase_2_features`
+#
+# **Output:** `outlier_thresholds.json` plus analysis outputs on Google Drive
+#
+# **Author:** Silas Pignotti
+#
+# **Created:** 2025-01-15
+#
+# **Updated:** 2026-03-11
 
 # %%
-# ============================================================
-# RUNTIME SETTINGS
-# ============================================================
+# ============================================================================
+# 1. ENVIRONMENT SETUP
+# ============================================================================
 # Required: CPU (Standard)
 # GPU: Not required
 # High-RAM: Recommended for large datasets
 #
 # SETUP: Add GITHUB_TOKEN to Colab Secrets (key icon in sidebar)
-# ============================================================
+# ============================================================================
 
 import subprocess
 from google.colab import userdata
@@ -48,23 +65,27 @@ if not token:
     )
 
 # Install package from private GitHub repo
-repo_url = f"git+https://{token}@github.com/SilasPignotti/urban-tree-transfer.git"
+repo_url = f"git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git"
 subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 
 print("OK: Package installed")
 
 
 # %%
-# Mount Google Drive for data files
+# ============================================================================
+# 2. GOOGLE DRIVE
+# ============================================================================
 from google.colab import drive
 
 drive.mount("/content/drive")
 
-print("Google Drive mounted")
+print("OK: Google Drive mounted")
 
 
 # %%
-# Package imports
+# ============================================================================
+# 3. IMPORTS
+# ============================================================================
 from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
 from urban_tree_transfer.config.loader import (
     get_temporal_feature_names,
@@ -91,9 +112,9 @@ log = ExecutionLog("exp_04_outlier_thresholds")
 print("OK: Package imports complete")
 
 # %%
-# ============================================================
-# CONFIGURATION
-# ============================================================
+# ============================================================================
+# 4. CONFIGURATION
+# ============================================================================
 
 DRIVE_DIR = Path("/content/drive/MyDrive/dev/urban-tree-transfer")
 INPUT_DIR = DRIVE_DIR / "data" / "phase_2_features"
@@ -935,9 +956,9 @@ print(f"Saved: {json_path}")
 
 
 # %%
-# ============================================================
-# SUMMARY & MANUAL SYNC INSTRUCTIONS
-# ============================================================
+# ============================================================================
+# FINDINGS SUMMARY
+# ============================================================================
 
 log.summary()
 log_path = LOGS_DIR / f"{log.notebook}_execution.json"
@@ -945,7 +966,7 @@ log.save(log_path)
 print(f"Execution log saved: {log_path}")
 
 print("\n" + "=" * 60)
-print("OUTPUT SUMMARY")
+print("EXPORT MANIFEST")
 print("=" * 60)
 
 print("\n--- JSON CONFIGURATIONS ---")
@@ -973,6 +994,6 @@ print("   - git commit -m 'Add outlier thresholds config'")
 print("   - git push")
 
 print("\n" + "=" * 60)
-print("NOTEBOOK COMPLETE")
+print("OK: NOTEBOOK COMPLETE")
 print("=" * 60)
 
