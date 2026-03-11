@@ -17,7 +17,6 @@ dependencies = [
     "pyyaml>=6.0.0",
     "pyarrow>=23.0.0",
     "pointpats>=2.5.0",
-    "matplotlib-venn>=1.1.2",
 ]
 
 [project.optional-dependencies]
