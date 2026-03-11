@@ -849,20 +849,23 @@ log.end_step(status="success", records=len(removed_temporal_features))
 
 
 # %%
-report_path = REPORT_DIR / "correlation_matrix.json"
-report_output = {
-    "pearson": {
-        "spectral_bands": combined_pearson_bands,
-        "vegetation_indices": combined_pearson_indices,
-    },
-    "spearman": {
-        "spectral_bands": bands_spearman,
-        "vegetation_indices": indices_spearman,
-    },
-    "disagreements": output_json["spearman_supplement"]["divergent_pairs"],
-}
-report_path.write_text(json.dumps(report_output, indent=2), encoding="utf-8")
-print(f"Saved report JSON: {report_path}")
+try:
+    report_path = REPORT_DIR / "correlation_matrix.json"
+    report_output = {
+        "pearson": {
+            "spectral_bands": combined_pearson_bands,
+            "vegetation_indices": combined_pearson_indices,
+        },
+        "spearman": {
+            "spectral_bands": bands_spearman,
+            "vegetation_indices": indices_spearman,
+        },
+        "disagreements": output_json["spearman_supplement"]["divergent_pairs"],
+    }
+    report_path.write_text(json.dumps(report_output, indent=2), encoding="utf-8")
+    print(f"Saved report JSON: {report_path}")
+except Exception as e:
+    print(f"WARNING: Failed to export report JSON: {e}")
 
 
 # %%

@@ -585,12 +585,15 @@ except Exception as e:
 
 
 # %%
-report_path = REPORT_DIR / "chm_assessment.json"
-report_records = cohens_df[
-    ["genus", "cohens_d", "ci_low", "ci_high", "n_berlin", "n_leipzig"]
-].to_dict(orient="records")
-report_path.write_text(json.dumps(report_records, indent=2), encoding="utf-8")
-print(f"Saved report JSON: {report_path}")
+try:
+    report_path = REPORT_DIR / "chm_assessment.json"
+    report_records = cohens_df[
+        ["genus", "cohens_d", "ci_low", "ci_high", "n_berlin", "n_leipzig"]
+    ].to_dict(orient="records")
+    report_path.write_text(json.dumps(report_records, indent=2), encoding="utf-8")
+    print(f"Saved report JSON: {report_path}")
+except Exception as e:
+    print(f"WARNING: Failed to export report JSON: {e}")
 
 
 # %% [markdown]

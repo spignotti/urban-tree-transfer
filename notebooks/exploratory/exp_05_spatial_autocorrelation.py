@@ -854,15 +854,18 @@ log.end_step(status="success")
 
 
 # %%
-report_path = REPORT_DIR / "morans_i_decay.json"
-report_records = (
-    morans_df.groupby("distance_m")[["morans_i", "p_value"]]
-    .mean()
-    .reset_index()
-    .to_dict(orient="records")
-)
-report_path.write_text(json.dumps(report_records, indent=2), encoding="utf-8")
-print(f"Saved report JSON: {report_path}")
+try:
+    report_path = REPORT_DIR / "morans_i_decay.json"
+    report_records = (
+        morans_df.groupby(["city", "distance_m"])["morans_i"]
+        .mean()
+        .reset_index()
+        .to_dict(orient="records")
+    )
+    report_path.write_text(json.dumps(report_records, indent=2), encoding="utf-8")
+    print(f"Saved report JSON: {report_path}")
+except Exception as e:
+    print(f"WARNING: Failed to export report JSON: {e}")
 
 
 # %%

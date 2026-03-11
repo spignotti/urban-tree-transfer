@@ -543,12 +543,15 @@ print(f"Saved JSON: {output_path}")
 
 
 # %%
-report_path = REPORT_DIR / "jm_distances.json"
-report_records = jm_df[
-    ["genus_pair", "month", "jm_distance", "city", "features_used"]
-].to_dict(orient="records")
-report_path.write_text(json.dumps(report_records, indent=2), encoding="utf-8")
-print(f"Saved report JSON: {report_path}")
+try:
+    report_path = REPORT_DIR / "jm_distances.json"
+    report_records = jm_df[
+        ["genus_pair", "month", "jm_distance", "city", "features_used"]
+    ].to_dict(orient="records")
+    report_path.write_text(json.dumps(report_records, indent=2), encoding="utf-8")
+    print(f"Saved report JSON: {report_path}")
+except Exception as e:
+    print(f"WARNING: Failed to export report JSON: {e}")
 
 
 # %% [markdown]
