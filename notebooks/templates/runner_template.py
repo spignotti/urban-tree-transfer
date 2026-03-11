@@ -35,10 +35,8 @@ drive.mount('/content/drive')
 
 
 # %%
-from urban_tree_transfer.utils.plotting import setup_plotting
 from urban_tree_transfer.utils.logging import ExecutionLog, log_step, log_success
 
-setup_plotting()
 log = ExecutionLog('NOTEBOOK_NAME')
 
 print('OK: Initialization complete')
