@@ -320,6 +320,7 @@ def test_hypothesis(
     hyp_id = hypothesis.get("id", "unknown")
     description = hypothesis.get("description", "")
     test_type = hypothesis.get("test_type", "correlation")
+    alpha = float(hypothesis.get("alpha", 0.05))
 
     result = {
         "id": hyp_id,
@@ -355,10 +356,43 @@ def test_hypothesis(
             p_value = float(corr_pval)  # type: ignore[arg-type]
             result["statistic"] = statistic
             result["p_value"] = p_value
+            result["effect_size"] = statistic
             result["conclusion"] = (
                 f"Significant correlation (r={statistic:.3f}, p={p_value:.4f})"
-                if p_value < 0.05
+                if p_value < alpha
                 else f"No significant correlation (r={statistic:.3f}, p={p_value:.4f})"
+            )
+
+        elif test_type == "kruskal":
+            group_var = hypothesis.get("group_variable", "")
+            metric_var = hypothesis.get("metric_variable", "")
+
+            if group_var not in genus_data.columns or metric_var not in genus_data.columns:
+                result["conclusion"] = f"Missing required columns: {group_var}, {metric_var}"
+                return result
+
+            grouped = []
+            for _, group_df in genus_data.groupby(group_var):
+                group_values = group_df[metric_var].dropna().to_numpy(dtype=float)
+                if group_values.size > 0:
+                    grouped.append(group_values)
+
+            if len(grouped) < 2 or sum(group.size for group in grouped) < 2:
+                result["conclusion"] = "Insufficient data for Kruskal-Wallis test"
+                return result
+
+            kw_stat, kw_pval = stats.kruskal(*grouped)
+            statistic = float(kw_stat)
+            p_value = float(kw_pval)
+            n_total = float(sum(group.size for group in grouped))
+            effect_size = 0.0 if n_total <= 1 else float(statistic / (n_total - 1.0))
+            result["statistic"] = statistic
+            result["p_value"] = p_value
+            result["effect_size"] = effect_size
+            result["conclusion"] = (
+                f"Significant difference across groups (H={statistic:.3f}, p={p_value:.4f})"
+                if p_value < alpha
+                else f"No significant difference across groups (H={statistic:.3f}, p={p_value:.4f})"
             )
 
         elif test_type == "mann_whitney":
@@ -389,11 +423,15 @@ def test_hypothesis(
             )
             statistic = float(mw_stat)  # type: ignore[arg-type]
             p_value = float(mw_pval)  # type: ignore[arg-type]
+            n1 = len(group1_series)
+            n2 = len(group2_series)
+            effect_size = float(1.0 - (2.0 * statistic) / (n1 * n2))
             result["statistic"] = statistic
             result["p_value"] = p_value
+            result["effect_size"] = effect_size
             result["conclusion"] = (
                 f"Significant difference (U={statistic:.1f}, p={p_value:.4f})"
-                if p_value < 0.05
+                if p_value < alpha
                 else f"No significant difference (U={statistic:.1f}, p={p_value:.4f})"
             )
 
@@ -423,9 +461,10 @@ def test_hypothesis(
             p_value = float(spearman_pval)  # type: ignore[arg-type]
             result["statistic"] = statistic
             result["p_value"] = p_value
+            result["effect_size"] = statistic
             result["conclusion"] = (
                 f"Significant rank correlation (rho={statistic:.3f}, p={p_value:.4f})"
-                if p_value < 0.05
+                if p_value < alpha
                 else f"No significant rank correlation (rho={statistic:.3f}, p={p_value:.4f})"
             )
 

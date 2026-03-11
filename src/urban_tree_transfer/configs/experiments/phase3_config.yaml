@@ -236,35 +236,31 @@ transfer_evaluation:
     medium: 0.15
   hypotheses:
     - id: H1
-      description: "Genera with more Berlin training samples transfer better"
-      test: pearson_correlation
-      x_metric: berlin_sample_count
-      y_metric: transfer_gap
-      expected_direction: negative
-      literature: "Sample size theory"
+      description: "Transfer loss varies significantly across genera"
+      test_type: kruskal
+      metric_variable: correct
+      group_variable: genus
+      expected_direction: varies
+      literature: "Genus-level transfer heterogeneity"
+      alpha: 0.05
     - id: H2
-      description: "Nadelbäume have lower transfer gap than Laubbäume"
-      test: mann_whitney_u
-      groups:
-        conifer: [PINUS, PICEA]
-        deciduous: [TILIA, ACER, QUERCUS, PLATANUS, AESCULUS, BETULA, FRAXINUS, ROBINIA]
-      expected_direction: "conifer < deciduous"
+      description: "Conifers transfer better than deciduous"
+      test_type: mann_whitney
+      group_variable: is_conifer
+      metric_variable: transfer_gap
+      group1_value: true
+      group2_value: false
+      expected_direction: lower_for_group1
       literature: "Fassnacht 2016"
+      alpha: 0.05
     - id: H3
-      description: "Genera with early leaf-out (BETULA, SALIX) have higher transfer gap"
-      test: group_comparison
-      groups:
-        early: [BETULA, SALIX]
-        mid_season: [TILIA, ACER, QUERCUS, PLATANUS, AESCULUS, FRAXINUS, ROBINIA]
-      expected_direction: "early > mid_season"
-      literature: "Hemmerling 2021"
-    - id: H4
-      description: "Genera with high Red-Edge feature importance transfer better"
-      test: spearman_correlation
-      x_metric: red_edge_importance
-      y_metric: transfer_f1
+      description: "Spectrally distinct genera transfer better"
+      test_type: spearman
+      x_variable: mean_jm_distance
+      y_variable: leipzig_f1
       expected_direction: positive
-      literature: "Immitzer 2019"
+      literature: "Jeffries-Matusita separability"
+      alpha: 0.05
 
 # Phase 3.5: Fine-Tuning (03d)
 finetuning:

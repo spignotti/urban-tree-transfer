@@ -767,6 +767,114 @@ except Exception as e:
 
 # %%
 # ============================================================
+# SECTION 9: Hypothesis H4 - Fine-Tuning Efficiency
+# ============================================================
+
+log.start_step("Hypothesis H4")
+
+try:
+    print("\n" + "=" * 70)
+    print("Hypothesis H4: Fine-Tuning Efficiency")
+    print("=" * 70)
+
+    transfer_eval_path = METADATA_DIR / "transfer_evaluation.json"
+    if not transfer_eval_path.exists():
+        raise FileNotFoundError(
+            f"transfer_evaluation.json not found at {transfer_eval_path}\n"
+            "Run 03c_transfer_evaluation.ipynb first."
+        )
+    transfer_eval = json.loads(transfer_eval_path.read_text())
+
+    berlin_per_genus = {
+        row["genus"]: row["f1_score"]
+        for row in berlin_eval["per_class"]
+    }
+    transfer_gap_by_genus = {
+        genus: values["absolute_drop"]
+        for genus, values in transfer_eval["metadata"]["per_genus_robustness"].items()
+    }
+
+    recovery_rows = []
+    for genus, berlin_genus_f1 in berlin_per_genus.items():
+        target_f1 = 0.9 * berlin_genus_f1
+        genus_curve = per_genus_df[per_genus_df["genus"] == genus].sort_values("fraction")
+        recovery_fraction = None
+        for _, row in genus_curve.iterrows():
+            if row["f1_score"] >= target_f1:
+                recovery_fraction = float(row["fraction"])
+                break
+
+        recovery_rows.append(
+            {
+                "genus": genus,
+                "berlin_f1": berlin_genus_f1,
+                "transfer_gap": transfer_gap_by_genus.get(genus),
+                "recovery_fraction": recovery_fraction,
+            }
+        )
+
+    recovery_df = pd.DataFrame(recovery_rows)
+    valid_recovery_df = recovery_df.dropna(subset=["transfer_gap", "recovery_fraction"])
+
+    from scipy.stats import spearmanr
+
+    if len(valid_recovery_df) < 3:
+        h4_result = {
+            "id": "H4",
+            "description": "Genera with larger zero-shot transfer gaps require more fine-tuning data",
+            "test_type": "spearman",
+            "statistic": None,
+            "p_value": None,
+            "effect_size": None,
+            "conclusion": "Insufficient data for Spearman test",
+        }
+    else:
+        statistic, p_value = spearmanr(
+            valid_recovery_df["transfer_gap"],
+            valid_recovery_df["recovery_fraction"],
+        )
+        statistic = float(statistic)
+        p_value = float(p_value)
+        h4_result = {
+            "id": "H4",
+            "description": "Genera with larger zero-shot transfer gaps require more fine-tuning data",
+            "test_type": "spearman",
+            "statistic": statistic,
+            "p_value": p_value,
+            "effect_size": statistic,
+            "conclusion": (
+                f"Significant rank correlation (rho={statistic:.3f}, p={p_value:.4f})"
+                if p_value < 0.05
+                else f"No significant rank correlation (rho={statistic:.3f}, p={p_value:.4f})"
+            ),
+        }
+
+    print(f"Valid genera with recovery threshold reached: {len(valid_recovery_df)}")
+    print(f"  Statistic:   {h4_result['statistic']}")
+    print(f"  p-value:     {h4_result['p_value']}")
+    print(f"  Effect size: {h4_result['effect_size']}")
+    print(f"  Result:      {h4_result['conclusion']}")
+
+    hypothesis_path = METADATA_DIR / "hypothesis_tests.json"
+    if not hypothesis_path.exists():
+        raise FileNotFoundError(
+            f"hypothesis_tests.json not found at {hypothesis_path}\n"
+            "Run 03c_transfer_evaluation.ipynb first."
+        )
+    hypothesis_results = json.loads(hypothesis_path.read_text())
+    hypothesis_results = [result for result in hypothesis_results if result.get("id") != "H4"]
+    hypothesis_results.append(h4_result)
+    hypothesis_path.write_text(json.dumps(hypothesis_results, indent=2))
+    print(f"\n✅ Updated: {hypothesis_path.name}")
+
+    log.end_step(status="success", records=len(valid_recovery_df))
+
+except Exception as e:
+    log.end_step(status="error", errors=[str(e)])
+    raise
+
+# %%
+# ============================================================
 # SECTION 10: Save Results
 # ============================================================
 

@@ -354,6 +354,7 @@ def compute_jm_matrix(df: pd.DataFrame, feature_cols: list[str], class_col: str 
 print("Computing JM matrix...")
 
 jm_matrix = compute_jm_matrix(berlin_train_viable, feature_cols, class_col="genus_latin")
+mean_jm_per_genus = jm_matrix.mean(axis=1).to_dict()
 
 jm_values = jm_matrix.values[np.triu_indices_from(jm_matrix.values, k=1)]
 
@@ -653,6 +654,7 @@ output_config = {
         "genus_groups": genus_groups,
         "genus_to_final_mapping": genus_to_final,
         "genus_german_mapping": genus_german_mapping,
+        "mean_jm_per_genus": mean_jm_per_genus,
     },
     "decision": {
         "strategy_applied": "jm_based_grouping_relative_threshold",
