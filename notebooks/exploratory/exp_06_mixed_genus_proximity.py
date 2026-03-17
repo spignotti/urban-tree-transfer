@@ -88,7 +88,6 @@ print("OK: Google Drive mounted")
 # ============================================================================
 from urban_tree_transfer.config import PROJECT_CRS, RANDOM_SEED
 from urban_tree_transfer.utils import ExecutionLog
-from urban_tree_transfer.feature_engineering.proximity import apply_proximity_filter
 
 from pathlib import Path
 from datetime import datetime, timezone
@@ -258,9 +257,202 @@ for city, gdf in city_data.items():
 
 log.end_step(status="success")
 
+
 # %%
 # ============================================================================
-# SECTION 9: Threshold Recommendation
+# SECTION 4: Distance Distribution Analysis
+# ============================================================================
+
+log.start_step("Distance Distribution")
+
+stats_by_city = {}
+
+for city, gdf in city_data.items():
+    distances = gdf["nearest_diff_genus_m"].to_numpy()
+    distances = distances[np.isfinite(distances)]
+
+    if len(distances) == 0:
+        raise ValueError(f"No finite distances for {city}. Check input data.")
+
+    percentiles = np.percentile(distances, [10, 25, 50, 75, 90, 95, 99])
+    stats_by_city[city] = {
+        "count": int(len(distances)),
+        "mean": float(np.mean(distances)),
+        "std": float(np.std(distances)),
+        "min": float(np.min(distances)),
+        "max": float(np.max(distances)),
+        "p10": float(percentiles[0]),
+        "p25": float(percentiles[1]),
+        "p50": float(percentiles[2]),
+        "p75": float(percentiles[3]),
+        "p90": float(percentiles[4]),
+        "p95": float(percentiles[5]),
+        "p99": float(percentiles[6]),
+    }
+
+    print(
+        f"{city.title()}: median={stats_by_city[city]['p50']:.2f}m, "
+        f"p90={stats_by_city[city]['p90']:.2f}m"
+    )
+
+log.end_step(status="success", records=len(stats_by_city))
+
+
+# %%
+# ============================================================================
+# SECTION 5: Threshold Sensitivity Analysis
+# ============================================================================
+
+log.start_step("Threshold Sensitivity")
+
+rows = []
+aggregate_rows = []
+combined_total = sum(len(gdf) for gdf in city_data.values())
+
+for threshold in THRESHOLDS_TO_TEST:
+    total_removed = 0
+    total_retained = 0
+
+    for city, gdf in city_data.items():
+        total = len(gdf)
+        removed = int((gdf["nearest_diff_genus_m"] < threshold).sum())
+        retained = total - removed
+        retention = retained / total if total else 0.0
+
+        rows.append(
+            {
+                "city": city,
+                "threshold": threshold,
+                "trees_removed": removed,
+                "trees_retained": retained,
+                "retention_rate": retention,
+            }
+        )
+
+        total_removed += removed
+        total_retained += retained
+
+    aggregate_rows.append(
+        {
+            "threshold_m": threshold,
+            "removed_count": int(total_removed),
+            "retained_count": int(total_retained),
+            "retention_rate": float(total_retained / combined_total if combined_total else 0.0),
+        }
+    )
+
+sensitivity_results = pd.DataFrame(rows)
+sensitivity_df = pd.DataFrame(aggregate_rows)
+
+print(sensitivity_results[["city", "threshold", "retention_rate"]].to_string(index=False))
+
+log.end_step(status="success", records=len(sensitivity_results))
+
+
+# %%
+# ============================================================================
+# SECTION 6: Genus-Specific Impact and Threshold Evaluation
+# ============================================================================
+
+log.start_step("Genus-Specific Impact")
+
+pixel_size_m = 10
+min_pixel_coverage = 2
+min_threshold_for_pixels = pixel_size_m * min_pixel_coverage
+uniformity_threshold = 0.10
+retention_threshold = 0.85
+
+threshold_evaluations = []
+
+for threshold in THRESHOLDS_TO_TEST:
+    evaluation = {"threshold": threshold, "per_city": {}}
+
+    for city, gdf in city_data.items():
+        city_eval = gdf[["genus_latin", "nearest_diff_genus_m"]].copy()
+        city_eval["removed"] = city_eval["nearest_diff_genus_m"] < threshold
+
+        genus_stats = (
+            city_eval.groupby("genus_latin")["removed"]
+            .agg(total_trees="count", removed_trees="sum")
+            .reset_index()
+        )
+        genus_stats["removal_rate"] = genus_stats["removed_trees"] / genus_stats["total_trees"]
+
+        retention_rate = float(
+            sensitivity_results[
+                (sensitivity_results["city"] == city)
+                & (sensitivity_results["threshold"] == threshold)
+            ]["retention_rate"].iloc[0]
+        )
+        max_city_deviation = float(
+            genus_stats["removal_rate"].max() - genus_stats["removal_rate"].min()
+        )
+
+        evaluation["per_city"][city] = {
+            "retention_rate": retention_rate,
+            "max_deviation": max_city_deviation,
+        }
+
+        if threshold == THRESHOLDS_TO_TEST[0] or threshold == THRESHOLDS_TO_TEST[-1]:
+            print(
+                f"{city.title()} @ {threshold}m: retention={retention_rate:.1%}, "
+                f"max genus deviation={max_city_deviation:.2%}"
+            )
+
+    evaluation["passes_retention"] = all(
+        evaluation["per_city"][city]["retention_rate"] >= retention_threshold for city in CITIES
+    )
+    evaluation["passes_uniformity"] = all(
+        evaluation["per_city"][city]["max_deviation"] < uniformity_threshold for city in CITIES
+    )
+    evaluation["covers_two_pixels"] = threshold >= min_threshold_for_pixels
+
+    threshold_evaluations.append(evaluation)
+
+passing_thresholds = [
+    evaluation
+    for evaluation in threshold_evaluations
+    if evaluation["passes_retention"]
+    and evaluation["passes_uniformity"]
+    and evaluation["covers_two_pixels"]
+]
+
+if passing_thresholds:
+    recommended_threshold = min(evaluation["threshold"] for evaluation in passing_thresholds)
+else:
+    recommended_threshold = max(
+        threshold_evaluations,
+        key=lambda evaluation: np.mean(
+            [evaluation["per_city"][city]["retention_rate"] for city in CITIES]
+        ),
+    )["threshold"]
+
+recommended_city_impacts = []
+for city, gdf in city_data.items():
+    city_eval = gdf[["genus_latin", "nearest_diff_genus_m"]].copy()
+    city_eval["removed"] = city_eval["nearest_diff_genus_m"] < recommended_threshold
+
+    genus_stats = (
+        city_eval.groupby("genus_latin")["removed"]
+        .agg(total_trees="count", removed_trees="sum")
+        .reset_index()
+    )
+    genus_stats["removal_rate"] = genus_stats["removed_trees"] / genus_stats["total_trees"]
+    genus_stats["city"] = city
+    recommended_city_impacts.append(genus_stats)
+
+genus_impact = pd.concat(recommended_city_impacts, ignore_index=True)
+max_deviation = genus_impact.groupby("city")["removal_rate"].apply(lambda x: x.max() - x.min())
+is_uniform = max_deviation < uniformity_threshold
+
+print(f"Recommended threshold candidate: {recommended_threshold}m")
+
+log.end_step(status="success", records=len(threshold_evaluations))
+
+
+# %%
+# ============================================================================
+# SECTION 7: Threshold Recommendation
 # ============================================================================
 
 log.start_step("Threshold Recommendation")
@@ -269,6 +461,8 @@ recommended_eval = next(
     (e for e in threshold_evaluations if e["threshold"] == recommended_threshold),
     None,
 )
+if recommended_eval is None:
+    raise ValueError(f"No threshold evaluation found for {recommended_threshold}m.")
 
 print("THRESHOLD RECOMMENDATION")
 print("=" * 60)
@@ -290,7 +484,7 @@ log.end_step(status="success")
 
 # %%
 # ============================================================================
-# SECTION 10: Export JSON Configuration
+# SECTION 8: Export JSON Configuration
 # ============================================================================
 
 log.start_step("Export Configuration")
