@@ -140,6 +140,7 @@ def get_metadata_columns(df: pd.DataFrame) -> list[str]:
         "plant_year",
         "correction_distance",
         "position_corrected",
+        "is_conifer",
     }
 
     metadata = []

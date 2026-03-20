@@ -24,6 +24,7 @@ _METADATA_COLUMNS = {
     "tree_type",
     "position_corrected",
     "correction_distance",
+    "is_conifer",
 }
 
 _OUTLIER_COLUMNS = {

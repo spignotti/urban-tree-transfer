@@ -17,6 +17,7 @@ metadata_columns:
   - tree_type      # anlagenbaeume/strassenbaeume (Berlin only)
   - position_corrected  # Boolean: was position corrected?
   - correction_distance # Distance in meters (0.0 if not corrected)
+  - is_conifer     # Boolean: is genus coniferous (for group-level analysis)
 
 # =============================================================================
 # CHM FEATURES
