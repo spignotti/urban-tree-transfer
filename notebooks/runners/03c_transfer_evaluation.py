@@ -131,6 +131,10 @@ for path in [METADATA_DIR, MODELS_DIR, LOGS_DIR, REPORT_DIR]:
 
 config = load_experiment_config()  # ✅ FIXED: removed "phase3" argument
 
+# Re-run controls
+FULL_RERUN = False
+RERUN_TRANSFER_EVAL = False
+
 # GPU detection (for NN inference)
 try:
     import torch
@@ -140,7 +144,8 @@ except Exception:
 
 # Skip if results already exist
 existing_eval_path = METADATA_DIR / "transfer_evaluation.json"
-if existing_eval_path.exists():
+print(f"Rerun flags: full={FULL_RERUN}, transfer_eval={RERUN_TRANSFER_EVAL}")
+if existing_eval_path.exists() and not (FULL_RERUN or RERUN_TRANSFER_EVAL):
     print(f"✅ Existing results found: {existing_eval_path}")
     existing_data = json.loads(existing_eval_path.read_text())
     print(f"   ML Champion: {existing_data.get('metadata', {}).get('ml_champion')}")
@@ -180,28 +185,35 @@ try:
     print(f"   Features: {len(ml_feature_cols)} (reduced)")
     
     # Load NN champion (optional)
-    nn_model_path = MODELS_DIR / "berlin_nn_champion.pt"
+    nn_model_path_pt = MODELS_DIR / "berlin_nn_champion.pt"
+    nn_model_path_zip = MODELS_DIR / "berlin_nn_champion.zip"
+    nn_model_path = nn_model_path_pt if nn_model_path_pt.exists() else nn_model_path_zip
     if nn_model_path.exists():
         nn_metadata_path = nn_model_path.with_suffix(nn_model_path.suffix + ".metadata.json")
         nn_metadata = json.loads(nn_metadata_path.read_text())
         nn_name = nn_metadata["model_name"]
         nn_feature_cols = nn_metadata["feature_columns"]
-        
-        # Filter model_params: Remove training parameters (batch_size, epochs, etc.)
-        # CNN1D __init__ only accepts: n_temporal_bases, n_months, n_static_features, n_classes,
-        #                              conv_filters, kernel_size, dropout, dense_units
         all_params = nn_metadata.get("best_params", {})
-        model_param_keys = {
-            "n_temporal_bases", "n_months", "n_static_features", "n_classes",
-            "conv_filters", "kernel_size", "dropout", "dense_units"
-        }
-        model_params = {k: v for k, v in all_params.items() if k in model_param_keys}
-        
-        # Load NN model with filtered model_params
+        if nn_name == "cnn_1d":
+            model_param_keys = {
+                "n_temporal_bases",
+                "n_months",
+                "n_static_features",
+                "n_classes",
+                "conv_filters",
+                "kernel_size",
+                "dropout",
+                "dense_units",
+            }
+            model_params = {k: v for k, v in all_params.items() if k in model_param_keys}
+        else:
+            model_params = all_params
+
+        # Load NN model with model-specific params
         nn_model = training.load_model(
             nn_model_path,
             model_class=models.CNN1D if nn_name == "cnn_1d" else None,
-            model_params=model_params,  # ✅ Only structural parameters
+            model_params=model_params,
         )
         
         print(f"✅ Loaded NN champion: {nn_name}")

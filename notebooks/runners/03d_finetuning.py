@@ -131,6 +131,121 @@ for path in [METADATA_DIR, MODEL_DIR, LOGS_DIR, REPORT_DIR]:
 
 config = load_experiment_config()  # ✅ FIXED: removed "phase3" argument
 
+# Re-run controls
+FULL_RERUN = False
+RERUN_FINETUNING = False
+
+
+def _extract_cnn_model_params(all_params: dict[str, object]) -> dict[str, object]:
+    """Filter CNN1D constructor parameters from stored best_params."""
+    model_param_keys = {
+        "n_temporal_bases",
+        "n_months",
+        "n_static_features",
+        "n_classes",
+        "conv_filters",
+        "kernel_size",
+        "dropout",
+        "dense_units",
+    }
+    return {k: v for k, v in all_params.items() if k in model_param_keys}
+
+
+def load_finetuning_checkpoint(curve_path: Path) -> dict[str, object] | None:
+    """Load intermediate fine-tuning checkpoint if available."""
+    if not curve_path.exists() or FULL_RERUN or RERUN_FINETUNING:
+        return None
+
+    data = json.loads(curve_path.read_text())
+    metadata = data.get("metadata", {})
+    checkpoint = metadata.get("checkpoint", {})
+    if checkpoint.get("completed", False):
+        print(f"✅ Existing completed results found: {curve_path}")
+        print(f"   ML Champion: {metadata.get('ml_champion')}")
+        print(f"   NN Champion: {metadata.get('nn_champion')}")
+        raise SystemExit("Skipping 03d: results already exist")
+
+    print(f"ℹ️  Resuming from partial checkpoint: {curve_path}")
+    return data
+
+
+def save_finetuning_checkpoint(
+    curve_path: Path,
+    *,
+    ml_name: str,
+    nn_name: str | None,
+    fractions: list[float],
+    ml_results: list[dict[str, object]],
+    nn_results: list[dict[str, object]],
+    ml_baseline_results: list[dict[str, object]],
+    stage: str,
+    completed: bool,
+    extra_metadata: dict[str, object] | None = None,
+) -> None:
+    """Persist incremental fine-tuning progress to JSON."""
+    summarized_results: list[dict[str, object]] = []
+
+    for row in ml_results:
+        summarized_results.append(
+            {
+                "fraction": float(row["fraction"]),
+                "model_type": "ml",
+                "metrics": {
+                    "f1_score": row["f1_score"],
+                    "precision": row["precision"],
+                    "recall": row["recall"],
+                    "accuracy": row["accuracy"],
+                },
+            }
+        )
+
+    for row in nn_results:
+        summarized_results.append(
+            {
+                "fraction": float(row["fraction"]),
+                "model_type": "nn",
+                "metrics": {
+                    "f1_score": row["f1_score"],
+                    "precision": row["precision"],
+                    "recall": row["recall"],
+                    "accuracy": row["accuracy"],
+                },
+            }
+        )
+
+    if not summarized_results and not completed:
+        return
+
+    payload = {
+        "results": summarized_results,
+        "metadata": {
+            "ml_champion": ml_name,
+            "nn_champion": nn_name,
+            "fractions": fractions,
+            "ml_results_raw": ml_results,
+            "nn_results_raw": nn_results,
+            "ml_baseline_results": ml_baseline_results,
+            "checkpoint": {
+                "completed": completed,
+                "stage": stage,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
+        },
+    }
+
+    if extra_metadata:
+        payload["metadata"].update(extra_metadata)
+
+    curve_path.write_text(json.dumps(payload, indent=2))
+
+
+def get_result_for_fraction(results: list[dict[str, object]], target_fraction: float) -> dict[str, object]:
+    """Return result row for fraction with tolerance-aware matching."""
+    for row in results:
+        if abs(float(row["fraction"]) - target_fraction) < 1e-9:
+            return row
+    raise ValueError(f"Missing result for fraction {target_fraction}")
+
 # GPU detection (for NN + XGBoost)
 try:
     import torch
@@ -139,14 +254,9 @@ except Exception:
     nn_device = "cpu"
 
 # Skip if results already exist
-existing_curve_path = METADATA_DIR / "finetuning_curve.json"
-if existing_curve_path.exists():
-    print(f"✅ Existing results found: {existing_curve_path}")
-    existing_data = json.loads(existing_curve_path.read_text())
-    meta = existing_data.get('metadata', {})
-    print(f"   ML Champion: {meta.get('ml_champion')}")
-    print(f"   NN Champion: {meta.get('nn_champion')}")
-    raise SystemExit("Skipping 03d: results already exist")
+curve_path = METADATA_DIR / "finetuning_curve.json"
+checkpoint_data = load_finetuning_checkpoint(curve_path)
+print(f"Rerun flags: full={FULL_RERUN}, finetuning={RERUN_FINETUNING}")
 
 
 # %%
@@ -176,36 +286,31 @@ try:
     ml_name = ml_metadata["model_name"]
     ml_feature_cols = ml_metadata["feature_columns"]
     
-    # Load NN champion
-    nn_model_path = MODEL_DIR / "berlin_nn_champion.pt"
-    nn_metadata_path = MODEL_DIR / "berlin_nn_champion.pt.metadata.json"
-    
-    if not nn_model_path.exists():
-        raise FileNotFoundError(
-            f"NN champion not found at {nn_model_path}\n"
-            "Run 03b_berlin_optimization.ipynb first."
+    # Load NN champion (optional)
+    nn_model_path_pt = MODEL_DIR / "berlin_nn_champion.pt"
+    nn_model_path_zip = MODEL_DIR / "berlin_nn_champion.zip"
+    nn_model_path = nn_model_path_pt if nn_model_path_pt.exists() else nn_model_path_zip
+
+    if nn_model_path.exists():
+        nn_metadata_path = nn_model_path.with_suffix(nn_model_path.suffix + ".metadata.json")
+        nn_metadata = json.loads(nn_metadata_path.read_text())
+        nn_name = nn_metadata["model_name"]
+        nn_feature_cols = nn_metadata["feature_columns"]
+
+        all_params = nn_metadata.get("best_params", {})
+        model_params = _extract_cnn_model_params(all_params) if nn_name == "cnn_1d" else all_params
+
+        nn_model = training.load_model(
+            nn_model_path,
+            model_class=models.CNN1D if nn_name == "cnn_1d" else None,
+            model_params=model_params,
         )
-    
-    nn_metadata = json.loads(nn_metadata_path.read_text())
-    nn_name = nn_metadata["model_name"]
-    nn_feature_cols = nn_metadata["feature_columns"]
-    
-    # ✅ FIXED: Filter model_params for CNN1D (remove training params)
-    # CNN1D __init__ only accepts: n_temporal_bases, n_months, n_static_features, n_classes,
-    #                              conv_filters, kernel_size, dropout, dense_units
-    all_params = nn_metadata.get("best_params", {})
-    model_param_keys = {
-        "n_temporal_bases", "n_months", "n_static_features", "n_classes",
-        "conv_filters", "kernel_size", "dropout", "dense_units"
-    }
-    model_params = {k: v for k, v in all_params.items() if k in model_param_keys}
-    
-    # ✅ FIXED: Load NN model with model_class and filtered model_params
-    nn_model = training.load_model(
-        nn_model_path,
-        model_class=models.CNN1D if nn_name == "cnn_1d" else None,
-        model_params=model_params,
-    )
+    else:
+        nn_model = None
+        nn_name = None
+        nn_feature_cols = None
+        nn_metadata = None
+        print("ℹ️  No NN champion artifact found - continuing with ML-only fine-tuning")
     
     # Load label encoder
     with (MODEL_DIR / "label_encoder.pkl").open("rb") as f:
@@ -217,8 +322,11 @@ try:
     with (MODEL_DIR / "berlin_scaler_ml.pkl").open("rb") as f:
         berlin_scaler_ml = pickle.load(f)
     
-    with (MODEL_DIR / "berlin_scaler_nn.pkl").open("rb") as f:
-        berlin_scaler_nn = pickle.load(f)
+    if nn_model is not None:
+        with (MODEL_DIR / "berlin_scaler_nn.pkl").open("rb") as f:
+            berlin_scaler_nn = pickle.load(f)
+    else:
+        berlin_scaler_nn = None
     
     # Set defaults for backward compatibility
     feature_cols = ml_feature_cols
@@ -228,8 +336,9 @@ try:
     
     print(f"\nML Champion: {ml_name}")
     print(f"  Features: {len(ml_feature_cols)} (reduced)")
-    print(f"NN Champion: {nn_name}")
-    print(f"  Features: {len(nn_feature_cols)} (full temporal)")
+    print(f"NN Champion: {nn_name if nn_name else 'None'}")
+    if nn_feature_cols is not None:
+        print(f"  Features: {len(nn_feature_cols)} (full temporal)")
     print(f"Genera:      {len(class_labels)}")
     print("=" * 70)
     
@@ -279,33 +388,43 @@ try:
     x_test = x_test_ml
     x_test_scaled = x_test_scaled_ml
     
-    # Load Leipzig NN splits (full temporal features)
-    print(f"\n[NN Champion Datasets - Full Temporal Features]")
-    # ✅ FIXED: No variant parameter needed - always loads _cnn files
-    leipzig_finetune_nn, leipzig_test_nn = data_loading.load_leipzig_splits_cnn(INPUT_DIR)
-    
-    print(f"  Finetune: {len(leipzig_finetune_nn):,} samples, {len(nn_feature_cols)} features")
-    print(f"  Test:     {len(leipzig_test_nn):,} samples")
-    
-    # Memory optimization for NN datasets
-    float_cols_nn = leipzig_test_nn.select_dtypes(include=["float64"]).columns
-    if len(float_cols_nn) > 0:
-        leipzig_test_nn[float_cols_nn] = leipzig_test_nn[float_cols_nn].astype("float32")
-        leipzig_finetune_nn[float_cols_nn] = leipzig_finetune_nn[float_cols_nn].astype("float32")
-        print(f"  Optimized: {len(float_cols_nn)} float64→float32")
-    
-    # Prepare NN test set (scaled with Berlin NN scaler)
-    x_test_nn = leipzig_test_nn[nn_feature_cols].to_numpy(dtype=np.float32)
-    x_test_scaled_nn = berlin_scaler_nn.transform(x_test_nn)
-    
-    print(f"  ✅ NN datasets prepared (scaled with berlin_scaler_nn)")
+    if nn_model is not None and nn_feature_cols is not None and berlin_scaler_nn is not None:
+        # Load Leipzig NN splits (full temporal features)
+        print(f"\n[NN Champion Datasets - Full Temporal Features]")
+        # ✅ FIXED: No variant parameter needed - always loads _cnn files
+        leipzig_finetune_nn, leipzig_test_nn = data_loading.load_leipzig_splits_cnn(INPUT_DIR)
+
+        print(f"  Finetune: {len(leipzig_finetune_nn):,} samples, {len(nn_feature_cols)} features")
+        print(f"  Test:     {len(leipzig_test_nn):,} samples")
+
+        # Memory optimization for NN datasets
+        float_cols_nn = leipzig_test_nn.select_dtypes(include=["float64"]).columns
+        if len(float_cols_nn) > 0:
+            leipzig_test_nn[float_cols_nn] = leipzig_test_nn[float_cols_nn].astype("float32")
+            leipzig_finetune_nn[float_cols_nn] = leipzig_finetune_nn[float_cols_nn].astype("float32")
+            print(f"  Optimized: {len(float_cols_nn)} float64→float32")
+
+        # Prepare NN test set (scaled with Berlin NN scaler)
+        x_test_nn = leipzig_test_nn[nn_feature_cols].to_numpy(dtype=np.float32)
+        x_test_scaled_nn = berlin_scaler_nn.transform(x_test_nn)
+
+        print(f"  ✅ NN datasets prepared (scaled with berlin_scaler_nn)")
+    else:
+        leipzig_finetune_nn = None
+        leipzig_test_nn = None
+        x_test_nn = None
+        x_test_scaled_nn = None
+        print("\nℹ️  NN artifacts missing - skipping NN dataset loading")
     
     # Get fine-tuning fractions from config
     fractions = config["finetuning"]["fractions"]
     
-    print(f"\nℹ️  Dual datasets loaded:")
+    print(f"\nℹ️  Dataset summary:")
     print(f"   - ML fine-tuning will use {len(ml_feature_cols)} reduced features")
-    print(f"   - NN fine-tuning will use {len(nn_feature_cols)} full temporal features")
+    if nn_feature_cols is not None:
+        print(f"   - NN fine-tuning will use {len(nn_feature_cols)} full temporal features")
+    else:
+        print("   - NN fine-tuning skipped (no NN champion artifacts)")
     print(f"\nFractions: {fractions}")
     print("=" * 70)
     
@@ -314,6 +433,19 @@ try:
 except Exception as e:
     log.end_step(status="error", errors=[str(e)])
     raise
+
+
+# Initialize resumable result containers
+checkpoint_metadata = (checkpoint_data or {}).get("metadata", {}) if checkpoint_data else {}
+ml_results = list(checkpoint_metadata.get("ml_results_raw", []))
+nn_results = list(checkpoint_metadata.get("nn_results_raw", []))
+ml_baseline_results = list(checkpoint_metadata.get("ml_baseline_results", []))
+
+if checkpoint_data:
+    print("\nResuming cached progress:")
+    print(f"  ML fractions cached: {len(ml_results)}")
+    print(f"  NN fractions cached: {len(nn_results)}")
+    print(f"  Baseline fractions cached: {len(ml_baseline_results)}")
 
 
 # %%
@@ -331,7 +463,7 @@ try:
     print(f"ML Fine-Tuning: {ml_name} (Warm-Start)")
     print("=" * 70)
     
-    ml_results = []
+    completed_ml_fractions = {float(row["fraction"]) for row in ml_results}
     n_estimators = config["finetuning"]["ml_warm_start_estimators"]
 
     use_xgb_gpu = False
@@ -363,6 +495,10 @@ try:
     x_val_scaled_ml = berlin_scaler_ml.transform(x_val_ml)
     
     for frac in fractions:
+        if float(frac) in completed_ml_fractions:
+            print(f"\n[{frac:.1%}] Already completed in checkpoint - skipping")
+            continue
+
         print(f"\n[{frac:.1%}] Fine-tuning with {int(frac * len(leipzig_finetune_ml))} samples...")
         
         # ✅ FIXED: create_stratified_subsets expects numpy arrays, not DataFrame
@@ -433,6 +569,18 @@ try:
         
         print(f"  F1:       {metrics['f1_score']:.4f}")
         print(f"  Accuracy: {metrics['accuracy']:.4f}")
+
+        save_finetuning_checkpoint(
+            curve_path,
+            ml_name=ml_name,
+            nn_name=nn_name,
+            fractions=fractions,
+            ml_results=ml_results,
+            nn_results=nn_results,
+            ml_baseline_results=ml_baseline_results,
+            stage="ml_finetuning",
+            completed=False,
+        )
         
         # Memory cleanup
         gc.collect()
@@ -454,112 +602,138 @@ log.start_step("NN Fine-Tuning")
 from sklearn.model_selection import train_test_split
 
 try:
-    print("\n" + "=" * 70)
-    print(f"NN Fine-Tuning: {nn_name} (Warm-Start)")
-    print("=" * 70)
-    
-    nn_results = []
-    finetune_cfg = config.get("finetuning", {})
-    epochs = finetune_cfg.get("nn_epochs", 50)
-    batch_size = finetune_cfg.get("nn_batch_size", 64)
-    lr_factor = finetune_cfg.get("nn_lr_factor", 0.1)
-    if "nn_epochs" not in finetune_cfg or "nn_batch_size" not in finetune_cfg:
-        print("⚠️  Missing nn_epochs/nn_batch_size in config; using defaults (epochs=50, batch_size=64)")
-    
-    # ✅ FIXED: Prepare full dataset arrays ONCE before loop
-    x_full_nn = leipzig_finetune_nn[nn_feature_cols].to_numpy(dtype=np.float32)
-    y_full_nn = leipzig_finetune_nn["genus_latin"].map(label_to_idx).to_numpy()
+    if nn_model is None or nn_name is None or leipzig_finetune_nn is None or x_test_scaled_nn is None:
+        print("\nℹ️  No NN champion artifacts available - skipping NN fine-tuning")
+        log.end_step(status="skipped")
+    else:
+        print("\n" + "=" * 70)
+        print(f"NN Fine-Tuning: {nn_name} (Warm-Start)")
+        print("=" * 70)
 
-    nn_val_ratio = finetune_cfg.get("nn_val_ratio", 0.10)
-    x_train_nn, x_val_nn, y_train_nn, y_val_nn = train_test_split(
-        x_full_nn,
-        y_full_nn,
-        test_size=nn_val_ratio,
-        stratify=y_full_nn,
-        random_state=RANDOM_SEED,
-    )
-    x_val_scaled_nn = berlin_scaler_nn.transform(x_val_nn)
+        completed_nn_fractions = {float(row["fraction"]) for row in nn_results}
+        finetune_cfg = config.get("finetuning", {})
+        epochs = finetune_cfg.get("nn_epochs", 50)
+        batch_size = finetune_cfg.get("nn_batch_size", 64)
+        lr_factor = finetune_cfg.get("nn_lr_factor", 0.1)
+        if "nn_epochs" not in finetune_cfg or "nn_batch_size" not in finetune_cfg:
+            print(
+                "⚠️  Missing nn_epochs/nn_batch_size in config; "
+                "using defaults (epochs=50, batch_size=64)"
+            )
 
-    print("\nNN Fine-Tuning Diagnostics")
-    print(f"  berlin_scaler_nn.mean_[:3]: {berlin_scaler_nn.mean_[:3]}")
-    print(f"  Epochs from config:         {epochs}")
-    print(f"  Learning rate factor:       {lr_factor}")
-    
-    for frac in fractions:
-        print(f"\n[{frac:.1%}] Fine-tuning with {int(frac * len(leipzig_finetune_nn))} samples...")
-        
-        # ✅ FIXED: create_stratified_subsets expects numpy arrays, not DataFrame
-        subsets = training.create_stratified_subsets(
-            x_train_nn,
-            y_train_nn,
-            fractions=[frac],
-            random_seed=RANDOM_SEED,
+        # ✅ FIXED: Prepare full dataset arrays ONCE before loop
+        x_full_nn = leipzig_finetune_nn[nn_feature_cols].to_numpy(dtype=np.float32)
+        y_full_nn = leipzig_finetune_nn["genus_latin"].map(label_to_idx).to_numpy()
+
+        nn_val_ratio = finetune_cfg.get("nn_val_ratio", 0.10)
+        x_train_nn, x_val_nn, y_train_nn, y_val_nn = train_test_split(
+            x_full_nn,
+            y_full_nn,
+            test_size=nn_val_ratio,
+            stratify=y_full_nn,
+            random_state=RANDOM_SEED,
         )
-        x_finetune, y_finetune = subsets[frac]
-        
-        # Scale with Berlin NN scaler for warm-start
-        x_finetune_scaled = berlin_scaler_nn.transform(x_finetune)
-        
-        # Warm-start fine-tuning (using NN validation split)
-        finetuned_model = training.finetune_neural_network(
-            nn_model,
-            x_finetune_scaled,
-            y_finetune,
-            x_val=x_val_scaled_nn,
-            y_val=y_val_nn,
-            epochs=epochs,
-            lr_factor=lr_factor,
-            batch_size=batch_size,
-            device=nn_device,
-        )
-        ft_history = getattr(finetuned_model, "finetune_history_", {})
-        if ft_history:
-            train_loss = ft_history.get("train_loss", [])
-            final_train_loss = train_loss[-1] if train_loss else None
-            print(f"  Final train_loss: {final_train_loss}")
-            print(f"  Stopped early:    {ft_history.get('stopped_early')}")
-            print(f"  Best epoch:       {ft_history.get('best_epoch')}")
-        else:
-            print("  No fine-tuning history returned")
-        
-        # Evaluate on Leipzig test set (using NN test data)
-        preds = finetuned_model.predict(x_test_scaled_nn, device=nn_device)
-        metrics = evaluation.compute_metrics(y_test, preds)
-        ci_f1 = evaluation.bootstrap_confidence_interval(
-            y_test,
-            preds,
-            lambda y_true_sample, y_pred_sample: evaluation.compute_metrics(
-                y_true_sample,
-                y_pred_sample,
-            )["f1_score"],
-            n_bootstrap=config["metrics"]["n_bootstrap"],
-            confidence_level=config["metrics"]["confidence_level"],
-        )
-        
-        nn_results.append({
-            "fraction": frac,
-            "n_samples": len(y_finetune),
-            "f1_score": metrics["f1_score"],
-            "accuracy": metrics["accuracy"],
-            "precision": metrics["precision"],
-            "recall": metrics["recall"],
-            "ci_f1": ci_f1,
-            "predictions": preds.tolist(),
-        })
-        
-        print(f"  F1:       {metrics['f1_score']:.4f}")
-        print(f"  Accuracy: {metrics['accuracy']:.4f}")
-        
-        # Memory cleanup
-        del finetuned_model, x_finetune, x_finetune_scaled
-        gc.collect()
-    
-    print("\n" + "=" * 70)
-    print(f"NN Fine-tuning complete: {len(nn_results)} fractions")
-    print("=" * 70)
-    
-    log.end_step(status="success", records=len(nn_results))
-    
+        x_val_scaled_nn = berlin_scaler_nn.transform(x_val_nn)
+
+        print("\nNN Fine-Tuning Diagnostics")
+        print(f"  berlin_scaler_nn.mean_[:3]: {berlin_scaler_nn.mean_[:3]}")
+        print(f"  Epochs from config:         {epochs}")
+        print(f"  Learning rate factor:       {lr_factor}")
+
+        for frac in fractions:
+            if float(frac) in completed_nn_fractions:
+                print(f"\n[{frac:.1%}] Already completed in checkpoint - skipping")
+                continue
+
+            print(
+                f"\n[{frac:.1%}] Fine-tuning with {int(frac * len(leipzig_finetune_nn))} samples..."
+            )
+
+            # ✅ FIXED: create_stratified_subsets expects numpy arrays, not DataFrame
+            subsets = training.create_stratified_subsets(
+                x_train_nn,
+                y_train_nn,
+                fractions=[frac],
+                random_seed=RANDOM_SEED,
+            )
+            x_finetune, y_finetune = subsets[frac]
+
+            # Scale with Berlin NN scaler for warm-start
+            x_finetune_scaled = berlin_scaler_nn.transform(x_finetune)
+
+            # Warm-start fine-tuning (using NN validation split)
+            finetuned_model = training.finetune_neural_network(
+                nn_model,
+                x_finetune_scaled,
+                y_finetune,
+                x_val=x_val_scaled_nn,
+                y_val=y_val_nn,
+                epochs=epochs,
+                lr_factor=lr_factor,
+                batch_size=batch_size,
+                device=nn_device,
+            )
+            ft_history = getattr(finetuned_model, "finetune_history_", {})
+            if ft_history:
+                train_loss = ft_history.get("train_loss", [])
+                final_train_loss = train_loss[-1] if train_loss else None
+                print(f"  Final train_loss: {final_train_loss}")
+                print(f"  Stopped early:    {ft_history.get('stopped_early')}")
+                print(f"  Best epoch:       {ft_history.get('best_epoch')}")
+            else:
+                print("  No fine-tuning history returned")
+
+            # Evaluate on Leipzig test set (using NN test data)
+            preds = finetuned_model.predict(x_test_scaled_nn, device=nn_device)
+            metrics = evaluation.compute_metrics(y_test, preds)
+            ci_f1 = evaluation.bootstrap_confidence_interval(
+                y_test,
+                preds,
+                lambda y_true_sample, y_pred_sample: evaluation.compute_metrics(
+                    y_true_sample,
+                    y_pred_sample,
+                )["f1_score"],
+                n_bootstrap=config["metrics"]["n_bootstrap"],
+                confidence_level=config["metrics"]["confidence_level"],
+            )
+
+            nn_results.append(
+                {
+                    "fraction": frac,
+                    "n_samples": len(y_finetune),
+                    "f1_score": metrics["f1_score"],
+                    "accuracy": metrics["accuracy"],
+                    "precision": metrics["precision"],
+                    "recall": metrics["recall"],
+                    "ci_f1": ci_f1,
+                    "predictions": preds.tolist(),
+                }
+            )
+
+            print(f"  F1:       {metrics['f1_score']:.4f}")
+            print(f"  Accuracy: {metrics['accuracy']:.4f}")
+
+            save_finetuning_checkpoint(
+                curve_path,
+                ml_name=ml_name,
+                nn_name=nn_name,
+                fractions=fractions,
+                ml_results=ml_results,
+                nn_results=nn_results,
+                ml_baseline_results=ml_baseline_results,
+                stage="nn_finetuning",
+                completed=False,
+            )
+
+            # Memory cleanup
+            del finetuned_model, x_finetune, x_finetune_scaled
+            gc.collect()
+
+        print("\n" + "=" * 70)
+        print(f"NN Fine-tuning complete: {len(nn_results)} fractions")
+        print("=" * 70)
+
+        log.end_step(status="success", records=len(nn_results))
 except Exception as e:
     log.end_step(status="error", errors=[str(e)])
     raise
@@ -579,12 +753,16 @@ try:
     print("ℹ️  Using Leipzig-specific scaler for fair comparison")
     print("=" * 70)
     
-    ml_baseline_results = []
+    completed_baseline_fractions = {float(row["fraction"]) for row in ml_baseline_results}
     
     # ✅ FIXED: Prepare full dataset arrays ONCE before loop (reuse from ML fine-tuning)
     # x_full_ml and y_full_ml already created in SECTION 3
     
     for frac in fractions:
+        if float(frac) in completed_baseline_fractions:
+            print(f"\n[{frac:.1%}] Baseline already completed in checkpoint - skipping")
+            continue
+
         print(f"\n[{frac:.1%}] Training from scratch with {int(frac * len(leipzig_finetune_ml))} samples...")
         
         # ✅ FIXED: create_stratified_subsets expects numpy arrays, not DataFrame
@@ -621,6 +799,18 @@ try:
         
         print(f"  F1:       {metrics['f1_score']:.4f}")
         print(f"  Accuracy: {metrics['accuracy']:.4f}")
+
+        save_finetuning_checkpoint(
+            curve_path,
+            ml_name=ml_name,
+            nn_name=nn_name,
+            fractions=fractions,
+            ml_results=ml_results,
+            nn_results=nn_results,
+            ml_baseline_results=ml_baseline_results,
+            stage="from_scratch_baseline",
+            completed=False,
+        )
         
         # Memory cleanup
         del baseline_model, x_train, x_train_scaled
@@ -651,10 +841,14 @@ try:
     
     # Get zero-shot predictions (re-evaluate with Berlin ML model using ML test data)
     zero_shot_preds = ml_model.predict(x_test_scaled_ml)
-    
+
+    full_fraction = max(float(frac) for frac in fractions)
+
     # Get full fine-tuning and from-scratch predictions
-    ml_full_preds = np.array(ml_results[-1]["predictions"])
-    ml_baseline_full_preds = np.array(ml_baseline_results[-1]["predictions"])
+    ml_full_row = get_result_for_fraction(ml_results, full_fraction)
+    ml_baseline_full_row = get_result_for_fraction(ml_baseline_results, full_fraction)
+    ml_full_preds = np.array(ml_full_row["predictions"])
+    ml_baseline_full_preds = np.array(ml_baseline_full_row["predictions"])
     
     # McNemar test: Fine-tuning vs Zero-shot
     mcnemar_ft_vs_zs = transfer.mcnemar_test(
@@ -782,7 +976,8 @@ try:
     per_genus_df = pd.DataFrame(per_genus_recovery)
     
     # Show top 5 best and worst recovering genera (at full fine-tuning)
-    full_fraction_data = per_genus_df[per_genus_df["fraction"] == fractions[-1]]
+    full_fraction = max(float(frac) for frac in fractions)
+    full_fraction_data = per_genus_df[per_genus_df["fraction"] == full_fraction]
     top_5 = full_fraction_data.nlargest(5, "f1_score")
     bottom_5 = full_fraction_data.nsmallest(5, "f1_score")
     
@@ -966,6 +1161,11 @@ try:
                 "finetuning_vs_fromscratch": mcnemar_ft_vs_fs,
             },
             "per_genus_recovery": per_genus_recovery,
+            "checkpoint": {
+                "completed": True,
+                "stage": "finalized",
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
         },
     }
     
@@ -1047,6 +1247,11 @@ except Exception as e:
 log.start_step("Save Execution Log")
 
 try:
+    full_fraction = max(float(frac) for frac in fractions)
+    ml_final_row = get_result_for_fraction(ml_results, full_fraction)
+    baseline_final_row = get_result_for_fraction(ml_baseline_results, full_fraction)
+    nn_final_row = get_result_for_fraction(nn_results, full_fraction) if nn_results else None
+
     # Add summary metadata
     execution_summary = {
         "notebook": "03d_finetuning",
@@ -1054,9 +1259,9 @@ try:
         "ml_champion": ml_name,
         "nn_champion": nn_name,
         "fractions": fractions,
-        "ml_final_f1": ml_results[-1]["f1_score"],
-        "nn_final_f1": nn_results[-1]["f1_score"],
-        "baseline_final_f1": ml_baseline_results[-1]["f1_score"],
+        "ml_final_f1": ml_final_row["f1_score"],
+        "nn_final_f1": nn_final_row["f1_score"] if nn_final_row else None,
+        "baseline_final_f1": baseline_final_row["f1_score"],
         "power_law": {
             "a": power_law_fit["a"],
             "b": power_law_fit["b"],
@@ -1102,10 +1307,18 @@ print(f"  NN Champion: {nn_name}")
 
 print(f"\nFine-tuning Fractions: {fractions}")
 
+full_fraction = max(float(frac) for frac in fractions)
+ml_final_row = get_result_for_fraction(ml_results, full_fraction)
+baseline_final_row = get_result_for_fraction(ml_baseline_results, full_fraction)
+nn_final_row = get_result_for_fraction(nn_results, full_fraction) if nn_results else None
+
 print(f"\nFinal Performance (Full Fine-tuning):")
-print(f"  ML:        {ml_results[-1]['f1_score']:.4f} F1")
-print(f"  NN:        {nn_results[-1]['f1_score']:.4f} F1")
-print(f"  Baseline:  {ml_baseline_results[-1]['f1_score']:.4f} F1 (from scratch)")
+print(f"  ML:        {ml_final_row['f1_score']:.4f} F1")
+if nn_final_row is not None:
+    print(f"  NN:        {nn_final_row['f1_score']:.4f} F1")
+else:
+    print("  NN:        skipped")
+print(f"  Baseline:  {baseline_final_row['f1_score']:.4f} F1 (from scratch)")
 
 print(f"\nPower-Law Fit:")
 print(f"  Formula: y = {power_law_fit['a']:.4f} * x^{power_law_fit['b']:.4f}")
