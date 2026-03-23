@@ -89,6 +89,7 @@ print("OK: Google Drive mounted")
 
 from pathlib import Path
 from datetime import datetime, timezone
+import inspect
 import json
 import pickle
 import warnings
@@ -165,6 +166,57 @@ def resolve_optuna_budget(model_name: str) -> tuple[int, int]:
     trials = int(model_trials.get(model_name, default_trials))
     timeout = int(model_timeouts.get(model_name, default_timeout))
     return trials, timeout
+
+
+def _supports_kwarg(func: object, kwarg_name: str) -> bool:
+    """Return True when callable signature contains the given kwarg."""
+    try:
+        signature = inspect.signature(func)
+    except (TypeError, ValueError):
+        return False
+    return kwarg_name in signature.parameters
+
+
+def create_study_compat(*, direction: str, sampler: str, pruner: str, random_seed: int):
+    """Call hp_tuning.create_study with backward-compatible kwargs."""
+    kwargs = {"direction": direction, "random_seed": random_seed}
+    if _supports_kwarg(hp_tuning.create_study, "sampler"):
+        kwargs["sampler"] = sampler
+    elif _supports_kwarg(hp_tuning.create_study, "sampler_name"):
+        kwargs["sampler_name"] = sampler
+
+    if _supports_kwarg(hp_tuning.create_study, "pruner"):
+        kwargs["pruner"] = pruner
+    elif _supports_kwarg(hp_tuning.create_study, "pruner_name"):
+        kwargs["pruner_name"] = pruner
+
+    return hp_tuning.create_study(**kwargs)
+
+
+def run_optuna_search_compat(
+    study,
+    objective,
+    *,
+    n_trials: int,
+    timeout_seconds: int,
+    model_name: str,
+    checkpoint_path: Path,
+):
+    """Call hp_tuning.run_optuna_search with backward-compatible kwargs."""
+    kwargs = {
+        "n_trials": n_trials,
+        "timeout_seconds": timeout_seconds,
+        "model_name": model_name,
+    }
+    if _supports_kwarg(hp_tuning.run_optuna_search, "checkpoint_path"):
+        kwargs["checkpoint_path"] = checkpoint_path
+    else:
+        print(
+            "WARN: Installed urban_tree_transfer package does not support "
+            "`checkpoint_path` in run_optuna_search(); proceeding without per-trial checkpoints."
+        )
+
+    return hp_tuning.run_optuna_search(study, objective, **kwargs)
 
 print(f"Input (Phase 3 Datasets): {INPUT_DIR}")
 print(f"Output (Phase 3):         {OUTPUT_DIR}")
@@ -512,7 +564,7 @@ try:
         total_grid_size = compute_search_space_size(ml_search_space)
 
         # Create Optuna study with pruning for efficiency
-        ml_study = hp_tuning.create_study(
+        ml_study = create_study_compat(
             direction="maximize",
             sampler=config["hp_tuning"]["optuna"]["sampler"],
             pruner=config["hp_tuning"]["optuna"]["pruner"],
@@ -542,7 +594,7 @@ try:
             f"Approximate discrete search-space size (2-point ranges): {total_grid_size}."
         )
     
-        ml_hp_results = hp_tuning.run_optuna_search(
+        ml_hp_results = run_optuna_search_compat(
             ml_study,
             ml_objective,
             n_trials=n_trials,
@@ -712,7 +764,7 @@ try:
                 print(f"  {param}: {values}")
 
             # Create NN study
-            nn_study = hp_tuning.create_study(
+            nn_study = create_study_compat(
                 direction="maximize",
                 sampler=config["hp_tuning"]["optuna"]["sampler"],
                 pruner=config["hp_tuning"]["optuna"]["pruner"],
@@ -736,7 +788,7 @@ try:
             print(f"  Trials: {n_trials}")
             print(f"  Timeout: {timeout}s ({timeout/3600:.1f}h)")
 
-            nn_hp_results = hp_tuning.run_optuna_search(
+            nn_hp_results = run_optuna_search_compat(
                 nn_study,
                 nn_objective,
                 n_trials=n_trials,
