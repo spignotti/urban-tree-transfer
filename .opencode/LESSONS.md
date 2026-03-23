@@ -21,6 +21,8 @@ Format: `- [YYYY-MM-DD] <what was tricky / what went wrong> → <what worked / c
 
 ## Notebooks & Colab
 
+- [2026-03-23] Installing optional deps (e.g. `pytorch-tabnet`) after importing `urban_tree_transfer.experiments.models` leaves `TabNetClassifier=None` in module state → install optional deps in notebook environment setup *before* package imports (or explicitly reload the module after install).
+
 ## Communication
 
 - [2026-03-23] Suggested shortcut-only path (proceed with XGBoost only) despite user needing root-cause fixes in exp_11 → prioritize implementing requested code-level fixes first; avoid repeating workaround recommendations when user has already asked for full correction.

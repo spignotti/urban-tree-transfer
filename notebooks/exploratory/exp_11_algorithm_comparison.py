@@ -71,6 +71,15 @@ subprocess.run(["pip", "install", repo_url, "-q"], check=True)
 # Install PyTorch separately (required for neural network models)
 subprocess.run(["pip", "install", "torch>=2.2.0", "-q"], check=True)
 
+# Install TabNet before package imports so models module resolves dependency correctly
+tabnet_install_error = None
+try:
+    subprocess.run(["pip", "install", "pytorch-tabnet", "-q"], check=True)
+    print("OK: pytorch-tabnet installed")
+except Exception as exc:
+    tabnet_install_error = str(exc)
+    print(f"WARN: pytorch-tabnet install failed (TabNet may be skipped): {exc}")
+
 print("OK: Package installed (including PyTorch for neural networks)")
 
 
@@ -605,14 +614,11 @@ except ImportError:
         f'  pip install "{repo_url}[gpu]"'
     )
 
-# Attempt notebook-local TabNet installation (no project dependency changes)
-tabnet_install_error = None
-try:
-    subprocess.run(["pip", "install", "pytorch-tabnet", "-q"], check=True)
-    print("✅ pytorch-tabnet installed")
-except Exception as exc:
-    tabnet_install_error = str(exc)
-    print(f"⚠️  pytorch-tabnet install failed: {exc}")
+# TabNet dependency status was resolved in Environment Setup.
+if tabnet_install_error is None:
+    print("✅ pytorch-tabnet available")
+else:
+    print(f"⚠️  pytorch-tabnet unavailable (TabNet may be skipped): {tabnet_install_error}")
 
 # 1. CNN-1D (requires PyTorch)
 print("\n1. CNN-1D (1D Convolutional Neural Network)")
