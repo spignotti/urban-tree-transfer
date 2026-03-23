@@ -15,6 +15,10 @@ from urban_tree_transfer.config import RANDOM_SEED
 from urban_tree_transfer.experiments.models import create_model
 from urban_tree_transfer.experiments.training import train_with_cv
 
+_MODEL_TRAINING_PARAMS: dict[str, set[str]] = {
+    "cnn_1d": {"learning_rate", "batch_size", "epochs", "early_stopping_patience"},
+}
+
 
 def create_study(
     direction: str = "maximize",
@@ -72,8 +76,10 @@ def build_objective(
     base_params = dict(base_params or {})
     fit_params = dict(fit_params or {})
 
-    # Define training parameters that should go to fit_params, not model_params
-    training_params = {"learning_rate", "batch_size", "epochs", "early_stopping_patience"}
+    # Define training parameters that should go to fit_params for this model.
+    # Most models (e.g., sklearn/XGBoost) expect tuned hyperparameters in the
+    # estimator constructor, while CNN training args are passed at fit-time.
+    training_params = _MODEL_TRAINING_PARAMS.get(model_name, set())
 
     def objective(trial: Any) -> float:
         params = suggest_params_from_space(trial, search_space)
