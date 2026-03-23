@@ -133,18 +133,16 @@ algorithm_comparison:
       type: ml
       grid:
         n_estimators: [200]
-        max_depth: [10, 20, 30]
-        min_samples_split: [2, 5]
+        max_depth: [10, 20]
+        min_samples_split: [2]
         min_samples_leaf: [1, 2]
     xgboost:
       type: ml
       grid:
-        n_estimators: [200, 400]
-        max_depth: [4, 6, 8]
+        n_estimators: [200]
+        max_depth: [4, 8]
         learning_rate: [0.05, 0.1]
         subsample: [0.8, 1.0]
-        colsample_bytree: [0.8, 1.0]
-        reg_lambda: [1.0, 2.0]
     cnn_1d:
       type: nn
       baseline:
