@@ -81,6 +81,7 @@ print("OK: Google Drive mounted")
 
 from pathlib import Path
 from datetime import datetime, timezone
+import inspect
 import json
 import pickle
 import warnings
@@ -135,6 +136,35 @@ config = load_experiment_config()  # ✅ FIXED: removed "phase3" argument
 FULL_RERUN = False
 RERUN_TRANSFER_EVAL = False
 
+
+def _supports_kwarg(func: object, kwarg_name: str) -> bool:
+    """Return True when callable signature contains kwarg."""
+    try:
+        signature = inspect.signature(func)
+    except (TypeError, ValueError):
+        return False
+    return kwarg_name in signature.parameters
+
+
+def load_model_compat(
+    model_path: Path,
+    model_class: type | None = None,
+    model_params: dict[str, object] | None = None,
+):
+    """Call training.load_model with backward-compatible kwargs."""
+    kwargs: dict[str, object] = {}
+    if model_class is not None and _supports_kwarg(training.load_model, "model_class"):
+        kwargs["model_class"] = model_class
+    if model_params is not None and _supports_kwarg(training.load_model, "model_params"):
+        kwargs["model_params"] = model_params
+
+    if model_class is not None and "model_class" not in kwargs:
+        print("WARN: training.load_model has no model_class kwarg; trying legacy call")
+    if model_params is not None and "model_params" not in kwargs:
+        print("WARN: training.load_model has no model_params kwarg; trying legacy call")
+
+    return training.load_model(model_path, **kwargs)
+
 # GPU detection (for NN inference)
 try:
     import torch
@@ -174,7 +204,7 @@ try:
         )
     
     # Load model and metadata separately (no return_metadata parameter)
-    ml_model = training.load_model(ml_model_path)
+    ml_model = load_model_compat(ml_model_path)
     ml_metadata_path = ml_model_path.with_suffix(ml_model_path.suffix + ".metadata.json")
     ml_metadata = json.loads(ml_metadata_path.read_text())
     
@@ -210,7 +240,7 @@ try:
             model_params = all_params
 
         # Load NN model with model-specific params
-        nn_model = training.load_model(
+        nn_model = load_model_compat(
             nn_model_path,
             model_class=models.CNN1D if nn_name == "cnn_1d" else None,
             model_params=model_params,

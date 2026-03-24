@@ -84,6 +84,7 @@ print("OK: Google Drive mounted")
 
 from pathlib import Path
 from datetime import datetime, timezone
+import inspect
 import json
 import pickle
 import warnings
@@ -134,6 +135,35 @@ config = load_experiment_config()  # ✅ FIXED: removed "phase3" argument
 # Re-run controls
 FULL_RERUN = False
 RERUN_FINETUNING = False
+
+
+def _supports_kwarg(func: object, kwarg_name: str) -> bool:
+    """Return True when callable signature contains kwarg."""
+    try:
+        signature = inspect.signature(func)
+    except (TypeError, ValueError):
+        return False
+    return kwarg_name in signature.parameters
+
+
+def load_model_compat(
+    model_path: Path,
+    model_class: type | None = None,
+    model_params: dict[str, object] | None = None,
+):
+    """Call training.load_model with backward-compatible kwargs."""
+    kwargs: dict[str, object] = {}
+    if model_class is not None and _supports_kwarg(training.load_model, "model_class"):
+        kwargs["model_class"] = model_class
+    if model_params is not None and _supports_kwarg(training.load_model, "model_params"):
+        kwargs["model_params"] = model_params
+
+    if model_class is not None and "model_class" not in kwargs:
+        print("WARN: training.load_model has no model_class kwarg; trying legacy call")
+    if model_params is not None and "model_params" not in kwargs:
+        print("WARN: training.load_model has no model_params kwarg; trying legacy call")
+
+    return training.load_model(model_path, **kwargs)
 
 
 def _extract_cnn_model_params(all_params: dict[str, object]) -> dict[str, object]:
@@ -281,7 +311,7 @@ try:
             "Run 03b_berlin_optimization.ipynb first."
         )
     
-    ml_model = training.load_model(ml_model_path)
+    ml_model = load_model_compat(ml_model_path)
     ml_metadata = json.loads(ml_metadata_path.read_text())
     ml_name = ml_metadata["model_name"]
     ml_feature_cols = ml_metadata["feature_columns"]
@@ -300,7 +330,7 @@ try:
         all_params = nn_metadata.get("best_params", {})
         model_params = _extract_cnn_model_params(all_params) if nn_name == "cnn_1d" else all_params
 
-        nn_model = training.load_model(
+        nn_model = load_model_compat(
             nn_model_path,
             model_class=models.CNN1D if nn_name == "cnn_1d" else None,
             model_params=model_params,
