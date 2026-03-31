@@ -40,8 +40,7 @@ urban-tree-transfer/
 ├── tests/                        # Unit and integration tests
 ├── docs/                         # Methodology and architecture docs
 ├── outputs/                      # Committed logs, metadata, report-ready JSON
-├── scripts/                      # Utility scripts
-└── reports/                      # Local report build assets (gitignored)
+└── scripts/                      # Utility scripts
 ```
 
 ## Data Access
