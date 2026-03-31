@@ -1,9 +1,20 @@
 [project]
 name = "urban-tree-transfer"
 version = "0.1.0"
-description = "Cross-City Transfer Learning for urban tree genus classification with Sentinel-2 satellite data"
+description = "Companion pipeline for cross-city urban tree genus transfer experiments with multitemporal Sentinel-2 data"
+readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "Silas Pignotti" }]
+license = { text = "Proprietary" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: Other/Proprietary License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
 dependencies = [
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
@@ -18,6 +29,11 @@ dependencies = [
     "pyarrow>=23.0.0",
     "pointpats>=2.5.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/spignotti/urban-tree-transfer"
+Documentation = "https://github.com/spignotti/urban-tree-transfer/tree/main/docs"
+Issues = "https://github.com/spignotti/urban-tree-transfer/issues"
 
 [project.optional-dependencies]
 gpu = [

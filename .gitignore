@@ -63,6 +63,10 @@ Thumbs.db
 .claude/
 .github/copilot-instructions.md
 
+# OpenCode local workflow artifacts (not for repo publication)
+.opencode/
+opencode.json
+
 # Project-specific data (large files, not for repo)
 data/
 *.gpkg
@@ -77,10 +81,14 @@ data/
 !configs/**/*.json
 !outputs/**/*.json
 !src/**/*.json
-!opencode.json
 outputs/report/
 credentials/
 secrets/
+
+# Local report drafting/build artifacts (not for repo publication)
+reports/
+paper-draft*.pdf
+*-draft*.pdf
 
 # Large model/data files
 *.zip

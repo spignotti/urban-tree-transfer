@@ -10,7 +10,7 @@ See `docs/PROJECT.md` for full project description, study design, and pipeline d
 We are refactoring for quality, not building from scratch.
 
 **Owner**: Silas Pignotti
-**Repository**: github.com/silas-workspace/urban-tree-transfer
+**Repository**: github.com/spignotti/urban-tree-transfer
 **Category**: portfolio
 
 ---
@@ -69,7 +69,7 @@ urban-tree-transfer/
 
 ### Package Install (Colab)
 ```
-pip install git+https://{token}@github.com/silas-workspace/urban-tree-transfer.git
+pip install git+https://{token}@github.com/spignotti/urban-tree-transfer.git
 ```
 All shared logic lives in `src/`. Notebooks only orchestrate — they import from
 the package and handle I/O with Google Drive.
