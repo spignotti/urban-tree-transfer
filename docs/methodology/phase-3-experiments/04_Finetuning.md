@@ -26,12 +26,12 @@ Vollständiger ML vs. NN Vergleich über alle Fraktionen. Kernargument: Zero-Sho
 
 ### Fraktionen: 10%, 25%, 50%, 100%
 
-| Fraktion | \~Samples | Repräsentiert |
+| Fraktion | Trainings-Samples | Repräsentiert |
 | --- | --- | --- |
-| 10% | \~500 | Minimal-Investment |
-| 25% | \~1250 | Moderate Investment |
-| 50% | \~2500 | Substantial Investment |
-| 100% | \~5000 | Vollständige Nutzung |
+| 10% | 8.040 | Minimal-Investment |
+| 25% | 20.100 | Moderate Investment |
+| 50% | 40.200 | Substantial Investment |
+| 100% | 80.401 | Vollständige Nutzung |
 
 Logarithmische Skalierung zeigt Diminishing Returns. Alle Subsets **stratifiziert** (Klassenverteilung erhalten → seltene Genus-Klassen proportional repräsentiert).
 
@@ -64,11 +64,11 @@ Neu berechnet auf **Leipzig-Verteilung** (balanced) — Fine-Tuning optimiert f�
 
 ## Datensplits
 
-Aus Leipzig Finetune (\~5.000) wird ein **10% Validierungs-Split** (stratifiziert) abgezweigt:
+Aus Leipzig Finetune (89.335 Bäume) wird ein **10% Validierungs-Split** (stratifiziert) abgezweigt:
 
-- **Leipzig Fine-Tune Training:** 90% (\~4.500) → Fraktionen 10%, 25%, 50%, 100%
-- **Leipzig Validation:** 10% (\~500) → Early Stopping / Monitoring
-- **Leipzig Test:** (\~1.500) → Finale Evaluation (unberührt während Training)
+- **Leipzig Fine-Tune Training:** 90% (80.401) → Fraktionen 10%, 25%, 50%, 100%
+- **Leipzig Validation:** 10% (8.934) → Early Stopping / Monitoring
+- **Leipzig Test:** 30.480 → Finale Evaluation (unberührt während Training)
 
 ---
 

@@ -4,7 +4,7 @@
 
 Erstellung ML-ready Train/Val/Test Splits mit Dual-Dataset-Strategie (Baseline + Proximity-gefiltert) für Phase 3 Ablationsstudien.
 
-**Output:** 10 Datensätze (5 Baseline + 5 Filtered), \~187 Features, Outlier-Flags
+**Output:** 10 Datensätze (5 Baseline + 5 Filtered), 147 Features nach Redundancy-Removal, Outlier-Flags
 
 ---
 
@@ -31,7 +31,7 @@ Regular Grid mit empirischer Block-Größe aus `spatial_autocorrelation.json` (e
 
 **Leipzig: 80/20 (Finetune-Pool/Test)**
 
-- Finetune-Pool für Few-Shot Sampling in Phase 3 (10, 50, 100 Bäume/Genus)
+- Finetune-Pool (89.335 Bäume): Quelle für stratifizierte Fraktions-Subsets in Phase 3 (10/25/50/100 % → 8.040/20.100/40.200/80.401 Trainingssamples)
 - Independent Test für Leipzig-Evaluation
 
 ### 5. Split-Validierung
@@ -65,7 +65,7 @@ Anwendung des 20m-Filters aus `proximity_filter.json` (exp\_06). Details siehe e
 
 Jeder Datensatz enthält:
 
-- Features (\~187 nach Redundancy-Removal)
+- Features (147 nach Redundancy-Removal)
 - Outlier-Flags (outlier\_severity: high/medium/low/none)
 - Spatial Block-ID
 - Metadaten (tree\_id, city, genus\_latin, plant\_year, etc.)
