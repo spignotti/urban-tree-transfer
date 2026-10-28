@@ -21,7 +21,7 @@ Mit fixiertem Setup (CHM, Datensatz, Outlier, Features) vergleichen wir vier Alg
 | Kategorie | Algorithmen | Coarse Grid | Features |
 | --- | --- | --- | --- |
 | ML | Random Forest, XGBoost | 24–48 Configs | 50 reduzierte Features |
-| NN | 1D-CNN, TabNet | Baseline + Varianten | \~144 volle temporale Features |
+| NN | 1D-CNN, TabNet | Baseline + Varianten | 144 volle temporale Features (8 Monate × 18 Variablen) |
 
 ML- und NN-Algorithmen verwenden automatisch die passende Datensatz-Variante (reduziert bzw. voll temporal).
 

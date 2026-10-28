@@ -84,7 +84,7 @@
 | NDII | NDWI | 0.959 |
 | kNDVI | NDVI | 0.993 |
 
-**Feature-Reduktion:** 276 → 184 (Temporal) → 147 (Correlation). Reduktion: 40 Features (21.4%)
+**Feature-Reduktion:** 276 → 184 (Temporal) → 187 (CHM) → 147 (Correlation). Reduktion: 40 Features (21.4%) von 187 auf 147
 
 **Behaltene Bänder (8):** B2, B3, B4, B5, B8, B8A, B11, B12
 

@@ -146,7 +146,7 @@ CHM → Proximity → Outlier → Features — jede baut auf der vorherigen auf:
 Nach Abschluss aller Ablationen erstellt 03a finale ML-ready Datensätze in **zwei Varianten:**
 
 - **XGBoost-Variante:** Reduzierte Features (Top-50) für Tree-based Models → vermeidet Dimensionality Curse
-- **CNN-Variante:** Volle temporale Sequenzen (\~144 Features: 12 Monate × 12 Indizes) → temporale Kontinuität für Faltungsoperationen
+- **CNN-Variante:** Volle temporale Sequenzen (144 Features: 8 Monate × 18 Variablen — 8 Spektralbänder + 10 Vegetationsindizes) → temporale Kontinuität für Faltungsoperationen
 
 **Begründung:** Gleiche Setup-Decisions, gleiche Samples/Labels, Unterschied nur bei Features. Tree-based Models profitieren von Feature Selection, CNNs benötigen vollständige Zeitreihen.
 

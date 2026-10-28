@@ -24,7 +24,7 @@ Städte mit existierenden Baumkatastern könnten als Trainingsquelle dienen, um 
 | --- | --- | --- |
 | ML | **Random Forest** | Robuster Baseline, geringes Overfitting, interpretierbar durch Feature Importance |
 | ML | **XGBoost** | State-of-the-art für tabellarische Daten |
-| NN | **1D-CNN** | Effizient für kurze temporale Sequenzen (12 Monate), erfasst lokale Muster |
+| NN | **1D-CNN** | Effizient für kurze temporale Sequenzen (8 Monate × 18 Variablen = 144 Features), erfasst lokale Muster |
 | NN | **TabNet** | Speziell für tabellarische Daten, Attention-basiert |
 
 **Champion-Selektion:** Nach initialem Vergleich werden **1 ML-Champion** und **1 NN-Champion** ausgewählt und per Hyperparameter-Tuning optimiert.
