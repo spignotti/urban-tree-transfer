@@ -165,10 +165,10 @@ Priority improvements for potential rework:
 - **[Paper]**: Multi-pixel sampling, soft-weighting for outliers, phenological phase features,
   bootstrap confidence intervals, seasonal autocorrelation, weighted consensus, domain adaptation
 
-Full list maintained in Notion (Improvements & Limitationen).
+Full list: [IMPROVEMENTS.md](IMPROVEMENTS.md).
 
 ---
 
 ## Related
 
-- **Documentation SSOT**: Notion workspace (full methodology documentation migrated from repo)
+- **Documentation SSOT**: [docs/methodology/](methodology/README.md) (migrated from Notion on 2026-10-28; Notion is archived)

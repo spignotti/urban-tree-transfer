@@ -1,0 +1,69 @@
+# 02_Exploratory_06_Mixed_Genus_Proximity
+
+> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680ea8a91e6efac1c8b75`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
+
+## Ziel
+
+Bestimmung des optimalen Mindestabstands zwischen Bäumen verschiedener Gattungen für spektrale Reinheit in Sentinel-2 10m-Pixeln. Bäume zu nahe an anderen Genera → Pixel-Mixing kontaminiert Spektralsignaturen.
+
+**Status:** ⏳ In Implementierung
+
+---
+
+## Methodik
+
+### Problem: Sentinel-2 Pixel Mixing
+
+Bei 10m-Pixeln können mehrere Bäume im selben Pixel liegen → Signal = gewichtete Mischung aller Objekte.
+
+**Kontaminationszonen:**
+
+| Distanz | Pixel-Überlappung | Kontamination |
+| --- | --- | --- |
+| \< 10m | Vollständig | HIGH |
+| 10–15m | Partiell | MEDIUM |
+| 15–20m | Kantenkontakt | LOW |
+| > 20m | Keine | NONE |
+
+### Nearest Different-Genus Distance
+
+Pro Baum: Minimale Distanz zum nächsten Baum einer **anderen** Gattung (euklidisch, pro Stadt).
+
+### Threshold Sensitivity Analysis
+
+Getestete Thresholds: \[5m, 10m, 15m, 20m, 30m\]
+
+**Entscheidungskriterien:**
+
+1. **Retention Rate > 85%** (Datenverlust-Limit)
+2. **Genus-Uniformität:** max. Abweichung \< 10% vom Mittel (kein Genus-Bias)
+3. **≥ 2× Pixel Size = 20m** (1-Pixel-Puffer garantiert)
+
+### Dual Dataset Strategy
+
+Phase 2c erstellt **zwei** Datensatz-Varianten:
+
+- **Baseline:** Alle Bäume (keine Proximity-Filterung) — Real-world Scenario
+- **Filtered:** Bäume \< 20m entfernt — spektral reiner
+
+Beide durchlaufen identische Pipeline → Phase 3 Ablationsstudie: Hilft der Filter?
+
+---
+
+## Schlüssel-Parameter
+
+| Parameter | Wert | Begründung |
+| --- | --- | --- |
+| Empfohlener Threshold | 20m | Eliminiert alle Pixel-Kontaminationszonen |
+| Min. Retention Rate | > 85% | Ausreichend Samples für Splits |
+| Genus-Uniformität | \< 10% Abweichung | Keine Klassen-Imbalance durch Filter |
+
+**Literatur:** Powell et al. (2007, RSE) — Mixed Pixels in urbanen Gebieten häufig. Kempeneers et al. (2013, IEEE JSTARS) — Sub-Pixel-Klassifikation.
+
+### Limitationen
+
+- Proximity ≠ Kontamination (PSF, Atmospheric Scattering können über Pixel-Grenzen streuen)
+- Binäre Entscheidung statt kontinuierlicher Gewichtung
+- Nur Genus-Level, ignoriert Baumgröße und saisonale Phänologie
+
+> 📝 **Offen:** Analyse noch nicht implementiert. Nach Pipeline-Rerun durchführen und Ergebnisse validieren.
