@@ -1,7 +1,5 @@
 # 02_Berlin_Optimierung
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f668005b290ced706d59663`, zuletzt bearbeitet 2026-03-25). Text unverändert übernommen.
-
 # Phase 3.2–3.3: Berlin-Optimierung
 
 ## Einleitung

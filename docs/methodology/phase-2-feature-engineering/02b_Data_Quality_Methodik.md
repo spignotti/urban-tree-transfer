@@ -1,7 +1,5 @@
 # 02b_Data_Quality_Methodik
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680679f45f3bbf506d3f5`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 ## Überblick
 
 Bereinigung der Phase-2a-Features: Temporal Reduction, NaN-Handling, CHM-Engineering, Plausibilitätsfilterung. Zentraler Fokus: **Vermeidung von Data Leakage** durch ausschließlich within-tree Operationen.
@@ -71,5 +69,3 @@ Wenn selbst im besten Monat NDVI \< 0.3 → kein gesunder Baum (Fehlklassifikati
 | Schwellenwert-Filter (Plant Year, NDVI) | ✅ Erlaubt | Absolute Kriterien |
 | Genus-/Stadt-Mittelwerte für NaN | ❌ Verboten | Train→Val/Test Leakage |
 | Cross-tree Outlier-Detection | ❌ Hier nicht | Erst Phase 2c (nach Splits) |
-
-> 📝 **Offen:** Ergebnisse nach Pipeline-Rerun validieren (Retention-Raten, NaN-Elimination, CHM-Normalisierung).

@@ -1,7 +1,5 @@
 # 05_Ergebnisse
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f668093ad57c4304d08e185`, zuletzt bearbeitet 2026-03-25). Text unverändert übernommen.
-
 # Phase 3: Experiments, Ergebnisse
 
 **Phase:** Experiments

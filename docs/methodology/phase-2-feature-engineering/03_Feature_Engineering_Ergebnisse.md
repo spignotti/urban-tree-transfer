@@ -1,7 +1,5 @@
 # 03_Feature_Engineering_Ergebnisse
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f668010a576eb8e9c46df49`, zuletzt bearbeitet 2026-03-24). Text unverändert übernommen.
-
 **Phase:** Feature Engineering \| **Status:** ✅ Abgeschlossen \| **Pipeline-Rerun:** 24.03.2026
 
 ---

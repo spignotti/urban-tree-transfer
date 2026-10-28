@@ -1,7 +1,5 @@
 # 02_Exploratory_05_Spatial_Autocorrelation
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680f79848d3fcf3989da5`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 ## Ziel
 
 Empirische Bestimmung der minimalen räumlichen Distanz, ab der keine signifikante Autokorrelation zwischen Baum-Features besteht. Definiert die **Block-Größe für Spatial Splits**, um Data Leakage durch räumliche Abhängigkeiten zu vermeiden.
@@ -57,5 +55,3 @@ Preliminary Splits erstellen → Moran's I within-split (\< 0.1) und between-spl
 - Roberts et al. (2017, RSE): 500m für urbane Vegetationskartierung
 - Zhu et al. (2019): Spatial Autocorrelation in Städten typisch 200–800m
 - Erwartete Block Size: 400–600m
-
-> 📝 **Offen:** Ergebnisse nach Pipeline-Rerun validieren (Decay Distances, Block Size, Post-Split Independence).

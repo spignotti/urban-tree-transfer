@@ -1,7 +1,5 @@
 # 02_Exploratory_04_Outlier_Detection
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680059c4fd00859ed8b11`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 ## Ziel
 
 Validierung der Schwellenwerte für multivariate Outlier-Detektion. Etablierung eines **Severity-basierten Flagging-Systems** (keine automatische Removal) für Ablationsstudien in Phase 3.
@@ -84,5 +82,3 @@ Sicherstellung, dass kein Genus überproportional betroffen ist (max. Abweichung
 | Mahalanobis α | 0.001 | Standard für multivariate Outlier-Detection |
 | IQR k | 1.5 | Standard Tukey (1977) |
 | Removal | Keine | Flagging-only für Ablationsstudien |
-
-> 📝 **Offen:** Ergebnisse nach Pipeline-Rerun validieren (Flagging-Raten, Consensus-Verteilung, Genus-Uniformität, biologischer Kontext).

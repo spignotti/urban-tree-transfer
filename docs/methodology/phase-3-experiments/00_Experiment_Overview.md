@@ -1,7 +1,5 @@
 # 00_Experiment_Overview
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f66801194aef3cc0b8f16ad`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 # Experimentelle Struktur: Übersicht
 
 ## Ziel der Experimente

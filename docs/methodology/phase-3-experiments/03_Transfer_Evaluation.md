@@ -1,7 +1,5 @@
 # 03_Transfer_Evaluation
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f668007bf78d8583d730322`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 # Phase 3.4: Transfer-Evaluation
 
 ## Einleitung

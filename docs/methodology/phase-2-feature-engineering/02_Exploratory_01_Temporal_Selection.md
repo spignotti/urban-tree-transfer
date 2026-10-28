@@ -1,7 +1,5 @@
 # 02_Exploratory_01_Temporal_Selection
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680368682c9b4d37c37cc`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 ## Ziel
 
 Identifikation der zeitlich diskriminativsten Monate für Genus-Klassifikation. Reduktion von 12 auf 6–10 Monate durch Analyse der monatlichen Separabilität.
@@ -55,5 +53,3 @@ Sicherstellung, dass selektierte Monate in **beiden** Städten diskriminativ sin
 | Sampling | 10.000 Bäume/Genus | JM stabil ab \~5.000, 10k als Puffer |
 | Top-N | 8 Monate | Balance Dimensionsreduktion vs. Informationserhalt |
 | Konsistenz-Schwelle | ρ > 0.7 | Spearman-Korrelation für Rangkonsistenz |
-
-> 📝 **Offen:** Ergebnisse nach Pipeline-Rerun validieren (selektierte Monate, JM-Werte, Spearman ρ).

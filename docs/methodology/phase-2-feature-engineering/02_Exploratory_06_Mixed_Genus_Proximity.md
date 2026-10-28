@@ -1,7 +1,5 @@
 # 02_Exploratory_06_Mixed_Genus_Proximity
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680ea8a91e6efac1c8b75`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 ## Ziel
 
 Bestimmung des optimalen Mindestabstands zwischen Bäumen verschiedener Gattungen für spektrale Reinheit in Sentinel-2 10m-Pixeln. Bäume zu nahe an anderen Genera → Pixel-Mixing kontaminiert Spektralsignaturen.
@@ -65,5 +63,3 @@ Beide durchlaufen identische Pipeline → Phase 3 Ablationsstudie: Hilft der Fil
 - Proximity ≠ Kontamination (PSF, Atmospheric Scattering können über Pixel-Grenzen streuen)
 - Binäre Entscheidung statt kontinuierlicher Gewichtung
 - Nur Genus-Level, ignoriert Baumgröße und saisonale Phänologie
-
-> 📝 **Offen:** Analyse noch nicht implementiert. Nach Pipeline-Rerun durchführen und Ergebnisse validieren.

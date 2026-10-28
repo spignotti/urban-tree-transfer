@@ -1,7 +1,5 @@
 # 02_Data_Processing_Ergebnisse
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680358c99e93c2aa58cb4`, zuletzt bearbeitet 2026-03-10). Text unverändert übernommen.
-
 **Phase:** Data Processing
 
 **Ausführungsdatum:** 03.02.2026

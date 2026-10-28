@@ -1,7 +1,5 @@
 # 04_Finetuning
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680a8b1ecec531fa0049d`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 # Phase 3.5: Fine-Tuning
 
 ## Einleitung
@@ -60,7 +58,7 @@ Neu berechnet auf **Leipzig-Verteilung** (balanced) — Fine-Tuning optimiert f�
 | Szenario | Scaler | Begründung |
 | --- | --- | --- |
 | **Fine-Tuning** | Berlin-Scaler beibehalten | Modell-Weights erwarten Berlin-skalierte Features; neuer Scaler würde Feature-Raum verschieben |
-| **From-Scratch** | Neuer Leipzig-Scaler | Kein Vorwissen, eigenständiges Modell |
+| **From-Scratch** | Neuer Leipzig-Scaler | Kein Vorwissen, unabhängiges Modell |
 
 ---
 

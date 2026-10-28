@@ -1,7 +1,5 @@
 # 01_Data_Processing_Methodik
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680f2a66af10198f25342`, zuletzt bearbeitet 2026-03-25). Text unverändert übernommen.
-
 ## Überblick
 
 Harmonisierung aller Eingangsdaten für die Baumgattungs-Klassifikation. Alle räumlichen Daten werden in EPSG:25833 (UTM Zone 33N) transformiert und auf Stadtgrenzen mit 500m Puffer zugeschnitten (Randeffekte).
@@ -86,8 +84,6 @@ B2, B3, B4, B5, B6, B7, B8, B8A, B11, B12 — alle auf 10m resampelt
 ### Vegetationsindizes (13)
 
 NDVI, EVI, GNDVI, NDre1, NDVIre, CIre, IRECI, RTVIcore, NDWI, MSI, NDII, kNDVI, VARI
-
-> 📝 **Offen:** Literaturbasierte Begründung jedes Indexes (Referenzen zu Immitzer et al. 2019, Grabska et al. 2019, Hemmerling et al. 2021) für den Bericht ergänzen.
 
 ---
 

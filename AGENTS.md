@@ -6,8 +6,7 @@ Urban Tree Transfer — genus-level classification of urban trees from multitemp
 Sentinel-2 imagery. Cross-city transfer learning study (Berlin -> Leipzig).
 See `docs/PROJECT.md` for full project description, study design, and pipeline details.
 
-**Status**: Active rework. The codebase is functional and has produced results.
-We are refactoring for quality, not building from scratch.
+**Status**: Concluded. The project report was submitted on 2026-03-31; the codebase is frozen at the submitted state. Changes are limited to documentation unless a publication round is started.
 
 **Owner**: Silas Pignotti
 **Repository**: github.com/spignotti/urban-tree-transfer

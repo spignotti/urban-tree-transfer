@@ -1,7 +1,5 @@
 # 02_Exploratory_02_CHM_Assessment
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680328cd2e2aaad903e96`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 ## Ziel
 
 Systematische Evaluation der CHM-Features (Kronenhöhe) für Genus-Klassifikation: Diskriminationskraft, Transferierbarkeit, Plant-Year-Threshold und Genus-Scope-Entscheidung.
@@ -70,5 +68,3 @@ Entscheidung: Nadelbäume einbeziehen oder nur Laubbäume?
 | Min. Conifer Genera | 3 | Minimum für sinnvolle Klassifikation |
 | Min. Conifer Samples | 500 | Statistische Stabilität für Splits |
 | Rare Genus Fallback | \<10 Samples | City-level statt genus-level Normalisierung |
-
-> 📝 **Offen:** Ergebnisse nach Pipeline-Rerun validieren (η², Cohen's d, Plant-Year-Cutoff, Scope-Entscheidung).

@@ -1,7 +1,5 @@
 # 02a_Feature_Extraction_Methodik
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f668008bda7c755864b1f84`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 ## Überblick
 
 Extraktion spektraler und struktureller Features aus Phase-1-Outputs (Baumkataster, CHM, Sentinel-2 Komposite). Alle NaN-Werte bleiben erhalten für Quality-Control in Phase 2b.
@@ -55,5 +53,3 @@ Pro Baum: Lokale Maxima (Footprint 3×3) im `max_radius` detektieren, Peak mit m
 - **Gesamt: 276 S2-Features**
 
 Cloud-masked Pixel bleiben als NaN erhalten (Quality-Control in Phase 2b).
-
-> 📝 **Offen:** Ergebnisse nach Pipeline-Rerun validieren (Correction-Distanzen, NaN-Raten, Feature-Counts).

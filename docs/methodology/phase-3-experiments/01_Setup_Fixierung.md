@@ -1,7 +1,5 @@
 # 01_Setup_Fixierung
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f6680618760ce92a8088cd8`, zuletzt bearbeitet 2026-03-30). Text unverändert übernommen.
-
 # Phase 3.1: Setup-Fixierung
 
 ## Einleitung

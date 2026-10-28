@@ -1,7 +1,5 @@
 # 02_Exploratory_03_Correlation_Analysis
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f668023a569c7f285fe5eed`, zuletzt bearbeitet 2026-03-24). Text unverändert übernommen.
-
 ## Ziel
 
 Identifikation hochkorrelierter Features zur Vermeidung von Multikollinearität. Redundante Features werden für Removal markiert, unter Gewährleistung von Cross-City-Konsistenz.

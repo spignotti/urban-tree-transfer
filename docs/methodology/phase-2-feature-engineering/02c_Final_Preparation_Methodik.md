@@ -1,7 +1,5 @@
 # 02c_Final_Preparation_Methodik
 
-> Migriert aus Notion am 2026-10-28 (Seite `31f356451f66805f93b8ddca46ffb279`, zuletzt bearbeitet 2026-03-12). Text unverändert übernommen.
-
 ## Ziel
 
 Erstellung ML-ready Train/Val/Test Splits mit Dual-Dataset-Strategie (Baseline + Proximity-gefiltert) für Phase 3 Ablationsstudien.
@@ -90,5 +88,3 @@ Jeder Datensatz enthält:
 - Roberts et al. (2017): Spatial Cross-Validation Strategies
 - Valavi et al. (2019): blockCV für räumlich getrennte Folds
 - Tukey (1977): IQR-Methode
-
-> 📝 **Offen:** Ergebnisse nach Pipeline-Rerun validieren (Split-Größen, KL-Divergenzen, Proximity-Retention, Outlier-Verteilung).
