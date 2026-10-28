@@ -68,13 +68,13 @@ Ein optimiertes XGBoost oder NN könnte durch Overfitting auf bestimmte Features
 
 ### 2. Proximity-Filter-Ablation (exp\_08b)
 
-**Motivation:** Sentinel-2 Pixel (10m) kann überlappende Baumkronen verschiedener Gattungen enthalten → Label-Noise durch Mischsignale. Proximity-Filter (≥20m Abstand) entfernt ambige Fälle.
+**Motivation:** Sentinel-2 Pixel (10m) kann überlappende Baumkronen verschiedener Gattungen enthalten → Label-Noise durch Mischsignale. Proximity-Filter (≥5m Abstand zur nächsten anderen Gattung, exp\_06) entfernt ambige Fälle.
 
 **Varianten:** Baseline (alle Bäume) vs. Filtered (nur isolierte Bäume)
 
 **Entscheidungslogik:**
 
-1. Sampleverlust > 20% → Baseline (seltene Gattungen gefährdet)
+1. Sampleverlust > 25% → Baseline (seltene Gattungen gefährdet)
 2. F1-Gewinn > 0.02 → Filtered; sonst Baseline (marginaler Gewinn)
 
 ---

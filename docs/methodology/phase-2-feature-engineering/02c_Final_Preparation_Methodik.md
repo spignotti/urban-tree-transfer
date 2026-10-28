@@ -46,7 +46,7 @@ Regular Grid mit empirischer Block-Größe aus `spatial_autocorrelation.json` (e
 
 ### 6. Proximity Filtering + Dual Datasets
 
-Anwendung des 20m-Filters aus `proximity_filter.json` (exp\_06). Details siehe exp\_06.
+Anwendung des 5m-Filters aus `proximity_filter.json` (exp\_06, `recommended_threshold_m` = 5). Details siehe exp\_06.
 
 **Dual Dataset Strategy:**
 

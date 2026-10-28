@@ -37,12 +37,14 @@ Getestete Thresholds: \[5m, 10m, 15m, 20m, 30m\]
 2. **Genus-Uniformität:** max. Abweichung \< 10% vom Mittel (kein Genus-Bias)
 3. **≥ 2× Pixel Size = 20m** (1-Pixel-Puffer garantiert)
 
+Gewählt wird der kleinste Threshold, der alle drei Kriterien erfüllt. Erfüllt keiner alle Kriterien, fällt die Wahl auf den Threshold mit der höchsten mittleren Retention. Im finalen Lauf traf dieser Fallback zu: Ab 20m bleiben nur noch \~26–30% der Bäume erhalten, daher **5m**.
+
 ### Dual Dataset Strategy
 
 Phase 2c erstellt **zwei** Datensatz-Varianten:
 
 - **Baseline:** Alle Bäume (keine Proximity-Filterung) — Real-world Scenario
-- **Filtered:** Bäume \< 20m entfernt — spektral reiner
+- **Filtered:** Bäume \< 5m zur nächsten anderen Gattung entfernt — spektral reiner
 
 Beide durchlaufen identische Pipeline → Phase 3 Ablationsstudie: Hilft der Filter?
 
@@ -52,7 +54,7 @@ Beide durchlaufen identische Pipeline → Phase 3 Ablationsstudie: Hilft der Fil
 
 | Parameter | Wert | Begründung |
 | --- | --- | --- |
-| Empfohlener Threshold | 20m | Eliminiert alle Pixel-Kontaminationszonen |
+| Empfohlener Threshold | 5m | Ergebnis exp\_06 (`proximity_filter.json`): Fallback auf höchste Retention, da kein Threshold alle Kriterien erfüllt |
 | Min. Retention Rate | > 85% | Ausreichend Samples für Splits |
 | Genus-Uniformität | \< 10% Abweichung | Keine Klassen-Imbalance durch Filter |
 

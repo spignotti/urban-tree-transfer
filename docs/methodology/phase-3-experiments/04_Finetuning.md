@@ -74,7 +74,7 @@ Aus Leipzig Finetune (89.335 Bäume) wird ein **10% Validierungs-Split** (strati
 
 ## From-Scratch Baseline
 
-Komplett neu auf Leipzig trainiert, ohne Berlin-Vorwissen. Eigener Leipzig-Scaler, gleicher Val/Test-Split.
+Komplett neu auf Leipzig trainiert, ohne Berlin-Vorwissen (ML-Modell mit den Berlin-Hyperparametern). Eigener Leipzig-Scaler. Die Fraktions-Subsets werden aus dem vollen Leipzig-Finetune-Pool (89.335 Bäume) gezogen, ohne separaten Validierungs-Split (kein Early Stopping); evaluiert wird auf demselben Leipzig-Test-Set (30.480) wie das Fine-Tuning.
 
 | Vergleich | Frage |
 | --- | --- |
