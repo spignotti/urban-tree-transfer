@@ -90,6 +90,24 @@ reports/
 paper-draft*.pdf
 *-draft*.pdf
 
+# LaTeX build outputs
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.out
+*.toc
+*.bbl
+*.blg
+*.xdv
+paper/*.pdf
+.DS_Store
+._*
+
+# Report source data (CSV inputs for figures and tables)
+!paper/data/
+
 # Large model/data files
 *.zip
 *.tar.gz

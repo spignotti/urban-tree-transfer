@@ -1,0 +1,7 @@
+algorithm,type,val_f1_mean,val_f1_std,train_f1_mean,train_val_gap,name,best_params
+majority,baseline,0.18154181873872272,0.0,0.18154181873872272,0.0,majority,
+stratified_random,baseline,0.18778841860704823,0.0,0.18778841860704823,0.0,stratified_random,
+random_forest,ml,0.47489720188219237,0.006450886014937546,0.8732801290940175,0.39838292721182517,random_forest,"{'n_estimators': 200, 'max_depth': 30, 'min_samples_split': 5, 'min_samples_leaf': 2}"
+xgboost,ml,0.5102848242986904,0.004689769585733879,0.6485974747996507,0.1383126505009603,xgboost,"{'n_estimators': 400, 'max_depth': 6, 'learning_rate': 0.1, 'subsample': 0.8, 'colsample_bytree': 1.0, 'reg_lambda': 2.0}"
+cnn_1d,nn,0.5665137666474269,0.009228390115748268,0.6137386925807657,0.047224925933338824,cnn_1d,
+tabnet,nn,0.5461390000186347,0.00820963202771359,0.7516106034106466,0.20547160339201187,tabnet,

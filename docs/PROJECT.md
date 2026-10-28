@@ -1,6 +1,6 @@
 # Urban Tree Transfer
 
-**Status**: ACTIVE
+**Status**: Concluded (report submitted 2026-03-31)
 
 **Owner**: Silas Pignotti
 
@@ -165,10 +165,11 @@ Priority improvements for potential rework:
 - **[Paper]**: Multi-pixel sampling, soft-weighting for outliers, phenological phase features,
   bootstrap confidence intervals, seasonal autocorrelation, weighted consensus, domain adaptation
 
-Full list maintained in Notion (Improvements & Limitationen).
+A detailed improvement backlog for a potential publication round is maintained privately.
 
 ---
 
 ## Related
 
-- **Documentation SSOT**: Notion workspace (full methodology documentation migrated from repo)
+- **Methodology documentation**: [docs/methodology/](methodology/README.md)
+- **Report sources**: [paper/](../paper/README.md)
