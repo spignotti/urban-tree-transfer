@@ -107,10 +107,13 @@ After each phase, copy generated logs and metadata from Drive into matching `out
 
 Committed outputs under `outputs/` serve as the reproducibility audit trail (logs, metadata, report-ready JSON exports), organised by pipeline phase.
 
-Report figure naming convention uses stable slugs:
+Report figure naming convention uses stable slugs under `paper/figures/`:
 
-- `fig-study-area` -> `reports/figures/fig-study-area.png`
-- `fig-transfer-robustness` -> `reports/figures/fig-transfer-robustness.png`
+![Per-genus relative transfer drop and Berlin versus Leipzig zero-shot F1](paper/figures/fig-per-genus-transfer.png)
+
+- `fig-per-genus-transfer` -> `paper/figures/fig-per-genus-transfer.png` (transfer robustness: per-genus relative F1 drop from Berlin to Leipzig, with source and zero-shot F1). The former slug `fig-transfer-robustness` is not a tracked file.
+
+No tracked image depicts the study area. `reports/figures/fig-study-area.png` is not remapped: every file in `paper/figures/` is a chart, not a map of Berlin and Leipzig.
 
 Supporting metrics are stored in `outputs/phase_*/report/*.json` and `outputs/phase_*/metadata/*.json`.
 
